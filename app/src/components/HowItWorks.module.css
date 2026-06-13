@@ -1,0 +1,270 @@
+.section {
+  padding-block: var(--space-5xl);
+  position: relative;
+}
+
+.container {
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: var(--space-lg);
+}
+
+.heading {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: var(--space-4xl);
+}
+
+.headingAccent {
+  color: var(--mint-400);
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xl);
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3xl);
+  align-items: center;
+  padding: var(--space-2xl);
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+.step.revealed {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 600ms var(--ease-out),
+              transform 600ms var(--ease-out);
+  transition-delay: var(--delay, 0ms);
+}
+
+.step:nth-child(even) {
+  direction: rtl;
+}
+
+.step:nth-child(even) > * {
+  direction: ltr;
+}
+
+.stepContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.stepNumber {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--mint-400);
+  letter-spacing: 0.1em;
+}
+
+.stepTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.stepDescription {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  max-width: 400px;
+}
+
+/* Step Visuals */
+.stepVisual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-xl);
+}
+
+/* Group mock */
+.mockGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: var(--slate-800);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+}
+
+.mockGroupIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--slate-950);
+}
+
+.mockGroupName {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mockGroupMode {
+  font-size: 0.75rem;
+  color: var(--mint-400);
+}
+
+.mockMembers {
+  display: flex;
+  justify-content: center;
+}
+
+.mockMember {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--slate-900);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--slate-950);
+  margin-right: -8px;
+}
+
+.mockMember:last-child {
+  color: var(--text-secondary);
+  font-size: 0.625rem;
+}
+
+/* Receipt mock */
+.mockReceipt {
+  background: var(--slate-800);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  width: 100%;
+  max-width: 280px;
+}
+
+.receiptHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.receiptDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.receiptField {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) 0;
+}
+
+.fieldLabel {
+  font-size: 0.8125rem;
+  color: var(--text-tertiary);
+}
+
+.fieldValue {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+/* Settlement mock */
+.mockSettlement {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  background: var(--slate-800);
+  border-radius: var(--radius-md);
+  width: 100%;
+  max-width: 300px;
+}
+
+.settlementRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  justify-content: center;
+}
+
+.settlementAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--slate-950);
+  flex-shrink: 0;
+}
+
+.settlementArrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.settlementAmount {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--mint-400);
+}
+
+.settlementLabel {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .step {
+    grid-template-columns: 1fr;
+    gap: var(--space-xl);
+    padding: var(--space-xl);
+  }
+
+  .step:nth-child(even) {
+    direction: ltr;
+  }
+
+  .stepVisual {
+    padding: var(--space-md) 0;
+  }
+}
