@@ -28,9 +28,13 @@ const splitTypes = [
 export default function NewExpensePage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  
+  const [expenseMode, setExpenseMode] = useState<"group" | "individual">("group");
+  
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [selectedGroup, setSelectedGroup] = useState("");
+  const [selectedFriend, setSelectedFriend] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("food");
   const [selectedSplit, setSelectedSplit] = useState("equal");
   
@@ -59,10 +63,23 @@ export default function NewExpensePage() {
       if (!res.ok) throw new Error("Failed to fetch groups");
       return res.json();
     },
-    enabled: !!token,
+    enabled: !!token && expenseMode === "group",
   });
-
   const groups = groupsData?.groups || [];
+
+  // Fetch user's friends
+  const { data: friendsData, isLoading: friendsLoading } = useQuery({
+    queryKey: ["friends"],
+    queryFn: async () => {
+      const res = await fetch("http://localhost:8000/api/friends", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to fetch friends");
+      return res.json();
+    },
+    enabled: !!token && expenseMode === "individual",
+  });
+  const friends = friendsData?.friends || [];
 
   // Fetch selected group details to get members for splitting
   const { data: selectedGroupData, isLoading: groupDetailsLoading } = useQuery({
@@ -74,24 +91,36 @@ export default function NewExpensePage() {
       if (!res.ok) throw new Error("Failed to fetch group details");
       return res.json();
     },
-    enabled: !!token && !!selectedGroup,
+    enabled: !!token && !!selectedGroup && expenseMode === "group",
   });
 
-  const activeCurrency = selectedGroupData?.group?.baseCurrency || defaultCurrency;
+  const activeCurrency = expenseMode === "group" 
+    ? (selectedGroupData?.group?.baseCurrency || defaultCurrency) 
+    : defaultCurrency;
+  
   const sym = getCurrencySymbol(activeCurrency);
 
   const createExpenseMutation = useMutation({
     mutationFn: async () => {
-      const members = selectedGroupData?.group?.members || [];
-      if (members.length === 0) throw new Error("Group has no members");
-
+      let splits = [];
       const totalAmount = parseFloat(amount);
-      const perPerson = totalAmount / members.length;
 
-      const splits = members.map((m: any) => ({
-        userId: m.id,
-        amountOwed: perPerson.toFixed(2),
-      }));
+      if (expenseMode === "group") {
+        const members = selectedGroupData?.group?.members || [];
+        if (members.length === 0) throw new Error("Group has no members");
+        const perPerson = totalAmount / members.length;
+        splits = members.map((m: any) => ({
+          userId: m.id,
+          amountOwed: perPerson.toFixed(2),
+        }));
+      } else {
+        if (!selectedFriend) throw new Error("No friend selected");
+        const perPerson = totalAmount / 2;
+        splits = [
+          { userId: currentUserId, amountOwed: perPerson.toFixed(2) },
+          { userId: selectedFriend, amountOwed: perPerson.toFixed(2) }
+        ];
+      }
 
       const res = await fetch("http://localhost:8000/api/expenses", {
         method: "POST",
@@ -100,7 +129,7 @@ export default function NewExpensePage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          groupId: selectedGroup,
+          groupId: expenseMode === "group" ? selectedGroup : null,
           description,
           amount: totalAmount,
           category: selectedCategory,
@@ -120,7 +149,12 @@ export default function NewExpensePage() {
       queryClient.invalidateQueries({ queryKey: ["group"] });
       queryClient.invalidateQueries({ queryKey: ["all_expenses"] });
       queryClient.invalidateQueries({ queryKey: ["recent_expenses"] });
-      router.push(`/dashboard/groups/${selectedGroup}`);
+      
+      if (expenseMode === "group") {
+        router.push(`/dashboard/groups/${selectedGroup}`);
+      } else {
+        router.push(`/dashboard/friends`);
+      }
     },
     onError: (err: any) => {
       setErrorMsg(err.message);
@@ -130,8 +164,12 @@ export default function NewExpensePage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
-    if (!selectedGroupData) {
+    if (expenseMode === "group" && !selectedGroupData) {
       setErrorMsg("Please wait for group details to load or select a valid group.");
+      return;
+    }
+    if (expenseMode === "individual" && !selectedFriend) {
+      setErrorMsg("Please select a friend to split with.");
       return;
     }
     createExpenseMutation.mutate();
@@ -142,8 +180,48 @@ export default function NewExpensePage() {
       <div className={styles.card}>
         <h2 className={styles.title}>Add Expense</h2>
         <p className={styles.subtitle}>
-          Log a new shared expense. All fields are editable later.
+          Log a new shared expense with a group or a friend directly.
         </p>
+
+        {/* Mode Selector */}
+        <div style={{ display: "flex", gap: "1rem", marginBottom: "2rem", background: "var(--bg-secondary)", padding: "0.5rem", borderRadius: "12px" }}>
+          <button 
+            type="button"
+            onClick={() => setExpenseMode("group")}
+            style={{ 
+              flex: 1, 
+              padding: "0.8rem", 
+              borderRadius: "8px", 
+              border: "none", 
+              fontWeight: 600,
+              backgroundColor: expenseMode === "group" ? "var(--bg-primary)" : "transparent",
+              color: expenseMode === "group" ? "var(--text-primary)" : "var(--text-secondary)",
+              boxShadow: expenseMode === "group" ? "0 4px 12px rgba(0,0,0,0.1)" : "none",
+              cursor: "pointer",
+              transition: "all 0.2s"
+            }}
+          >
+            With a Group
+          </button>
+          <button 
+            type="button"
+            onClick={() => setExpenseMode("individual")}
+            style={{ 
+              flex: 1, 
+              padding: "0.8rem", 
+              borderRadius: "8px", 
+              border: "none", 
+              fontWeight: 600,
+              backgroundColor: expenseMode === "individual" ? "var(--bg-primary)" : "transparent",
+              color: expenseMode === "individual" ? "var(--text-primary)" : "var(--text-secondary)",
+              boxShadow: expenseMode === "individual" ? "0 4px 12px rgba(0,0,0,0.1)" : "none",
+              cursor: "pointer",
+              transition: "all 0.2s"
+            }}
+          >
+            Individual Friend
+          </button>
+        </div>
 
         {errorMsg && (
           <div style={{ color: "#ff6b6b", background: "rgba(255, 107, 107, 0.1)", border: "1px solid rgba(255, 107, 107, 0.2)", borderRadius: "8px", padding: "0.8rem 1rem", marginBottom: "1.5rem", fontSize: "0.9rem" }}>
@@ -183,33 +261,65 @@ export default function NewExpensePage() {
             />
           </div>
 
-          {/* Group select */}
+          {/* Context Selector */}
           <div className={styles.field}>
-            <label className={styles.label}>Group</label>
-            <div className={styles.groupPicker}>
-              {groupsLoading ? (
-                <div className="text-secondary" style={{ fontSize: "0.9rem" }}>Loading your groups...</div>
-              ) : groups.length === 0 ? (
-                <div className="text-secondary" style={{ fontSize: "0.9rem" }}>No groups found. Create a group first!</div>
-              ) : (
-                groups.map((g: any) => (
-                  <button
-                    key={g.id}
-                    type="button"
-                    className={`${styles.groupChip} ${selectedGroup === g.id ? styles.groupChipSelected : ""}`}
-                    onClick={() => {
-                      setSelectedGroup(g.id);
-                      setErrorMsg("");
-                    }}
-                    style={{ "--chip-color": g.color || "#3DD68C" } as React.CSSProperties}
-                  >
-                    <span className={styles.chipDot} style={{ background: g.color || "#3DD68C" }} />
-                    {g.name}
-                  </button>
-                ))
-              )}
-            </div>
-            {selectedGroup && groupDetailsLoading && (
+            <label className={styles.label}>{expenseMode === "group" ? "Group" : "Friend"}</label>
+            
+            {expenseMode === "group" ? (
+              <div className={styles.groupPicker}>
+                {groupsLoading ? (
+                  <div className="text-secondary" style={{ fontSize: "0.9rem" }}>Loading your groups...</div>
+                ) : groups.length === 0 ? (
+                  <div className="text-secondary" style={{ fontSize: "0.9rem" }}>No groups found. Create a group first!</div>
+                ) : (
+                  groups.map((g: any) => (
+                    <button
+                      key={g.id}
+                      type="button"
+                      className={`${styles.groupChip} ${selectedGroup === g.id ? styles.groupChipSelected : ""}`}
+                      onClick={() => {
+                        setSelectedGroup(g.id);
+                        setErrorMsg("");
+                      }}
+                      style={{ "--chip-color": g.color || "#3DD68C" } as React.CSSProperties}
+                    >
+                      <span className={styles.chipDot} style={{ background: g.color || "#3DD68C" }} />
+                      {g.name}
+                    </button>
+                  ))
+                )}
+              </div>
+            ) : (
+              <div className={styles.groupPicker}>
+                {friendsLoading ? (
+                  <div className="text-secondary" style={{ fontSize: "0.9rem" }}>Loading your friends...</div>
+                ) : friends.length === 0 ? (
+                  <div className="text-secondary" style={{ fontSize: "0.9rem" }}>No friends found. Add friends first!</div>
+                ) : (
+                  friends.map((f: any) => (
+                    <button
+                      key={f.friendId}
+                      type="button"
+                      className={`${styles.groupChip} ${selectedFriend === f.friendId ? styles.groupChipSelected : ""}`}
+                      onClick={() => {
+                        setSelectedFriend(f.friendId);
+                        setErrorMsg("");
+                      }}
+                      style={{ "--chip-color": "#4a90e2" } as React.CSSProperties}
+                    >
+                      {f.friendAvatar ? (
+                        <img src={f.friendAvatar} alt="" style={{ width: 16, height: 16, borderRadius: "50%", marginRight: 6 }} />
+                      ) : (
+                        <span className={styles.chipDot} style={{ background: "#4a90e2" }} />
+                      )}
+                      {f.friendName}
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+            
+            {expenseMode === "group" && selectedGroup && groupDetailsLoading && (
               <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "0.5rem" }}>
                 Loading splitting participants...
               </div>
@@ -256,7 +366,12 @@ export default function NewExpensePage() {
           <button
             type="submit"
             className={`btn btn-primary btn-lg ${styles.submitBtn}`}
-            disabled={createExpenseMutation.isPending || !amount || !description || !selectedGroup || groupDetailsLoading}
+            disabled={
+              createExpenseMutation.isPending || 
+              !amount || 
+              !description || 
+              (expenseMode === "group" ? !selectedGroup || groupDetailsLoading : !selectedFriend)
+            }
             id="expense-submit"
           >
             {createExpenseMutation.isPending ? "Adding..." : "Add Expense"}

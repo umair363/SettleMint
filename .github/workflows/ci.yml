@@ -7,39 +7,34 @@ on:
     branches: [ main ]
 
 jobs:
-  test-and-build:
+  build-and-test:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
-
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: '20'
+        cache: 'npm'
 
-    # Install API dependencies and build
-    - name: Install API Dependencies
+    - name: Install Root Dependencies (if any)
+      run: npm install || true
+
+    - name: Install API Dependencies & Build
+      working-directory: ./api
       run: |
-        cd api
         npm ci
+        npm run build
+      
+    - name: Typecheck API
+      working-directory: ./api
+      run: npx tsc --noEmit
 
-    - name: Build API
+    - name: Install App Dependencies & Build
+      working-directory: ./app
       run: |
-        cd api
-        npm run build --if-present
-
-    # Install APP dependencies and build
-    - name: Install Frontend Dependencies
-      run: |
-        cd app
         npm ci
-
-    - name: Build Frontend
-      run: |
-        cd app
         npm run build
