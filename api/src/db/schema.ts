@@ -38,7 +38,7 @@ export const groupMembers = pgTable("group_members", {
 // --- Expenses ---
 export const expenses = pgTable("expenses", {
   id: uuid("id").primaryKey().defaultRandom(),
-  groupId: uuid("group_id").references(() => groups.id, { onDelete: "cascade" }).notNull(),
+  groupId: uuid("group_id").references(() => groups.id, { onDelete: "cascade" }),
   description: text("description").notNull(),
   amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
   currency: varchar("currency", { length: 3 }).default("USD").notNull(),
