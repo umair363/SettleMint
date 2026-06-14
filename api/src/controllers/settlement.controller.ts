@@ -42,12 +42,11 @@ export const createSettlement = async (request: AuthenticatedRequest, reply: Fas
     }
 
     const [newSettlement] = await db.insert(settlements).values({
-      groupId,
+      groupId: groupId || null,
       paidBy: userId,
       paidTo,
       amount: amount.toString(),
       method: method || "cash",
-      status: "completed",
       notes: notes || null,
     }).returning();
 
