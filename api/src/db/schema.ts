@@ -9,6 +9,9 @@ export const users = pgTable("users", {
   fullName: varchar("full_name", { length: 255 }).notNull(),
   avatarUrl: text("avatar_url"),
   defaultCurrency: varchar("default_currency", { length: 3 }).default("USD").notNull(),
+  isVerified: boolean("is_verified").default(false).notNull(),
+  otpCode: varchar("otp_code", { length: 6 }),
+  otpExpiresAt: timestamp("otp_expires_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

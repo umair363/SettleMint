@@ -60,6 +60,27 @@ export const sendWelcomeEmail = async (email: string, fullName: string) => {
   return sendEmail(email, "Welcome to SettleMint!", welcomeHtml);
 };
 
+export const sendOTPEmail = async (email: string, fullName: string, otp: string) => {
+  const otpHtml = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 2rem; color: #1e293b;">
+      <h1 style="color: #3DD68C; font-size: 24px; font-weight: 700; margin-bottom: 1rem;">Verify your email</h1>
+      <p style="font-size: 16px; line-height: 1.6; color: #475569;">
+        Hi ${fullName},
+      </p>
+      <p style="font-size: 16px; line-height: 1.6; color: #475569;">
+        Use the following one-time password (OTP) to verify your SettleMint account. This code expires in 15 minutes.
+      </p>
+      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #0f1219;">
+        ${otp}
+      </div>
+      <p style="font-size: 14px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 1.5rem; margin-top: 2rem;">
+        The SettleMint Team &middot; Built with care.
+      </p>
+    </div>
+  `;
+  return sendEmail(email, "Your SettleMint Verification Code", otpHtml);
+};
+
 export const sendExpenseAlertEmail = async (to: string, userName: string, payerName: string, description: string, amount: string, currency: string) => {
   const symbol = currency === "USD" ? "$" : currency === "PKR" ? "Rs" : currency;
   const alertHtml = `

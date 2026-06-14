@@ -54,16 +54,20 @@ export default function SignupPage() {
         throw new Error(data.error || "Registration failed");
       }
 
-      localStorage.setItem(
-        "settlemint_session",
-        JSON.stringify({
-          user: data.user,
-          token: data.token,
-          expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
-        })
-      );
+      if (data.requireVerification) {
+        router.push(`/verify?email=${encodeURIComponent(data.email || email)}`);
+      } else {
+        localStorage.setItem(
+          "settlemint_session",
+          JSON.stringify({
+            user: data.user,
+            token: data.token,
+            expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+          })
+        );
 
-      router.push("/dashboard");
+        router.push("/dashboard");
+      }
     } catch (err: any) {
       setError(err.message || "Something went wrong. Please try again.");
     } finally {
