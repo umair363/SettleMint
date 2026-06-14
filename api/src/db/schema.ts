@@ -109,3 +109,33 @@ export const settlementsRelations = relations(settlements, ({ one }) => ({
   payer: one(users, { fields: [settlements.paidBy], references: [users.id] }),
   receiver: one(users, { fields: [settlements.paidTo], references: [users.id] }),
 }));
+
+// --- Friendships ---
+export const friendships = pgTable("friendships", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  user1Id: uuid("user1_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  user2Id: uuid("user2_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  status: varchar("status", { length: 50 }).default("accepted").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// --- Activity Logs ---
+export const activityLogs = pgTable("activity_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  groupId: uuid("group_id").references(() => groups.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  action: varchar("action", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// --- Notifications ---
+export const notifications = pgTable("notifications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  type: varchar("type", { length: 50 }).notNull(),
+  isRead: boolean("is_read").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});

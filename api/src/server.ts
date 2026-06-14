@@ -24,8 +24,11 @@ server.register(cors, {
 import authRoutes from "./routes/auth.routes";
 import groupRoutes from "./routes/group.routes";
 import expenseRoutes from "./routes/expense.routes";
-import userRoutes from "./routes/user.routes";
 import settlementRoutes from "./routes/settlement.routes";
+import userRoutes from "./routes/user.routes";
+import friendshipRoutes from "./routes/friendship.routes";
+import activityRoutes from "./routes/activity.routes";
+import notificationRoutes from "./routes/notification.routes";
 
 // Health check route
 server.get("/health", async (request, reply) => {
@@ -36,8 +39,11 @@ server.get("/health", async (request, reply) => {
 server.register(authRoutes, { prefix: "/api/auth" });
 server.register(groupRoutes, { prefix: "/api/groups" });
 server.register(expenseRoutes, { prefix: "/api/expenses" });
-server.register(userRoutes, { prefix: "/api/users" });
 server.register(settlementRoutes, { prefix: "/api/settlements" });
+server.register(userRoutes, { prefix: "/api/users" });
+server.register(friendshipRoutes, { prefix: "/api/friends" });
+server.register(activityRoutes, { prefix: "/api/activity" });
+server.register(notificationRoutes, { prefix: "/api/notifications" });
 
 // Main async start function
 const start = async () => {
