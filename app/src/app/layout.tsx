@@ -22,6 +22,12 @@ export const metadata: Metadata = {
     locale: "en_US",
     siteName: "SettleMint",
   },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "SettleMint",
+  },
 };
 
 import { Providers } from "./providers";
@@ -32,8 +38,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <Providers>
           {children}
         </Providers>

@@ -143,6 +143,18 @@ export default function DashboardLayout({
       ),
     },
     {
+      href: "/dashboard/friends",
+      label: "Friends",
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <circle cx="9" cy="8" r="4" stroke="currentColor" strokeWidth="1.5" />
+          <path d="M15 8A4 4 0 1111 8" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 2" />
+          <path d="M1 20C1 16.5 4.5 14 9 14C11.5 14 13.5 14.8 15 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          <path d="M23 20C23 17 20 15 17 14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="2 2" />
+        </svg>
+      ),
+    },
+    {
       href: "/dashboard/activity",
       label: "Activity",
       icon: (
@@ -281,7 +293,7 @@ export default function DashboardLayout({
           </button>
 
           <div className={styles.topbarRight}>
-            <button className={styles.iconBtn} aria-label="Notifications" id="topbar-notifications">
+            <Link href="/dashboard/notifications" className={styles.iconBtn} aria-label="Notifications" id="topbar-notifications">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path
                   d="M18 8A6 6 0 006 8C6 15 3 17 3 17H21S18 15 18 8Z"
@@ -298,7 +310,7 @@ export default function DashboardLayout({
                 />
               </svg>
               <span className={styles.notifDot} />
-            </button>
+            </Link>
 
             <Link href="/dashboard/new-expense" className={`btn btn-primary ${styles.addBtn}`} id="topbar-add-expense">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

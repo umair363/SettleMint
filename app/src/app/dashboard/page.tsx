@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import styles from "./page.module.css";
-
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import Skeleton from "@/components/Skeleton";
+import styles from "./page.module.css";
 
 interface Group {
   id: string;
@@ -174,7 +175,11 @@ export default function DashboardHome() {
           </div>
           <div className={styles.expenseList}>
             {expensesLoading ? (
-              <div className="text-secondary">Loading activity...</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <Skeleton height="60px" borderRadius="12px" />
+                <Skeleton height="60px" borderRadius="12px" />
+                <Skeleton height="60px" borderRadius="12px" />
+              </div>
             ) : expenses.length === 0 ? (
               <div className="text-secondary" style={{ padding: '1rem', border: '1px dashed var(--border-default)', borderRadius: '12px', textAlign: 'center' }}>
                 No recent activity.
