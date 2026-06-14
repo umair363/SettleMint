@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Skeleton from "@/components/Skeleton";
 import styles from "./expenses.module.css";
+import { getCurrencySymbol, convertCurrency } from "@/utils/currency";
 
 export default function ExpensesPage() {
   const [search, setSearch] = useState("");
@@ -21,14 +22,6 @@ export default function ExpensesPage() {
     }
   }, []);
 
-  const getCurrencySymbol = (code: string) => {
-    const symbols: Record<string, string> = {
-      USD: "$", EUR: "€", GBP: "£", PKR: "Rs", INR: "₹",
-      CAD: "$", AUD: "$", AED: "د.إ", SAR: "﷼", THB: "฿",
-      SGD: "$", JPY: "¥", CNY: "¥", CHF: "Fr"
-    };
-    return symbols[code] || "$";
-  };
   const sym = getCurrencySymbol(defaultCurrency);
 
   const { data: expensesData, isLoading } = useQuery({
@@ -50,7 +43,10 @@ export default function ExpensesPage() {
     return matchSearch;
   });
 
-  const totalSpent = filtered.reduce((sum: number, e: any) => sum + parseFloat(e.amount), 0);
+  const totalSpent = filtered.reduce((sum: number, e: any) => {
+    const amountInDefault = convertCurrency(parseFloat(e.amount), e.currency || "USD", defaultCurrency);
+    return sum + amountInDefault;
+  }, 0);
 
   return (
     <div className={styles.page}>
@@ -58,7 +54,7 @@ export default function ExpensesPage() {
         <div>
           <h1 className={styles.title}>Expenses</h1>
           <p className={styles.subtitle}>
-            {filtered.length} expenses &middot; {sym}{totalSpent.toFixed(2)} total
+            {filtered.length} expenses &middot; {sym}{totalSpent.toFixed(2)} total (converted to {defaultCurrency})
           </p>
         </div>
       </div>
@@ -110,39 +106,49 @@ export default function ExpensesPage() {
         ) : filtered.length === 0 ? (
           <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>No expenses found.</div>
         ) : (
-          filtered.map((exp: any) => (
-            <div key={exp.id} className={styles.tableRow}>
-              <div className={styles.colMain}>
-                <div
-                  className={styles.catDot}
-                  style={{ background: "#5B8DEF" }}
-                />
-                <div className={styles.expInfo}>
-                  <span className={styles.expDesc}>{exp.description}</span>
-                  <span className={styles.expPayer}>Paid by {exp.payerName}</span>
+          filtered.map((exp: any) => {
+            const amountInDefault = convertCurrency(parseFloat(exp.amount), exp.currency || "USD", defaultCurrency);
+            return (
+              <div key={exp.id} className={styles.tableRow}>
+                <div className={styles.colMain}>
+                  <div
+                    className={styles.catDot}
+                    style={{ background: "#5B8DEF" }}
+                  />
+                  <div className={styles.expInfo}>
+                    <span className={styles.expDesc}>{exp.description}</span>
+                    <span className={styles.expPayer}>Paid by {exp.payerName}</span>
+                  </div>
+                </div>
+                <div className={styles.colGroup}>
+                  <span
+                    className={styles.groupTag}
+                    style={{ borderColor: `#5B8DEF40`, color: "#5B8DEF" }}
+                  >
+                    {exp.category || "General"}
+                  </span>
+                </div>
+                <div className={styles.colSplit}>
+                  <span className={styles.splitType}>Equal</span>
+                </div>
+                <div className={styles.colDate}>
+                  <span className={styles.dateText}>{new Date(exp.date).toLocaleDateString()}</span>
+                </div>
+                <div className={styles.colAmount}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                    <span className={styles.amountText}>
+                      {getCurrencySymbol(exp.currency)}{parseFloat(exp.amount).toFixed(2)}
+                    </span>
+                    {exp.currency !== defaultCurrency && (
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        ({sym}{amountInDefault.toFixed(2)})
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-              <div className={styles.colGroup}>
-                <span
-                  className={styles.groupTag}
-                  style={{ borderColor: `#5B8DEF40`, color: "#5B8DEF" }}
-                >
-                  {exp.category || "General"}
-                </span>
-              </div>
-              <div className={styles.colSplit}>
-                <span className={styles.splitType}>Equal</span>
-              </div>
-              <div className={styles.colDate}>
-                <span className={styles.dateText}>{new Date(exp.date).toLocaleDateString()}</span>
-              </div>
-              <div className={styles.colAmount}>
-                <span className={styles.amountText}>
-                  {getCurrencySymbol(exp.currency)}{parseFloat(exp.amount).toFixed(2)}
-                </span>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

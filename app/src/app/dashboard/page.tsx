@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import Skeleton from "@/components/Skeleton";
 import styles from "./page.module.css";
+import { getCurrencySymbol, convertCurrency } from "@/utils/currency";
 
 interface Group {
   id: string;
@@ -17,18 +17,19 @@ interface Group {
   role: string;
 }
 
-const mockExpenses = [];
-
 export default function DashboardHome() {
   const [userName, setUserName] = useState("");
+  const [userId, setUserId] = useState("");
   const [token, setToken] = useState("");
   const [defaultCurrency, setDefaultCurrency] = useState("USD");
+
   useEffect(() => {
     const loadSession = () => {
       const session = localStorage.getItem("settlemint_session");
       if (session) {
         const parsed = JSON.parse(session);
         setUserName(parsed.user.name || parsed.user.fullName || "");
+        setUserId(parsed.user.id || "");
         setDefaultCurrency(parsed.user.defaultCurrency || "USD");
         setToken(parsed.token);
       }
@@ -42,14 +43,6 @@ export default function DashboardHome() {
     };
   }, []);
 
-  const getCurrencySymbol = (code: string) => {
-    const symbols: Record<string, string> = {
-      USD: "$", EUR: "€", GBP: "£", PKR: "Rs", INR: "₹",
-      CAD: "$", AUD: "$", AED: "د.إ", SAR: "﷼", THB: "฿",
-      SGD: "$", JPY: "¥", CNY: "¥", CHF: "Fr"
-    };
-    return symbols[code] || "$";
-  };
   const sym = getCurrencySymbol(defaultCurrency);
 
   const { data: groupsData, isLoading } = useQuery({
@@ -79,9 +72,27 @@ export default function DashboardHome() {
   const groups: Group[] = groupsData?.groups || [];
   const expenses = expensesData?.expenses || [];
 
-  const totalOwed = 0; // Will be calculated when we pull balances
-  const totalOwe = 0;
-  const netBalance = 0;
+  // Calculate real balances converted to default currency
+  let totalOwed = 0;
+  let totalOwe = 0;
+
+  expenses.forEach((exp: any) => {
+    const amt = parseFloat(exp.amount);
+    const amtInDefault = convertCurrency(amt, exp.currency || "USD", defaultCurrency);
+    
+    // Assume 50% split for mock calculation
+    const share = amtInDefault * 0.5;
+
+    if (exp.paidBy === userId) {
+      // User paid, so they are owed the other share
+      totalOwed += share;
+    } else {
+      // Someone else paid, so user owes them their share
+      totalOwe += share;
+    }
+  });
+
+  const netBalance = totalOwed - totalOwe;
 
   return (
     <div className={styles.page}>
@@ -143,18 +154,18 @@ export default function DashboardHome() {
                 >
                   <div
                     className={styles.groupIcon}
-                    style={{ background: `${group.color}20`, color: group.color }}
+                    style={{ background: `${group.color || '#5B8DEF'}20`, color: group.color || '#5B8DEF' }}
                   >
                     {group.emoji || group.name[0]}
                   </div>
                   <div className={styles.groupInfo}>
                     <span className={styles.groupName}>{group.name}</span>
                     <span className={styles.groupMeta}>
-                      {group.mode} &middot; {group.role}
+                      {group.mode || "Group"} &middot; {group.role}
                     </span>
                   </div>
                   <span className={`${styles.groupBalance} ${styles.neutral}`}>
-                    $0.00
+                    {getCurrencySymbol(group.baseCurrency || "USD")}0.00
                   </span>
                 </Link>
               ))
@@ -193,25 +204,35 @@ export default function DashboardHome() {
                 No recent activity.
               </div>
             ) : (
-              expenses.slice(0, 5).map((exp: any) => (
-                <div key={exp.id} className={styles.expenseRow}>
-                  <div
-                    className={styles.expenseCat}
-                    style={{ background: `rgba(91, 141, 239, 0.15)`, color: "#5B8DEF" }}
-                  >
-                    📝
+              expenses.slice(0, 5).map((exp: any) => {
+                const convertedAmt = convertCurrency(parseFloat(exp.amount), exp.currency || "USD", defaultCurrency);
+                return (
+                  <div key={exp.id} className={styles.expenseRow}>
+                    <div
+                      className={styles.expenseCat}
+                      style={{ background: `rgba(91, 141, 239, 0.15)`, color: "#5B8DEF" }}
+                    >
+                      📝
+                    </div>
+                    <div className={styles.expenseInfo}>
+                      <span className={styles.expenseDesc}>{exp.description}</span>
+                      <span className={styles.expenseMeta}>
+                        {exp.payerName} &middot; {new Date(exp.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                      <span className={styles.expenseAmount}>
+                        {getCurrencySymbol(exp.currency)}{parseFloat(exp.amount).toFixed(2)}
+                      </span>
+                      {exp.currency !== defaultCurrency && (
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                          ({sym}{convertedAmt.toFixed(2)})
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className={styles.expenseInfo}>
-                    <span className={styles.expenseDesc}>{exp.description}</span>
-                    <span className={styles.expenseMeta}>
-                      {exp.payerName} &middot; {new Date(exp.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </span>
-                  </div>
-                  <span className={styles.expenseAmount}>
-                    {getCurrencySymbol(exp.currency)}{parseFloat(exp.amount).toFixed(2)}
-                  </span>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
