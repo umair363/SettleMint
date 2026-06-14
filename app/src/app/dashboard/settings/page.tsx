@@ -9,6 +9,12 @@ export default function SettingsPage() {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [defaultCurrency, setDefaultCurrency] = useState("USD");
   const [token, setToken] = useState("");
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   useEffect(() => {
     const session = localStorage.getItem("settlemint_session");
@@ -50,10 +56,10 @@ export default function SettingsPage() {
         localStorage.setItem("settlemint_session", JSON.stringify(session));
         window.dispatchEvent(new Event("user-profile-updated"));
       }
-      alert("Profile updated successfully!");
+      showToast("Profile updated successfully!");
     },
     onError: (err: any) => {
-      alert(err.message);
+      showToast(err.message, "error");
     }
   });
 
@@ -127,6 +133,26 @@ export default function SettingsPage() {
           </button>
         </form>
       </div>
+
+      {toast && (
+        <div className={`${styles.toast} ${toast.type === "error" ? styles.toastError : ""}`}>
+          <span className={`${styles.toastIcon} ${toast.type === "error" ? styles.toastIconError : ""}`}>
+            {toast.type === "success" ? (
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M6 10L9 13L14 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M10 6V11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <circle cx="10" cy="14" r="1" fill="currentColor" />
+              </svg>
+            )}
+          </span>
+          <span>{toast.message}</span>
+        </div>
+      )}
     </div>
   );
 }

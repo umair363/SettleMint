@@ -1,4 +1,5 @@
 import styles from "./Footer.module.css";
+import Link from "next/link";
 
 export default function Footer() {
   return (
@@ -45,8 +46,8 @@ export default function Footer() {
             </div>
             <div className={styles.linkGroup}>
               <h4 className={styles.groupTitle}>Legal</h4>
-              <a href="#" className={styles.footerLink}>Privacy</a>
-              <a href="#" className={styles.footerLink}>Terms</a>
+              <Link href="/privacy" className={styles.footerLink}>Privacy</Link>
+              <Link href="/terms" className={styles.footerLink}>Terms</Link>
               <a href="#" className={styles.footerLink}>Security</a>
             </div>
           </div>

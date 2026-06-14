@@ -23,7 +23,7 @@ export default function DashboardHome() {
   const [userName, setUserName] = useState("");
   const [token, setToken] = useState("");
   const [defaultCurrency, setDefaultCurrency] = useState("USD");
-
+  useEffect(() => {
     const loadSession = () => {
       const session = localStorage.getItem("settlemint_session");
       if (session) {
