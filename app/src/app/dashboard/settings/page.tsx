@@ -99,9 +99,20 @@ export default function SettingsPage() {
               value={defaultCurrency}
               onChange={(e) => setDefaultCurrency(e.target.value)}
             >
-              <option value="USD">USD ($)</option>
-              <option value="EUR">EUR (€)</option>
-              <option value="GBP">GBP (£)</option>
+              <option value="USD">USD ($) - US Dollar</option>
+              <option value="EUR">EUR (€) - Euro</option>
+              <option value="GBP">GBP (£) - British Pound</option>
+              <option value="PKR">PKR (Rs) - Pakistani Rupee</option>
+              <option value="INR">INR (₹) - Indian Rupee</option>
+              <option value="CAD">CAD ($) - Canadian Dollar</option>
+              <option value="AUD">AUD ($) - Australian Dollar</option>
+              <option value="AED">AED (د.إ) - UAE Dirham</option>
+              <option value="SAR">SAR (﷼) - Saudi Riyal</option>
+              <option value="THB">THB (฿) - Thai Baht</option>
+              <option value="SGD">SGD ($) - Singapore Dollar</option>
+              <option value="JPY">JPY (¥) - Japanese Yen</option>
+              <option value="CNY">CNY (¥) - Chinese Yuan</option>
+              <option value="CHF">CHF (Fr) - Swiss Franc</option>
             </select>
           </div>
 
