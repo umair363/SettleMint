@@ -21,15 +21,27 @@ const mockExpenses = [];
 export default function DashboardHome() {
   const [userName, setUserName] = useState("");
   const [token, setToken] = useState("");
+  const [defaultCurrency, setDefaultCurrency] = useState("USD");
 
   useEffect(() => {
     const session = localStorage.getItem("settlemint_session");
     if (session) {
       const parsed = JSON.parse(session);
       setUserName(parsed.user.name || parsed.user.fullName || "");
+      setDefaultCurrency(parsed.user.defaultCurrency || "USD");
       setToken(parsed.token);
     }
   }, []);
+
+  const getCurrencySymbol = (code: string) => {
+    const symbols: Record<string, string> = {
+      USD: "$", EUR: "€", GBP: "£", PKR: "Rs", INR: "₹",
+      CAD: "$", AUD: "$", AED: "د.إ", SAR: "﷼", THB: "฿",
+      SGD: "$", JPY: "¥", CNY: "¥", CHF: "Fr"
+    };
+    return symbols[code] || "$";
+  };
+  const sym = getCurrencySymbol(defaultCurrency);
 
   const { data: groupsData, isLoading } = useQuery({
     queryKey: ["groups"],
@@ -78,20 +90,20 @@ export default function DashboardHome() {
         <div className={`${styles.balanceCard} ${styles.balanceNet}`}>
           <span className={styles.balanceLabel}>Net Balance</span>
           <span className={`${styles.balanceValue} ${netBalance >= 0 ? styles.positive : styles.negative}`}>
-            {netBalance >= 0 ? "+" : "-"}${Math.abs(netBalance).toFixed(2)}
+            {netBalance >= 0 ? "+" : "-"}{sym}{Math.abs(netBalance).toFixed(2)}
           </span>
           <span className={styles.balanceSub}>Across {groups.length} groups</span>
         </div>
         <div className={styles.balanceCard}>
           <span className={styles.balanceLabel}>You are owed</span>
           <span className={`${styles.balanceValue} ${styles.positive}`}>
-            +${totalOwed.toFixed(2)}
+            {sym}{totalOwed.toFixed(2)}
           </span>
         </div>
         <div className={styles.balanceCard}>
           <span className={styles.balanceLabel}>You owe</span>
           <span className={`${styles.balanceValue} ${styles.negative}`}>
-            -${totalOwe.toFixed(2)}
+            {sym}{totalOwe.toFixed(2)}
           </span>
         </div>
       </div>
@@ -183,7 +195,7 @@ export default function DashboardHome() {
                     </span>
                   </div>
                   <span className={styles.expenseAmount}>
-                    ${parseFloat(exp.amount).toFixed(2)}
+                    {getCurrencySymbol(exp.currency)}{parseFloat(exp.amount).toFixed(2)}
                   </span>
                 </div>
               ))

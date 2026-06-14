@@ -9,14 +9,26 @@ export default function ExpensesPage() {
   const [filterGroup, setFilterGroup] = useState("all");
 
   const [token, setToken] = useState("");
+  const [defaultCurrency, setDefaultCurrency] = useState("USD");
 
   useEffect(() => {
     const session = localStorage.getItem("settlemint_session");
     if (session) {
       const parsed = JSON.parse(session);
       setToken(parsed.token);
+      setDefaultCurrency(parsed.user.defaultCurrency || "USD");
     }
   }, []);
+
+  const getCurrencySymbol = (code: string) => {
+    const symbols: Record<string, string> = {
+      USD: "$", EUR: "€", GBP: "£", PKR: "Rs", INR: "₹",
+      CAD: "$", AUD: "$", AED: "د.إ", SAR: "﷼", THB: "฿",
+      SGD: "$", JPY: "¥", CNY: "¥", CHF: "Fr"
+    };
+    return symbols[code] || "$";
+  };
+  const sym = getCurrencySymbol(defaultCurrency);
 
   const { data: expensesData, isLoading } = useQuery({
     queryKey: ["all_expenses"],
@@ -45,7 +57,7 @@ export default function ExpensesPage() {
         <div>
           <h1 className={styles.title}>Expenses</h1>
           <p className={styles.subtitle}>
-            {filtered.length} expenses &middot; ${totalSpent.toFixed(2)} total
+            {filtered.length} expenses &middot; {sym}{totalSpent.toFixed(2)} total
           </p>
         </div>
       </div>
@@ -119,7 +131,7 @@ export default function ExpensesPage() {
               </div>
               <div className={styles.colAmount}>
                 <span className={styles.amountText}>
-                  ${parseFloat(exp.amount).toFixed(2)}
+                  {getCurrencySymbol(exp.currency)}{parseFloat(exp.amount).toFixed(2)}
                 </span>
               </div>
             </div>
