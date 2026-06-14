@@ -49,10 +49,10 @@ export default function Navbar() {
         </div>
 
         <div className={styles.actions}>
-          <a href="#" className={styles.loginBtn} id="nav-login">
+          <a href="/login" className={styles.loginBtn} id="nav-login">
             Log In
           </a>
-          <a href="#" className="btn btn-primary" id="nav-cta">
+          <a href="/signup" className="btn btn-primary" id="nav-cta">
             Get Started Free
           </a>
         </div>
@@ -100,7 +100,7 @@ export default function Navbar() {
             Modes
           </a>
           <div className={styles.mobileCta}>
-            <a href="#" className="btn btn-primary btn-lg" style={{ width: "100%" }}>
+            <a href="/signup" className="btn btn-primary btn-lg" style={{ width: "100%" }}>
               Get Started Free
             </a>
           </div>

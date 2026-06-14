@@ -42,7 +42,7 @@ export default function Hero() {
           </p>
 
           <div className={`${styles.ctas} animate-fade-up stagger-4`}>
-            <a href="#" className="btn btn-primary btn-lg" id="hero-cta-primary">
+            <a href="/signup" className="btn btn-primary btn-lg" id="hero-cta-primary">
               Start Splitting Free
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path

@@ -1,0 +1,312 @@
+/* Dashboard Home Page */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xl);
+}
+
+/* Greeting */
+.greeting {
+  padding-bottom: var(--space-md);
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.subtitle {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+}
+
+/* Balance Cards */
+.balanceCards {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: var(--space-md);
+}
+
+.balanceCard {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.balanceNet {
+  border-color: var(--border-accent);
+  background: rgba(61, 214, 140, 0.03);
+}
+
+.balanceLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.balanceValue {
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  letter-spacing: -0.02em;
+}
+
+.positive {
+  color: var(--mint-400);
+}
+
+.negative {
+  color: #ff6b6b;
+}
+
+.balanceSub {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+/* Two column layout */
+.twoCol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-xl);
+}
+
+/* Section */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.seeAll {
+  font-size: 0.8125rem;
+  color: var(--mint-400);
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 200ms;
+}
+
+.seeAll:hover {
+  opacity: 0.8;
+}
+
+/* Group List */
+.groupList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.groupCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: background 200ms var(--ease-out);
+}
+
+.groupCard:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.groupIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--slate-950);
+  flex-shrink: 0;
+}
+
+.groupInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.groupName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.groupMeta {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.groupBalance {
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+.newGroupBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border-default);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: border-color 200ms, color 200ms, background 200ms;
+  margin-top: var(--space-xs);
+}
+
+.newGroupBtn:hover {
+  border-color: var(--mint-400);
+  color: var(--mint-400);
+  background: rgba(61, 214, 140, 0.04);
+}
+
+/* Expense List */
+.expenseList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.expenseRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  transition: background 200ms;
+}
+
+.expenseRow:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.expenseCat {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.expenseInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.expenseDesc {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.expenseMeta {
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+}
+
+.expenseAmount {
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+/* Quick Actions */
+.quickActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.actionGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
+}
+
+.actionCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-xl);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  text-decoration: none;
+  transition: border-color 200ms var(--ease-out), transform 200ms var(--ease-out);
+}
+
+.actionCard:hover {
+  border-color: var(--border-default);
+  transform: translateY(-2px);
+}
+
+.actionIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.actionLabel {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .balanceCards {
+    grid-template-columns: 1fr;
+  }
+
+  .twoCol {
+    grid-template-columns: 1fr;
+  }
+
+  .actionGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

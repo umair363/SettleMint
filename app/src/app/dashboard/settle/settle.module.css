@@ -1,0 +1,282 @@
+.settlePage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xl);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xl);
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin-top: var(--space-xs);
+}
+
+.backBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  transition: all 200ms var(--ease-out);
+}
+
+.backBtn:hover {
+  background: var(--surface-card);
+  color: var(--text-primary);
+  transform: translateX(-2px);
+}
+
+.formCard {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  padding: var(--space-2xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+/* User Selection Row */
+.partySelection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding-bottom: var(--space-xl);
+  border-bottom: 1px dashed var(--border-subtle);
+}
+
+.partyBox {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.partyLabel {
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.userSelect {
+  width: 100%;
+  appearance: none;
+  background: var(--slate-900);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-align-last: center;
+  cursor: pointer;
+  transition: all 200ms var(--ease-out);
+}
+
+.userSelect:hover, .userSelect:focus {
+  border-color: var(--border-accent);
+  background: rgba(61, 214, 140, 0.05);
+  outline: none;
+}
+
+.directionIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: rgba(61, 214, 140, 0.1);
+  color: var(--mint-400);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: transform 300ms var(--ease-out);
+}
+
+.directionIcon:hover {
+  transform: scale(1.1);
+}
+
+/* Amount Input */
+.amountSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.amountInputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.currency {
+  position: absolute;
+  left: 0;
+  font-size: 3.5rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.amountInput {
+  background: transparent;
+  border: none;
+  font-size: 4.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  width: 280px;
+  text-align: center;
+  outline: none;
+  padding: 0 2rem;
+  font-variant-numeric: tabular-nums;
+  transition: color 200ms;
+}
+
+.amountInput:focus {
+  color: var(--mint-400);
+}
+
+.amountInput::placeholder {
+  color: var(--slate-800);
+}
+
+.amountSuggestion {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.suggestBtn {
+  color: var(--mint-400);
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background: rgba(61, 214, 140, 0.1);
+  transition: background 200ms;
+}
+
+.suggestBtn:hover {
+  background: rgba(61, 214, 140, 0.2);
+}
+
+/* Method Selection */
+.methodSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.methodLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.methodGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
+}
+
+.methodBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  background: var(--surface-card);
+  color: var(--text-secondary);
+  transition: all 200ms var(--ease-out);
+}
+
+.methodBtn:hover {
+  border-color: var(--text-tertiary);
+  color: var(--text-primary);
+}
+
+.methodBtn.active {
+  border-color: var(--mint-400);
+  background: rgba(61, 214, 140, 0.08);
+  color: var(--mint-400);
+}
+
+/* Notes */
+.noteInput {
+  width: 100%;
+  background: var(--slate-900);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  resize: none;
+  outline: none;
+  transition: border-color 200ms;
+}
+
+.noteInput:focus {
+  border-color: var(--border-accent);
+}
+
+.noteInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+.submitBtn {
+  margin-top: var(--space-md);
+  width: 100%;
+  padding-block: 1rem;
+}
+
+@media (max-width: 640px) {
+  .formCard {
+    padding: var(--space-lg);
+  }
+  
+  .partySelection {
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+  
+  .directionIcon {
+    transform: rotate(90deg);
+  }
+  
+  .directionIcon:hover {
+    transform: rotate(90deg) scale(1.1);
+  }
+  
+  .methodGrid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,214 @@
+/* Expenses Page */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.subtitle {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+}
+
+/* Filters */
+.filters {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+}
+
+.searchWrap {
+  position: relative;
+  flex: 1;
+  max-width: 320px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.625rem 0.75rem 0.625rem 38px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 200ms, box-shadow 200ms;
+}
+
+.searchInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+.searchInput:focus {
+  border-color: var(--mint-400);
+  box-shadow: 0 0 0 3px rgba(61, 214, 140, 0.1);
+}
+
+.filterSelect {
+  padding: 0.625rem 1rem;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.filterSelect option {
+  background: var(--slate-800);
+}
+
+/* Table */
+.table {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.tableHeader {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 0.8fr 0.8fr;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-xl);
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 0.8fr 0.8fr;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-xl);
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background 150ms;
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.tableRow:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.colMain {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.catDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.expInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.expDesc {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.expPayer {
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+}
+
+.groupTag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  border: 1px solid;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.splitType {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.dateText {
+  font-size: 0.8125rem;
+  color: var(--text-tertiary);
+}
+
+.amountText {
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
+.colAmount {
+  text-align: right;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchWrap {
+    max-width: 100%;
+  }
+
+  .tableHeader {
+    display: none;
+  }
+
+  .tableRow {
+    grid-template-columns: 1fr auto;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+  }
+
+  .colGroup, .colSplit, .colDate {
+    display: none;
+  }
+}
