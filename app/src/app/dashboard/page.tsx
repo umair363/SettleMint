@@ -16,10 +16,7 @@ interface Group {
   role: string;
 }
 
-const mockExpenses = [
-  { id: "e1", description: "Airport Taxi", amount: 45.00, paidBy: "You", groupName: "SE Asia Trip", time: "2h ago", category: "Transport", categoryColor: "#5B8DEF" },
-  { id: "e2", description: "Groceries (Aldi)", amount: 87.30, paidBy: "Hamza", groupName: "Apartment 4B", time: "5h ago", category: "Food", categoryColor: "#FF6B6B" },
-];
+const mockExpenses = [];
 
 export default function DashboardHome() {
   const [userName, setUserName] = useState("");
@@ -46,7 +43,20 @@ export default function DashboardHome() {
     enabled: !!token,
   });
 
+  const { data: expensesData, isLoading: expensesLoading } = useQuery({
+    queryKey: ["recent_expenses"],
+    queryFn: async () => {
+      const res = await fetch("http://localhost:8000/api/expenses/me", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to fetch expenses");
+      return res.json();
+    },
+    enabled: !!token,
+  });
+
   const groups: Group[] = groupsData?.groups || [];
+  const expenses = expensesData?.expenses || [];
 
   const totalOwed = 0; // Will be calculated when we pull balances
   const totalOwe = 0;
@@ -151,25 +161,33 @@ export default function DashboardHome() {
             </Link>
           </div>
           <div className={styles.expenseList}>
-            {mockExpenses.map((exp) => (
-              <div key={exp.id} className={styles.expenseRow}>
-                <div
-                  className={styles.expenseCat}
-                  style={{ background: `${exp.categoryColor}15`, color: exp.categoryColor }}
-                >
-                  {exp.category[0]}
-                </div>
-                <div className={styles.expenseInfo}>
-                  <span className={styles.expenseDesc}>{exp.description}</span>
-                  <span className={styles.expenseMeta}>
-                    {exp.paidBy} &middot; {exp.groupName} &middot; {exp.time}
+            {expensesLoading ? (
+              <div className="text-secondary">Loading activity...</div>
+            ) : expenses.length === 0 ? (
+              <div className="text-secondary" style={{ padding: '1rem', border: '1px dashed var(--border-default)', borderRadius: '12px', textAlign: 'center' }}>
+                No recent activity.
+              </div>
+            ) : (
+              expenses.slice(0, 5).map((exp: any) => (
+                <div key={exp.id} className={styles.expenseRow}>
+                  <div
+                    className={styles.expenseCat}
+                    style={{ background: `rgba(91, 141, 239, 0.15)`, color: "#5B8DEF" }}
+                  >
+                    📝
+                  </div>
+                  <div className={styles.expenseInfo}>
+                    <span className={styles.expenseDesc}>{exp.description}</span>
+                    <span className={styles.expenseMeta}>
+                      {exp.payerName} &middot; {new Date(exp.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                  <span className={styles.expenseAmount}>
+                    ${parseFloat(exp.amount).toFixed(2)}
                   </span>
                 </div>
-                <span className={styles.expenseAmount}>
-                  ${exp.amount.toFixed(2)}
-                </span>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>

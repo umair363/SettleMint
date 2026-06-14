@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { db } from "../db";
 import { expenses, expenseSplits, groupMembers, users } from "../db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or } from "drizzle-orm";
 
 interface AuthenticatedRequest extends FastifyRequest {
   user?: {
@@ -10,6 +10,41 @@ interface AuthenticatedRequest extends FastifyRequest {
     fullName: string;
   };
 }
+
+// GET /api/expenses/me - Get all expenses for the user across all groups
+export const getMyExpenses = async (request: AuthenticatedRequest, reply: FastifyReply) => {
+  try {
+    const userId = request.user?.id;
+    if (!userId) return reply.code(401).send({ error: "Unauthorized" });
+
+    // Join expenses with expenseSplits to find expenses involving the user
+    // We can also just get expenses where the user is in the group.
+    // For simplicity, let's get all expenses where the user is a part of the split OR paid for it.
+    
+    // We'll fetch expenses where the user is involved
+    const userExpenses = await db
+      .select({
+        id: expenses.id,
+        description: expenses.description,
+        amount: expenses.amount,
+        currency: expenses.currency,
+        date: expenses.date,
+        category: expenses.category,
+        paidBy: expenses.paidBy,
+        payerName: users.fullName,
+      })
+      .from(expenses)
+      .innerJoin(users, eq(expenses.paidBy, users.id))
+      .leftJoin(expenseSplits, eq(expenses.id, expenseSplits.expenseId))
+      .where(or(eq(expenses.paidBy, userId), eq(expenseSplits.userId, userId)))
+      .groupBy(expenses.id, users.fullName);
+
+    return reply.code(200).send({ expenses: userExpenses });
+  } catch (error) {
+    request.log.error(error);
+    return reply.code(500).send({ error: "Internal Server Error" });
+  }
+};
 
 // GET /api/expenses/group/:groupId - Get expenses for a specific group
 export const getGroupExpenses = async (request: AuthenticatedRequest, reply: FastifyReply) => {
