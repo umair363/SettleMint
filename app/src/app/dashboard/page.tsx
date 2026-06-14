@@ -24,14 +24,22 @@ export default function DashboardHome() {
   const [token, setToken] = useState("");
   const [defaultCurrency, setDefaultCurrency] = useState("USD");
 
-  useEffect(() => {
-    const session = localStorage.getItem("settlemint_session");
-    if (session) {
-      const parsed = JSON.parse(session);
-      setUserName(parsed.user.name || parsed.user.fullName || "");
-      setDefaultCurrency(parsed.user.defaultCurrency || "USD");
-      setToken(parsed.token);
-    }
+    const loadSession = () => {
+      const session = localStorage.getItem("settlemint_session");
+      if (session) {
+        const parsed = JSON.parse(session);
+        setUserName(parsed.user.name || parsed.user.fullName || "");
+        setDefaultCurrency(parsed.user.defaultCurrency || "USD");
+        setToken(parsed.token);
+      }
+    };
+
+    loadSession();
+
+    window.addEventListener("user-profile-updated", loadSession);
+    return () => {
+      window.removeEventListener("user-profile-updated", loadSession);
+    };
   }, []);
 
   const getCurrencySymbol = (code: string) => {

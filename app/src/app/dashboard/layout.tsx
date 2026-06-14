@@ -65,6 +65,22 @@ export default function DashboardLayout({
     };
 
     validateSession();
+
+    const handleUpdate = () => {
+      const sessionStr = localStorage.getItem("settlemint_session");
+      if (sessionStr) {
+        const parsed = JSON.parse(sessionStr);
+        setUser({
+          ...parsed.user,
+          name: parsed.user.fullName || parsed.user.name
+        });
+      }
+    };
+
+    window.addEventListener("user-profile-updated", handleUpdate);
+    return () => {
+      window.removeEventListener("user-profile-updated", handleUpdate);
+    };
   }, [router]);
 
   const handleLogout = useCallback(() => {

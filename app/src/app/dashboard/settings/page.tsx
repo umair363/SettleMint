@@ -15,7 +15,7 @@ export default function SettingsPage() {
     if (session) {
       const parsed = JSON.parse(session);
       setToken(parsed.token);
-      setFullName(parsed.user.name || "");
+      setFullName(parsed.user.fullName || parsed.user.name || "");
       setAvatarUrl(parsed.user.avatarUrl || "");
       setDefaultCurrency(parsed.user.defaultCurrency || "USD");
     }
@@ -43,10 +43,12 @@ export default function SettingsPage() {
         session.user = {
           ...session.user,
           name: data.user.fullName,
+          fullName: data.user.fullName,
           avatarUrl: data.user.avatarUrl,
           defaultCurrency: data.user.defaultCurrency
         };
         localStorage.setItem("settlemint_session", JSON.stringify(session));
+        window.dispatchEvent(new Event("user-profile-updated"));
       }
       alert("Profile updated successfully!");
     },
