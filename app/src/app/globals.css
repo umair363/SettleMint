@@ -463,5 +463,4 @@ h1, h2, h3, h4, h5, h6 {
     backdrop-filter: none;
   }
 }
-o p t i o n   {   b a c k g r o u n d - c o l o r :   v a r ( - - b g - c a r d ) ;   c o l o r :   v a r ( - - t e x t - p r i m a r y ) ;   }  
- 
+option { background-color: #1a1f2e; color: #f9fafb; }
