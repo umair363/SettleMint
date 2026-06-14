@@ -14,11 +14,19 @@ const modes = [
 
 const currencies = [
   { code: "USD", symbol: "$", name: "US Dollar" },
-  { code: "EUR", symbol: "\u20ac", name: "Euro" },
-  { code: "GBP", symbol: "\u00a3", name: "British Pound" },
+  { code: "EUR", symbol: "€", name: "Euro" },
+  { code: "GBP", symbol: "£", name: "British Pound" },
   { code: "PKR", symbol: "Rs", name: "Pakistani Rupee" },
-  { code: "INR", symbol: "\u20b9", name: "Indian Rupee" },
-  { code: "THB", symbol: "\u0e3f", name: "Thai Baht" },
+  { code: "INR", symbol: "₹", name: "Indian Rupee" },
+  { code: "CAD", symbol: "$", name: "Canadian Dollar" },
+  { code: "AUD", symbol: "$", name: "Australian Dollar" },
+  { code: "AED", symbol: "د.إ", name: "UAE Dirham" },
+  { code: "SAR", symbol: "﷼", name: "Saudi Riyal" },
+  { code: "THB", symbol: "฿", name: "Thai Baht" },
+  { code: "SGD", symbol: "$", name: "Singapore Dollar" },
+  { code: "JPY", symbol: "¥", name: "Japanese Yen" },
+  { code: "CNY", symbol: "¥", name: "Chinese Yuan" },
+  { code: "CHF", symbol: "Fr", name: "Swiss Franc" },
 ];
 
 export default function NewGroupPage() {
