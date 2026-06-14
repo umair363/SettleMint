@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import styles from "./new-expense.module.css";
+import { getCurrencySymbol } from "@/utils/currency";
 
 const categories = [
   { id: "food", label: "Food & Drink", emoji: "🍽" },
@@ -35,6 +36,8 @@ export default function NewExpensePage() {
   
   const [token, setToken] = useState("");
   const [currentUserId, setCurrentUserId] = useState("");
+  const [defaultCurrency, setDefaultCurrency] = useState("USD");
+  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     const session = localStorage.getItem("settlemint_session");
@@ -42,11 +45,12 @@ export default function NewExpensePage() {
       const parsed = JSON.parse(session);
       setToken(parsed.token);
       setCurrentUserId(parsed.user.id);
+      setDefaultCurrency(parsed.user.defaultCurrency || "USD");
     }
   }, []);
 
   // Fetch user's groups
-  const { data: groupsData } = useQuery({
+  const { data: groupsData, isLoading: groupsLoading } = useQuery({
     queryKey: ["groups"],
     queryFn: async () => {
       const res = await fetch("http://localhost:8000/api/groups", {
@@ -61,7 +65,7 @@ export default function NewExpensePage() {
   const groups = groupsData?.groups || [];
 
   // Fetch selected group details to get members for splitting
-  const { data: selectedGroupData } = useQuery({
+  const { data: selectedGroupData, isLoading: groupDetailsLoading } = useQuery({
     queryKey: ["group", selectedGroup],
     queryFn: async () => {
       const res = await fetch(`http://localhost:8000/api/groups/${selectedGroup}`, {
@@ -72,6 +76,9 @@ export default function NewExpensePage() {
     },
     enabled: !!token && !!selectedGroup,
   });
+
+  const activeCurrency = selectedGroupData?.group?.baseCurrency || defaultCurrency;
+  const sym = getCurrencySymbol(activeCurrency);
 
   const createExpenseMutation = useMutation({
     mutationFn: async () => {
@@ -98,6 +105,7 @@ export default function NewExpensePage() {
           amount: totalAmount,
           category: selectedCategory,
           splits,
+          currency: activeCurrency,
         }),
       });
 
@@ -110,17 +118,20 @@ export default function NewExpensePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       queryClient.invalidateQueries({ queryKey: ["group"] });
+      queryClient.invalidateQueries({ queryKey: ["all_expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["recent_expenses"] });
       router.push(`/dashboard/groups/${selectedGroup}`);
     },
     onError: (err: any) => {
-      alert(err.message);
+      setErrorMsg(err.message);
     }
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg("");
     if (!selectedGroupData) {
-      alert("Please wait for group details to load or select a valid group.");
+      setErrorMsg("Please wait for group details to load or select a valid group.");
       return;
     }
     createExpenseMutation.mutate();
@@ -134,10 +145,16 @@ export default function NewExpensePage() {
           Log a new shared expense. All fields are editable later.
         </p>
 
+        {errorMsg && (
+          <div style={{ color: "#ff6b6b", background: "rgba(255, 107, 107, 0.1)", border: "1px solid rgba(255, 107, 107, 0.2)", borderRadius: "8px", padding: "0.8rem 1rem", marginBottom: "1.5rem", fontSize: "0.9rem" }}>
+            {errorMsg}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className={styles.form}>
           {/* Amount - Big hero input */}
           <div className={styles.amountSection}>
-            <span className={styles.currencyPrefix}>$</span>
+            <span className={styles.currencyPrefix}>{sym}</span>
             <input
               type="number"
               className={styles.amountInput}
@@ -170,15 +187,20 @@ export default function NewExpensePage() {
           <div className={styles.field}>
             <label className={styles.label}>Group</label>
             <div className={styles.groupPicker}>
-              {groups.length === 0 ? (
+              {groupsLoading ? (
                 <div className="text-secondary" style={{ fontSize: "0.9rem" }}>Loading your groups...</div>
+              ) : groups.length === 0 ? (
+                <div className="text-secondary" style={{ fontSize: "0.9rem" }}>No groups found. Create a group first!</div>
               ) : (
                 groups.map((g: any) => (
                   <button
                     key={g.id}
                     type="button"
                     className={`${styles.groupChip} ${selectedGroup === g.id ? styles.groupChipSelected : ""}`}
-                    onClick={() => setSelectedGroup(g.id)}
+                    onClick={() => {
+                      setSelectedGroup(g.id);
+                      setErrorMsg("");
+                    }}
                     style={{ "--chip-color": g.color || "#3DD68C" } as React.CSSProperties}
                   >
                     <span className={styles.chipDot} style={{ background: g.color || "#3DD68C" }} />
@@ -187,6 +209,11 @@ export default function NewExpensePage() {
                 ))
               )}
             </div>
+            {selectedGroup && groupDetailsLoading && (
+              <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "0.5rem" }}>
+                Loading splitting participants...
+              </div>
+            )}
           </div>
 
           {/* Category */}
@@ -229,7 +256,7 @@ export default function NewExpensePage() {
           <button
             type="submit"
             className={`btn btn-primary btn-lg ${styles.submitBtn}`}
-            disabled={createExpenseMutation.isPending || !amount || !description || !selectedGroup}
+            disabled={createExpenseMutation.isPending || !amount || !description || !selectedGroup || groupDetailsLoading}
             id="expense-submit"
           >
             {createExpenseMutation.isPending ? "Adding..." : "Add Expense"}

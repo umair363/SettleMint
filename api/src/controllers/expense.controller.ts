@@ -95,21 +95,23 @@ export const createExpense = async (request: AuthenticatedRequest, reply: Fastif
     const userId = request.user?.id;
     if (!userId) return reply.code(401).send({ error: "Unauthorized" });
 
-    const { groupId, description, amount, category, notes, splits } = request.body as any;
+    const { groupId, description, amount, category, notes, splits, currency } = request.body as any;
 
-    if (!groupId || !description || !amount || !splits || !Array.isArray(splits)) {
+    if (!description || !amount || !splits || !Array.isArray(splits)) {
       return reply.code(400).send({ error: "Missing required fields" });
     }
 
-    // Verify user is in the group
-    const membership = await db
-      .select()
-      .from(groupMembers)
-      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId)))
-      .limit(1);
+    if (groupId) {
+      // Verify user is in the group
+      const membership = await db
+        .select()
+        .from(groupMembers)
+        .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId)))
+        .limit(1);
 
-    if (membership.length === 0) {
-      return reply.code(403).send({ error: "Forbidden: Not a member of this group" });
+      if (membership.length === 0) {
+        return reply.code(403).send({ error: "Forbidden: Not a member of this group" });
+      }
     }
 
     // Run within a transaction
@@ -122,6 +124,7 @@ export const createExpense = async (request: AuthenticatedRequest, reply: Fastif
         paidBy: userId,
         category: category || "General",
         notes: notes || null,
+        currency: currency || "USD",
       }).returning();
 
       // 2. Insert Splits
