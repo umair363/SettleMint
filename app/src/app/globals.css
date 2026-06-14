@@ -464,3 +464,19 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 option { background-color: #1a1f2e; color: #f9fafb; }
+
+/* ─────────────── Skeleton Loaders ─────────────── */
+.skeleton-loader {
+  background: linear-gradient(90deg, var(--slate-800) 25%, var(--slate-700) 50%, var(--slate-800) 75%);
+  background-size: 400% 100%;
+  animation: skeleton-loading 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}

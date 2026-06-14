@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import Skeleton from "@/components/Skeleton";
 import styles from "./expenses.module.css";
 
 export default function ExpensesPage() {
@@ -99,7 +100,13 @@ export default function ExpensesPage() {
         </div>
         
         {isLoading ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading...</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '1rem 0' }}>
+            <Skeleton height="48px" borderRadius="8px" />
+            <Skeleton height="48px" borderRadius="8px" />
+            <Skeleton height="48px" borderRadius="8px" />
+            <Skeleton height="48px" borderRadius="8px" />
+            <Skeleton height="48px" borderRadius="8px" />
+          </div>
         ) : filtered.length === 0 ? (
           <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>No expenses found.</div>
         ) : (
