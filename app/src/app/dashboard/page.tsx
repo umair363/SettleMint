@@ -70,7 +70,7 @@ export default function DashboardHome() {
           <span className={`${styles.balanceValue} ${netBalance >= 0 ? styles.positive : styles.negative}`}>
             {netBalance >= 0 ? "+" : "-"}${Math.abs(netBalance).toFixed(2)}
           </span>
-          <span className={styles.balanceSub}>Across {mockGroups.length} groups</span>
+          <span className={styles.balanceSub}>Across {groups.length} groups</span>
         </div>
         <div className={styles.balanceCard}>
           <span className={styles.balanceLabel}>You are owed</span>
