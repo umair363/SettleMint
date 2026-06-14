@@ -1,0 +1,119 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
+import styles from "./settings.module.css";
+
+export default function SettingsPage() {
+  const [fullName, setFullName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [defaultCurrency, setDefaultCurrency] = useState("USD");
+  const [token, setToken] = useState("");
+
+  useEffect(() => {
+    const session = localStorage.getItem("settlemint_session");
+    if (session) {
+      const parsed = JSON.parse(session);
+      setToken(parsed.token);
+      setFullName(parsed.user.name || "");
+      setAvatarUrl(parsed.user.avatarUrl || "");
+      setDefaultCurrency(parsed.user.defaultCurrency || "USD");
+    }
+  }, []);
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("http://localhost:8000/api/users/me", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ fullName, avatarUrl, defaultCurrency }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update profile");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      // Update local storage session
+      const sessionStr = localStorage.getItem("settlemint_session");
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        session.user = {
+          ...session.user,
+          name: data.user.fullName,
+          avatarUrl: data.user.avatarUrl,
+          defaultCurrency: data.user.defaultCurrency
+        };
+        localStorage.setItem("settlemint_session", JSON.stringify(session));
+      }
+      alert("Profile updated successfully!");
+    },
+    onError: (err: any) => {
+      alert(err.message);
+    }
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateProfileMutation.mutate();
+  };
+
+  return (
+    <div className={styles.page}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>Settings</h1>
+        <p className={styles.subtitle}>Manage your profile and preferences.</p>
+      </header>
+
+      <div className={styles.card}>
+        <form className={styles.form} onSubmit={handleSubmit}>
+          
+          <div className={styles.field}>
+            <label className={styles.label}>Full Name</label>
+            <input 
+              type="text" 
+              className={styles.input} 
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label}>Avatar URL</label>
+            <input 
+              type="url" 
+              className={styles.input} 
+              placeholder="https://example.com/avatar.png"
+              value={avatarUrl}
+              onChange={(e) => setAvatarUrl(e.target.value)}
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label}>Default Currency</label>
+            <select 
+              className={styles.select}
+              value={defaultCurrency}
+              onChange={(e) => setDefaultCurrency(e.target.value)}
+            >
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+            </select>
+          </div>
+
+          <button 
+            type="submit" 
+            className={`btn btn-primary ${styles.submitBtn}`}
+            disabled={updateProfileMutation.isPending}
+          >
+            {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,241 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import styles from "./new-expense.module.css";
+
+const categories = [
+  { id: "food", label: "Food & Drink", emoji: "🍽" },
+  { id: "transport", label: "Transport", emoji: "🚕" },
+  { id: "accommodation", label: "Accommodation", emoji: "🏨" },
+  { id: "entertainment", label: "Entertainment", emoji: "🎬" },
+  { id: "shopping", label: "Shopping", emoji: "🛍" },
+  { id: "bills", label: "Bills & Utilities", emoji: "💡" },
+  { id: "groceries", label: "Groceries", emoji: "🛒" },
+  { id: "health", label: "Health", emoji: "💊" },
+  { id: "other", label: "Other", emoji: "📌" },
+];
+
+const splitTypes = [
+  { id: "equal", label: "Split Equally", description: "Divide evenly among all members" },
+  { id: "unequal", label: "Exact Amounts", description: "Enter specific amount per person" },
+  { id: "percentage", label: "By Percentage", description: "Split by percentage shares" },
+  { id: "shares", label: "By Shares", description: "2:1:1 ratio style splitting" },
+];
+
+export default function NewExpensePage() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
+  const [selectedGroup, setSelectedGroup] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("food");
+  const [selectedSplit, setSelectedSplit] = useState("equal");
+  
+  const [token, setToken] = useState("");
+  const [currentUserId, setCurrentUserId] = useState("");
+
+  useEffect(() => {
+    const session = localStorage.getItem("settlemint_session");
+    if (session) {
+      const parsed = JSON.parse(session);
+      setToken(parsed.token);
+      setCurrentUserId(parsed.user.id);
+    }
+  }, []);
+
+  // Fetch user's groups
+  const { data: groupsData } = useQuery({
+    queryKey: ["groups"],
+    queryFn: async () => {
+      const res = await fetch("http://localhost:8000/api/groups", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to fetch groups");
+      return res.json();
+    },
+    enabled: !!token,
+  });
+
+  const groups = groupsData?.groups || [];
+
+  // Fetch selected group details to get members for splitting
+  const { data: selectedGroupData } = useQuery({
+    queryKey: ["group", selectedGroup],
+    queryFn: async () => {
+      const res = await fetch(`http://localhost:8000/api/groups/${selectedGroup}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to fetch group details");
+      return res.json();
+    },
+    enabled: !!token && !!selectedGroup,
+  });
+
+  const createExpenseMutation = useMutation({
+    mutationFn: async () => {
+      const members = selectedGroupData?.group?.members || [];
+      if (members.length === 0) throw new Error("Group has no members");
+
+      const totalAmount = parseFloat(amount);
+      const perPerson = totalAmount / members.length;
+
+      const splits = members.map((m: any) => ({
+        userId: m.id,
+        amountOwed: perPerson.toFixed(2),
+      }));
+
+      const res = await fetch("http://localhost:8000/api/expenses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          groupId: selectedGroup,
+          description,
+          amount: totalAmount,
+          category: selectedCategory,
+          splits,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to create expense");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["group"] });
+      router.push(`/dashboard/groups/${selectedGroup}`);
+    },
+    onError: (err: any) => {
+      alert(err.message);
+    }
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedGroupData) {
+      alert("Please wait for group details to load or select a valid group.");
+      return;
+    }
+    createExpenseMutation.mutate();
+  };
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.card}>
+        <h2 className={styles.title}>Add Expense</h2>
+        <p className={styles.subtitle}>
+          Log a new shared expense. All fields are editable later.
+        </p>
+
+        <form onSubmit={handleSubmit} className={styles.form}>
+          {/* Amount - Big hero input */}
+          <div className={styles.amountSection}>
+            <span className={styles.currencyPrefix}>$</span>
+            <input
+              type="number"
+              className={styles.amountInput}
+              placeholder="0.00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              step="0.01"
+              min="0"
+              required
+              autoFocus
+              id="expense-amount"
+            />
+          </div>
+
+          {/* Description */}
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="expense-desc">What was it for?</label>
+            <input
+              id="expense-desc"
+              type="text"
+              className={styles.input}
+              placeholder='e.g. "Dinner at Sakura" or "Uber to airport"'
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              required
+            />
+          </div>
+
+          {/* Group select */}
+          <div className={styles.field}>
+            <label className={styles.label}>Group</label>
+            <div className={styles.groupPicker}>
+              {groups.length === 0 ? (
+                <div className="text-secondary" style={{ fontSize: "0.9rem" }}>Loading your groups...</div>
+              ) : (
+                groups.map((g: any) => (
+                  <button
+                    key={g.id}
+                    type="button"
+                    className={`${styles.groupChip} ${selectedGroup === g.id ? styles.groupChipSelected : ""}`}
+                    onClick={() => setSelectedGroup(g.id)}
+                    style={{ "--chip-color": g.color || "#3DD68C" } as React.CSSProperties}
+                  >
+                    <span className={styles.chipDot} style={{ background: g.color || "#3DD68C" }} />
+                    {g.name}
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Category */}
+          <div className={styles.field}>
+            <label className={styles.label}>Category</label>
+            <div className={styles.categoryGrid}>
+              {categories.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={`${styles.categoryBtn} ${selectedCategory === c.id ? styles.categoryBtnSelected : ""}`}
+                  onClick={() => setSelectedCategory(c.id)}
+                >
+                  <span className={styles.categoryEmoji}>{c.emoji}</span>
+                  <span className={styles.categoryLabel}>{c.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Split type */}
+          <div className={styles.field}>
+            <label className={styles.label}>How to split</label>
+            <div className={styles.splitOptions}>
+              {splitTypes.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  className={`${styles.splitOption} ${selectedSplit === s.id ? styles.splitOptionSelected : ""}`}
+                  onClick={() => setSelectedSplit(s.id)}
+                >
+                  <span className={styles.splitLabel}>{s.label}</span>
+                  <span className={styles.splitDesc}>{s.description}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            className={`btn btn-primary btn-lg ${styles.submitBtn}`}
+            disabled={createExpenseMutation.isPending || !amount || !description || !selectedGroup}
+            id="expense-submit"
+          >
+            {createExpenseMutation.isPending ? "Adding..." : "Add Expense"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
