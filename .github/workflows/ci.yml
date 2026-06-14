@@ -1,0 +1,45 @@
+name: SettleMint CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    # Install API dependencies and build
+    - name: Install API Dependencies
+      run: |
+        cd api
+        npm ci
+
+    - name: Build API
+      run: |
+        cd api
+        npm run build --if-present
+
+    # Install APP dependencies and build
+    - name: Install Frontend Dependencies
+      run: |
+        cd app
+        npm ci
+
+    - name: Build Frontend
+      run: |
+        cd app
+        npm run build
