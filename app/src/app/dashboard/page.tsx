@@ -29,7 +29,7 @@ export default function DashboardHome() {
     const session = localStorage.getItem("settlemint_session");
     if (session) {
       const parsed = JSON.parse(session);
-      setUserName(parsed.user.name);
+      setUserName(parsed.user.name || parsed.user.fullName || "");
       setToken(parsed.token);
     }
   }, []);
@@ -56,7 +56,7 @@ export default function DashboardHome() {
     <div className={styles.page}>
       <div className={styles.greeting}>
         <h1 className={styles.title}>
-          Welcome back, {userName.split(" ")[0] || "there"}
+          Welcome back, {userName ? userName.split(" ")[0] : "there"}
         </h1>
         <p className={styles.subtitle}>
           Here is what is happening across your groups.
