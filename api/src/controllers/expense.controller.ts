@@ -1,7 +1,8 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { db } from "../db";
 import { expenses, expenseSplits, groupMembers, users } from "../db/schema";
-import { eq, and, or } from "drizzle-orm";
+import { eq, and, or, inArray } from "drizzle-orm";
+import { sendExpenseAlertEmail } from "../utils/email";
 
 interface AuthenticatedRequest extends FastifyRequest {
   user?: {
@@ -135,6 +136,29 @@ export const createExpense = async (request: AuthenticatedRequest, reply: Fastif
 
       return insertedExpense;
     });
+
+    // Send expense notification emails asynchronously
+    const userIds = splits.map((s: any) => s.userId).filter((uid: string) => uid !== userId);
+    if (userIds.length > 0) {
+      db.select({ email: users.email, fullName: users.fullName })
+        .from(users)
+        .where(inArray(users.id, userIds))
+        .then((notifiedUsers) => {
+          db.select({ fullName: users.fullName })
+            .from(users)
+            .where(eq(users.id, userId))
+            .limit(1)
+            .then(([payer]) => {
+              const payerName = payer?.fullName || "Someone";
+              notifiedUsers.forEach((u) => {
+                sendExpenseAlertEmail(u.email, u.fullName, payerName, description, amount.toString(), "USD")
+                  .catch(err => request.log.error("Expense alert email failed: ", err));
+              });
+            })
+            .catch(err => request.log.error("Payer query failed: ", err));
+        })
+        .catch(err => request.log.error("Notification recipients query failed: ", err));
+    }
 
     return reply.code(201).send({ message: "Expense created successfully", expense: newExpense });
   } catch (error) {

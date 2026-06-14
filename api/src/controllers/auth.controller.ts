@@ -4,6 +4,7 @@ import { users } from "../db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { sendWelcomeEmail } from "../utils/email";
 
 const JWT_SECRET = process.env.JWT_SECRET || "super-secret-jwt-key-settlemint-123";
 
@@ -42,6 +43,11 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
       JWT_SECRET,
       { expiresIn: "7d" }
     );
+
+    // Send Welcome Email asynchronously
+    sendWelcomeEmail(newUser.email, newUser.fullName).catch(err => {
+      request.log.error("Welcome email failed: ", err);
+    });
 
     return reply.code(201).send({
       message: "User registered successfully",
