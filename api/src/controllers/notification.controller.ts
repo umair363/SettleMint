@@ -4,9 +4,7 @@ import { notifications } from "../db/schema";
 import { eq, desc } from "drizzle-orm";
 
 interface AuthenticatedRequest extends FastifyRequest {
-  user?: {
-    id: string;
-  };
+  user?: any;
 }
 
 export const getMyNotifications = async (request: AuthenticatedRequest, reply: FastifyReply) => {

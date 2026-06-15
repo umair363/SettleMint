@@ -4,9 +4,7 @@ import { activityLogs } from "../db/schema";
 import { eq, desc } from "drizzle-orm";
 
 interface AuthenticatedRequest extends FastifyRequest {
-  user?: {
-    id: string;
-  };
+  user?: any;
 }
 
 export const getMyActivity = async (request: AuthenticatedRequest, reply: FastifyReply) => {
