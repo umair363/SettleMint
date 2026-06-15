@@ -4,9 +4,7 @@ import { friendships, users } from "../db/schema";
 import { eq, or, and } from "drizzle-orm";
 
 interface AuthenticatedRequest extends FastifyRequest {
-  user?: {
-    id: string;
-  };
+  user?: any;
 }
 
 export const getFriends = async (request: AuthenticatedRequest, reply: FastifyReply) => {
