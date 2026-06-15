@@ -18,7 +18,7 @@ export default function NotificationsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["notifications"],
     queryFn: async () => {
-      const res = await fetch("http://localhost:8000/api/notifications", {
+      const res = await fetch("https://settlemint.onrender.com/api/notifications", {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch notifications");
@@ -29,7 +29,7 @@ export default function NotificationsPage() {
 
   const markReadMutation = useMutation({
     mutationFn: async (id: string) => {
-      await fetch(`http://localhost:8000/api/notifications/${id}/read`, {
+      await fetch(`https://settlemint.onrender.com/api/notifications/${id}/read`, {
         method: "PATCH",
         headers: { Authorization: `Bearer ${token}` }
       });

@@ -17,7 +17,7 @@ export default function ActivityPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["activity"],
     queryFn: async () => {
-      const res = await fetch("http://localhost:8000/api/activity", {
+      const res = await fetch("https://settlemint.onrender.com/api/activity", {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch activity");

@@ -106,7 +106,7 @@ export default function GroupDetailPage() {
   const { data: groupData, isLoading: groupLoading, error: groupError } = useQuery({
     queryKey: ["group", groupId],
     queryFn: async () => {
-      const res = await fetch(`http://localhost:8000/api/groups/${groupId}`, {
+      const res = await fetch(`https://settlemint.onrender.com/api/groups/${groupId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.status === 403 || res.status === 404) {
@@ -122,7 +122,7 @@ export default function GroupDetailPage() {
   const { data: expensesData, isLoading: expensesLoading } = useQuery({
     queryKey: ["expenses", groupId],
     queryFn: async () => {
-      const res = await fetch(`http://localhost:8000/api/expenses/group/${groupId}`, {
+      const res = await fetch(`https://settlemint.onrender.com/api/expenses/group/${groupId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch expenses");

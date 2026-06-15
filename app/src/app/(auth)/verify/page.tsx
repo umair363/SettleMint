@@ -35,7 +35,7 @@ function VerifyContent() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/api/auth/verify-otp", {
+      const response = await fetch("https://settlemint.onrender.com/api/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp }),
@@ -74,7 +74,7 @@ function VerifyContent() {
     setResendLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/api/auth/resend-otp", {
+      const response = await fetch("https://settlemint.onrender.com/api/auth/resend-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

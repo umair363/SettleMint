@@ -32,7 +32,7 @@ export default function SettleUpPage() {
   const { data: groupsData } = useQuery({
     queryKey: ["groups"],
     queryFn: async () => {
-      const res = await fetch("http://localhost:8000/api/groups", {
+      const res = await fetch("https://settlemint.onrender.com/api/groups", {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch groups");
@@ -44,7 +44,7 @@ export default function SettleUpPage() {
   const { data: groupDetailsData } = useQuery({
     queryKey: ["group", selectedGroup],
     queryFn: async () => {
-      const res = await fetch(`http://localhost:8000/api/groups/${selectedGroup}`, {
+      const res = await fetch(`https://settlemint.onrender.com/api/groups/${selectedGroup}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch group details");
@@ -61,7 +61,7 @@ export default function SettleUpPage() {
       const isUserPaying = payer === currentUserId;
       const actualPaidTo = isUserPaying ? receiver : payer; // In real life, user can only pay someone or receive from someone. Our API assumes the active user is recording what they paid, OR what they received.
       
-      const res = await fetch("http://localhost:8000/api/settlements", {
+      const res = await fetch("https://settlemint.onrender.com/api/settlements", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

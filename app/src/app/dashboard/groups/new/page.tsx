@@ -44,7 +44,7 @@ export default function NewGroupPage() {
       
       const modeData = modes.find(m => m.id === selectedMode);
 
-      const res = await fetch("http://localhost:8000/api/groups", {
+      const res = await fetch("https://settlemint.onrender.com/api/groups", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

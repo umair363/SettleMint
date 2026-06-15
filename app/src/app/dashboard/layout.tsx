@@ -42,7 +42,7 @@ export default function DashboardLayout({
         }
 
         // Verify token with backend
-        const res = await fetch("http://localhost:8000/api/auth/me", {
+        const res = await fetch("https://settlemint.onrender.com/api/auth/me", {
           headers: {
             "Authorization": `Bearer ${parsed.token}`
           }

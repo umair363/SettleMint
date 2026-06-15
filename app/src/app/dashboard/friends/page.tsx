@@ -19,7 +19,7 @@ export default function FriendsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["friends"],
     queryFn: async () => {
-      const res = await fetch("http://localhost:8000/api/friends", {
+      const res = await fetch("https://settlemint.onrender.com/api/friends", {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch friends");
@@ -30,7 +30,7 @@ export default function FriendsPage() {
 
   const addFriendMutation = useMutation({
     mutationFn: async (friendEmail: string) => {
-      const res = await fetch("http://localhost:8000/api/friends", {
+      const res = await fetch("https://settlemint.onrender.com/api/friends", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
