@@ -35,7 +35,7 @@ export default function GroupsPage() {
   const { data: groupsData, isLoading } = useQuery({
     queryKey: ["groups"],
     queryFn: async () => {
-      const res = await fetch("http://localhost:8000/api/groups", {
+      const res = await fetch("https://settlemint.onrender.com/api/groups", {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch groups");

@@ -57,7 +57,7 @@ export default function NewExpensePage() {
   const { data: groupsData, isLoading: groupsLoading } = useQuery({
     queryKey: ["groups"],
     queryFn: async () => {
-      const res = await fetch("http://localhost:8000/api/groups", {
+      const res = await fetch("https://settlemint.onrender.com/api/groups", {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch groups");
@@ -71,7 +71,7 @@ export default function NewExpensePage() {
   const { data: friendsData, isLoading: friendsLoading } = useQuery({
     queryKey: ["friends"],
     queryFn: async () => {
-      const res = await fetch("http://localhost:8000/api/friends", {
+      const res = await fetch("https://settlemint.onrender.com/api/friends", {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch friends");
@@ -85,7 +85,7 @@ export default function NewExpensePage() {
   const { data: selectedGroupData, isLoading: groupDetailsLoading } = useQuery({
     queryKey: ["group", selectedGroup],
     queryFn: async () => {
-      const res = await fetch(`http://localhost:8000/api/groups/${selectedGroup}`, {
+      const res = await fetch(`https://settlemint.onrender.com/api/groups/${selectedGroup}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch group details");
@@ -122,7 +122,7 @@ export default function NewExpensePage() {
         ];
       }
 
-      const res = await fetch("http://localhost:8000/api/expenses", {
+      const res = await fetch("https://settlemint.onrender.com/api/expenses", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

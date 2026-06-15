@@ -48,7 +48,7 @@ export default function DashboardHome() {
   const { data: groupsData, isLoading } = useQuery({
     queryKey: ["groups"],
     queryFn: async () => {
-      const res = await fetch("http://localhost:8000/api/groups", {
+      const res = await fetch("https://settlemint.onrender.com/api/groups", {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Network response was not ok");
@@ -60,7 +60,7 @@ export default function DashboardHome() {
   const { data: expensesData, isLoading: expensesLoading } = useQuery({
     queryKey: ["recent_expenses"],
     queryFn: async () => {
-      const res = await fetch("http://localhost:8000/api/expenses/me", {
+      const res = await fetch("https://settlemint.onrender.com/api/expenses/me", {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch expenses");

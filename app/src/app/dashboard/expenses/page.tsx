@@ -27,7 +27,7 @@ export default function ExpensesPage() {
   const { data: expensesData, isLoading } = useQuery({
     queryKey: ["all_expenses"],
     queryFn: async () => {
-      const res = await fetch("http://localhost:8000/api/expenses/me", {
+      const res = await fetch("https://settlemint.onrender.com/api/expenses/me", {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch expenses");
