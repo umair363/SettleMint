@@ -1,97 +1,83 @@
-<div align="center">
-  <img src="https://i.imgur.com/gK98hWq.png" alt="SettleMint Logo" width="120"/>
-  <h1>SettleMint</h1>
-  <p><strong>A Modern, Open-Source Bill Splitting & Expense Sharing Platform</strong></p>
-  <p>Built for roommates, travelers, and friends who want a friction-free way to settle up without the corporate bloat.</p>
+# SettleMint 🍃
 
-  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-14-black" alt="Next.js"></a>
-  <a href="https://fastify.dev/"><img src="https://img.shields.io/badge/Fastify-4-black" alt="Fastify"></a>
-  <a href="https://postgresql.org/"><img src="https://img.shields.io/badge/PostgreSQL-16-blue" alt="Postgres"></a>
-  <a href="https://orm.drizzle.team/"><img src="https://img.shields.io/badge/Drizzle_ORM-0.30-yellow" alt="Drizzle"></a>
-</div>
+SettleMint is a modern, high-fidelity expense splitting and management application built for frictionless financial collaboration among friends and groups. Say goodbye to awkward money conversations and hello to smart, transparent bill splitting.
 
-<br/>
+![SettleMint Architecture](https://img.shields.io/badge/Architecture-Monorepo-3DD68C?style=flat-square)
+![Next.js](https://img.shields.io/badge/Frontend-Next.js%2014-black?style=flat-square&logo=next.js)
+![Fastify](https://img.shields.io/badge/Backend-Fastify-202020?style=flat-square&logo=fastify)
+![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-316192?style=flat-square&logo=postgresql)
 
-## 🌟 The Anti-Slop Approach
-SettleMint isn't just another CRUD app. It's designed with an **"anti-slop" philosophy**—prioritizing extreme visual fidelity, zero layout shifts, dynamic interactions, and a dark-first "cyber-slate" aesthetic. It's built for power users who appreciate beautiful software.
+## 🌟 Features
 
-## 🚀 Key Features
+*   **1-on-1 Splitting**: Easily split expenses with individual friends directly, no group required.
+*   **Group Ledgers**: Manage complex housemate bills, vacation expenses, and group activities seamlessly.
+*   **Dynamic Currency**: Intelligent currency handling and formatting depending on group settings.
+*   **OTP Email Verification**: Robust and secure user authentication via Resend-powered one-time passwords.
+*   **Minimalist UI**: Built using premium "Anti-Slop" design principles, leveraging CSS modules, custom easing curves, and a monochromatic aesthetic with vibrant accents.
+*   **Responsive**: Flawlessly optimized across Desktop and Mobile devices.
 
-### 🏦 The Dashboard Core
-- **Real-Time Dashboards:** Powered by TanStack React Query, your data instantly syncs without aggressive page reloads.
-- **Group Management:** Create groups for trips, roommates, or events with tailored modes, emojis, and custom base currencies.
-- **Granular Splitting:** Add expenses with detailed transaction states. Instantly calculates exact "per-person" splits under the hood.
-- **Settle Up Engine:** A dedicated module for recording payments between members—whether it's cash, bank transfer, or a payment app.
+## 🏗 System Architecture
 
-### 🔒 Secure & High-Performance Backend
-- **JWT-Guarded:** Every API route is fortified by HTTP Bearer tokens and strict route-level middleware.
-- **PostgreSQL + Drizzle:** Fully typed relational database schema guaranteeing high integrity for monetary transactions.
-- **Fastify Speed:** The backend runs on Fastify, ensuring blazing fast sub-millisecond route resolution.
+The project is structured as a Turborepo-style monorepo, decoupled into two primary domains to ensure scalable deployments:
 
----
+1.  **/app (Frontend)**
+    *   **Framework**: Next.js (App Router)
+    *   **Styling**: Pure Vanilla CSS Modules (No Tailwind dependencies)
+    *   **State Management**: React Query (TanStack)
+    *   **Deployment**: Optimized for Vercel edge delivery.
 
-## 🛠️ Architecture Stack
+2.  **/api (Backend)**
+    *   **Framework**: Fastify (Node.js)
+    *   **ORM**: Drizzle ORM
+    *   **Database**: PostgreSQL (Neon.tech)
+    *   **Authentication**: JWT & Bcrypt
+    *   **Deployment**: Optimized for Render / Railway continuous instances.
 
-### Frontend (Data Cockpit)
-- **Framework:** Next.js 14 (App Router)
-- **State & Data Fetching:** TanStack React Query `v5`
-- **Styling:** Pure CSS Modules (Zero Tailwind bloat) with CSS Variables for theming
-- **Icons:** Inline SVG micro-components for maximum performance
+## 🚀 Getting Started
 
-### Backend (The Vault)
-- **Runtime:** Node.js + TypeScript
-- **Framework:** Fastify
-- **Database:** PostgreSQL (Containerized via Docker)
-- **ORM:** Drizzle ORM
-- **Authentication:** `jsonwebtoken` + `bcrypt`
+### Prerequisites
+*   Node.js v20+
+*   PostgreSQL database (Local or Cloud)
+*   Resend API Key (for email services)
 
----
-
-## 💻 Getting Started (Local Development)
-
-SettleMint uses a decoupled monolithic architecture (Frontend and Backend run as separate services).
-
-### 1. Start the Database
-Ensure Docker Desktop is running.
-```bash
-cd api
-docker-compose up -d
-```
-
-### 2. Configure Environment
-Create an `.env` file in the `api/` directory:
-```env
-DATABASE_URL=postgres://settlemint:settlemint_secret@localhost:5433/settlemint
-JWT_SECRET=super_secret_jwt_key_12345
-```
-
-### 3. Migrate and Start the Backend
+### 1. Backend Setup (`/api`)
+Navigate to the `api` directory to initialize the database and backend server.
 ```bash
 cd api
 npm install
-npm run db:push    # Pushes the Drizzle schema to PostgreSQL
-npm run dev        # Starts Fastify on http://localhost:8000
+```
+Create a `.env` file in the `api` folder:
+```env
+DATABASE_URL=postgres://user:pass@host:port/dbname
+JWT_SECRET=your_super_secret_key
+RESEND_API_KEY=re_your_api_key
+EMAIL_FROM="SettleMint <onboarding@resend.dev>"
+PORT=8000
+```
+Run database migrations and start the server:
+```bash
+npm run db:push
+npm run dev
 ```
 
-### 4. Start the Frontend
-In a new terminal window:
+### 2. Frontend Setup (`/app`)
+In a new terminal window, navigate to the `app` directory.
 ```bash
 cd app
 npm install
-npm run dev        # Starts Next.js on http://localhost:3000
 ```
+Start the Next.js development server:
+```bash
+npm run dev
+```
+The frontend will be live at [http://localhost:3000](http://localhost:3000).
 
-Open `http://localhost:3000` to see the application running.
+## 🔒 Security & Privacy
 
----
-
-## 🎨 Design System Tokens
-
-SettleMint relies on a strictly curated palette to achieve its premium look:
-- **Backgrounds:** `#0A0E17` (App Base), `#111622` (Card Surface)
-- **Primary Accent:** `#3DD68C` (Mint Green - for positive actions/balances)
-- **Secondary Accents:** `#5B8DEF` (Tech Blue), `#B197FC` (Royal Purple), `#FFA94D` (Warning Orange)
-- **Typography:** Next.js Inter (geist-sans equivalent) with strict letter-spacing rules.
+*   All passwords are cryptographically hashed using `bcrypt` before storage.
+*   API Routes are strictly guarded via Bearer Token JWT Middleware.
+*   All routes are stateless, ensuring secure cross-origin scaling.
 
 ## 📜 License
-MIT License. Open-source and free to fork for personal projects.
+
+This project is proprietary and confidential. Unauthorized copying of this file, via any medium, is strictly prohibited.
