@@ -69,6 +69,18 @@ export default function DashboardHome() {
     enabled: !!token,
   });
 
+  const { data: settlementsData } = useQuery({
+    queryKey: ["settlements"],
+    queryFn: async () => {
+      const res = await fetch("https://settlemint.onrender.com/api/settlements", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to fetch settlements");
+      return res.json();
+    },
+    enabled: !!token,
+  });
+
   const groups: Group[] = groupsData?.groups || [];
   const expenses = expensesData?.expenses || [];
 
@@ -76,21 +88,40 @@ export default function DashboardHome() {
   let totalOwed = 0;
   let totalOwe = 0;
 
+  // 1. Process Expenses & Splits
   expenses.forEach((exp: any) => {
-    const amt = parseFloat(exp.amount);
-    const amtInDefault = convertCurrency(amt, exp.currency || "USD", defaultCurrency);
+    const isPayer = exp.paidBy === userId;
     
-    // Assume 50% split for mock calculation
-    const share = amtInDefault * 0.5;
+    exp.splits?.forEach((split: any) => {
+      const splitAmount = convertCurrency(parseFloat(split.amountOwed), exp.currency || "USD", defaultCurrency);
+      if (split.userId === userId && !isPayer) {
+        // I owe this amount
+        totalOwe += splitAmount;
+      } else if (split.userId !== userId && isPayer) {
+        // Someone owes me this amount
+        totalOwed += splitAmount;
+      }
+    });
+  });
 
-    if (exp.paidBy === userId) {
-      // User paid, so they are owed the other share
-      totalOwed += share;
-    } else {
-      // Someone else paid, so user owes them their share
-      totalOwe += share;
+  // 2. Process Settlements
+  const settlements = settlementsData?.settlements || [];
+  settlements.forEach((st: any) => {
+    const group = groups.find(g => g.id === st.groupId);
+    const currency = group ? group.baseCurrency : defaultCurrency;
+    const amount = convertCurrency(parseFloat(st.amount), currency, defaultCurrency);
+
+    if (st.paidBy === userId) {
+      // I paid someone back, so my debt decreases
+      totalOwe -= amount;
+    } else if (st.paidTo === userId) {
+      // Someone paid me back, so what they owe me decreases
+      totalOwed -= amount;
     }
   });
+
+  totalOwe = Math.max(0, totalOwe);
+  totalOwed = Math.max(0, totalOwed);
 
   const netBalance = totalOwed - totalOwe;
 
