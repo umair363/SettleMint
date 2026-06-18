@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { db } from "../db";
-import { groups, groupMembers, users, expenses, expenseSplits, settlements } from "../db/schema";
+import { groups, groupMembers, users, expenses, expenseSplits, settlements, activityLogs } from "../db/schema";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import { calculateBalances, calculateSuggestedSettlements } from "../utils/settlementEngine";
 
@@ -157,6 +157,13 @@ export const createGroup = async (request: AuthenticatedRequest, reply: FastifyR
       groupId: newGroup.id,
       userId: userId,
       role: "admin",
+    });
+
+    await db.insert(activityLogs).values({
+      groupId: newGroup.id,
+      userId: userId,
+      action: "Group Created",
+      description: `Created group "${name}"`,
     });
 
     return reply.code(201).send({ message: "Group created successfully", group: newGroup });

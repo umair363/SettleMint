@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { db } from "../db";
-import { settlements, users } from "../db/schema";
+import { settlements, users, activityLogs } from "../db/schema";
 import { eq, or } from "drizzle-orm";
 
 interface AuthenticatedRequest extends FastifyRequest {
@@ -37,7 +37,7 @@ export const createSettlement = async (request: AuthenticatedRequest, reply: Fas
 
     const { groupId, paidTo, amount, method, notes } = request.body as any;
 
-    if (!groupId || !paidTo || !amount) {
+    if (!paidTo || !amount) {
       return reply.code(400).send({ error: "Missing required fields" });
     }
 
@@ -49,6 +49,16 @@ export const createSettlement = async (request: AuthenticatedRequest, reply: Fas
       method: method || "cash",
       notes: notes || null,
     }).returning();
+
+    // Fetch receiver name for the activity log
+    const [receiver] = await db.select({ fullName: users.fullName }).from(users).where(eq(users.id, paidTo));
+    
+    await db.insert(activityLogs).values({
+      groupId: groupId || null,
+      userId: userId,
+      action: "Payment Recorded",
+      description: `Paid ${receiver?.fullName || "someone"} ${amount.toString()}`,
+    });
 
     return reply.code(201).send({ message: "Settlement recorded", settlement: newSettlement });
   } catch (error) {
