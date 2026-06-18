@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { db } from "../db";
-import { expenses, expenseSplits, groupMembers, users } from "../db/schema";
+import { expenses, expenseSplits, groupMembers, users, activityLogs } from "../db/schema";
 import { eq, and, or, inArray } from "drizzle-orm";
 import { sendExpenseAlertEmail } from "../utils/email";
 
@@ -147,6 +147,14 @@ export const createExpense = async (request: AuthenticatedRequest, reply: Fastif
       }));
 
       await tx.insert(expenseSplits).values(splitInserts);
+
+      // 3. Insert Activity Log
+      await tx.insert(activityLogs).values({
+        groupId: groupId || null,
+        userId: userId,
+        action: "Expense Created",
+        description: `Added "${description}" for ${currency || "USD"} ${amount.toString()}`,
+      });
 
       return insertedExpense;
     });
