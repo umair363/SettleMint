@@ -142,9 +142,13 @@ export default function GroupDetailPage() {
     ? expenses 
     : expenses.filter((e: any) => e.paidBy === currentUserId || false /* To-do: filter splits */);
 
-  // Temporary calculate totals (will be improved when we fetch actual split balances)
-  const myBalance = 0.00;
+  const myBalance = group.balances?.[currentUserId] || 0.00;
   const totalExpenses = expenses.reduce((sum: number, exp: any) => sum + parseFloat(exp.amount), 0);
+  const suggestedSettlements = group.suggestedSettlements || [];
+  
+  // Get currency symbol
+  const getSymbol = (curr: string) => curr === "USD" ? "$" : curr === "PKR" ? "Rs" : curr;
+  const sym = getSymbol(group.baseCurrency);
 
   return (
     <div className={styles.groupDetail}>
@@ -194,11 +198,11 @@ export default function GroupDetailPage() {
           <div className={styles.balanceMain}>
             <span className={styles.balanceLabel}>Your Balance</span>
             <span className={`${styles.balanceValue} ${myBalance > 0 ? styles.positive : myBalance < 0 ? styles.negative : styles.neutral}`}>
-              {myBalance > 0 ? '+' : ''}${Math.abs(myBalance).toFixed(2)}
+              {myBalance > 0 ? '+' : ''}{sym}{Math.abs(myBalance).toFixed(2)}
             </span>
           </div>
           
-          <Link href="/dashboard/settle" className={`btn btn-primary ${styles.settleBtn}`}>
+          <Link href={`/dashboard/settle?group=${groupId}`} className={`btn btn-primary ${styles.settleBtn}`}>
             Settle Up
           </Link>
         </div>
@@ -217,7 +221,7 @@ export default function GroupDetailPage() {
             )}
           </div>
           <span className={styles.membersText}>
-            Total group spending: ${totalExpenses.toFixed(2)}
+            Total group spending: {sym}{totalExpenses.toFixed(2)}
           </span>
         </div>
       </section>
@@ -265,7 +269,7 @@ export default function GroupDetailPage() {
                   </div>
                   
                   <div className={styles.expenseAmount}>
-                    <span className={styles.amount}>${parseFloat(exp.amount).toFixed(2)}</span>
+                    <span className={styles.amount}>{sym}{parseFloat(exp.amount).toFixed(2)}</span>
                   </div>
                 </Link>
               ))}
@@ -292,22 +296,32 @@ export default function GroupDetailPage() {
             <div className={styles.panelCard}>
               <h3 className={styles.panelTitle}>Suggested Settlements</h3>
               
-              {mockSettlements.map((s, i) => (
+              {suggestedSettlements.length > 0 ? suggestedSettlements.map((s: any, i: number) => (
                 <div key={i} className={styles.settlementItem}>
                   <div className={styles.settlementUsers}>
-                    <span>{s.from}</span>
+                    <span style={{ fontWeight: s.fromId === currentUserId ? 600 : 400 }}>
+                      {s.fromId === currentUserId ? "You" : s.from}
+                    </span>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className={styles.settlementArrow}>
                       <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
-                    <span>{s.to}</span>
+                    <span style={{ fontWeight: s.toId === currentUserId ? 600 : 400 }}>
+                      {s.toId === currentUserId ? "You" : s.to}
+                    </span>
                   </div>
-                  <span className={styles.settlementAmount}>${s.amount.toFixed(2)}</span>
+                  <span className={styles.settlementAmount}>{sym}{s.amount.toFixed(2)}</span>
                 </div>
-              ))}
+              )) : (
+                <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>
+                  Everyone is completely settled up! No debts. 🎉
+                </p>
+              )}
               
-              <Link href="/dashboard/settle" className={`btn btn-secondary ${styles.settlementAction}`}>
-                Record a payment
-              </Link>
+              {suggestedSettlements.length > 0 && (
+                <Link href={`/dashboard/settle?group=${groupId}`} className={`btn btn-secondary ${styles.settlementAction}`}>
+                  Record a payment
+                </Link>
+              )}
             </div>
           </div>
         </aside>
