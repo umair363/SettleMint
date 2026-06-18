@@ -7,7 +7,8 @@ export default async function authRoutes(server: FastifyInstance) {
   server.post("/login", authController.login);
   server.post("/verify-otp", authController.verifyOtp);
   server.post("/resend-otp", authController.resendOtp);
-
+  server.post("/forgot-password", authController.forgotPassword);
+  server.post("/reset-password", authController.resetPassword);
   // Protected route example
   server.get("/me", { preHandler: authenticate }, authController.me);
 }
