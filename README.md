@@ -1,83 +1,125 @@
-# SettleMint 🍃
+<div align="center">
+  <img src="app/src/app/icon.png" alt="SettleMint Logo" width="120" height="120" style="border-radius: 20%;" />
+  
+  <h1 align="center">SettleMint</h1>
 
-SettleMint is a modern, high-fidelity expense splitting and management application built for frictionless financial collaboration among friends and groups. Say goodbye to awkward money conversations and hello to smart, transparent bill splitting.
+  <p align="center">
+    <strong>Split expenses, not friendships.</strong>
+    <br />
+    A modern, high-fidelity expense management platform built for frictionless financial collaboration among friends, roommates, and travel groups.
+  </p>
 
-![SettleMint Architecture](https://img.shields.io/badge/Architecture-Monorepo-3DD68C?style=flat-square)
-![Next.js](https://img.shields.io/badge/Frontend-Next.js%2014-black?style=flat-square&logo=next.js)
-![Fastify](https://img.shields.io/badge/Backend-Fastify-202020?style=flat-square&logo=fastify)
-![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-316192?style=flat-square&logo=postgresql)
+  <p align="center">
+    <a href="https://settlemint.online"><strong>View Live App</strong></a> · 
+    <a href="#-features">Features</a> · 
+    <a href="#-tech-stack">Tech Stack</a> · 
+    <a href="#-getting-started">Getting Started</a>
+  </p>
 
-## 🌟 Features
+  <p align="center">
+    <img src="https://img.shields.io/badge/Next.js_14-black?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js" />
+    <img src="https://img.shields.io/badge/Fastify-202020?style=for-the-badge&logo=fastify&logoColor=white" alt="Fastify" />
+    <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+    <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+    <img src="https://img.shields.io/badge/Drizzle_ORM-C5F74F?style=for-the-badge&logo=drizzle&logoColor=black" alt="Drizzle" />
+  </p>
+</div>
 
-*   **1-on-1 Splitting**: Easily split expenses with individual friends directly, no group required.
-*   **Group Ledgers**: Manage complex housemate bills, vacation expenses, and group activities seamlessly.
-*   **Dynamic Currency**: Intelligent currency handling and formatting depending on group settings.
-*   **OTP Email Verification**: Robust and secure user authentication via Resend-powered one-time passwords.
-*   **Minimalist UI**: Built using premium "Anti-Slop" design principles, leveraging CSS modules, custom easing curves, and a monochromatic aesthetic with vibrant accents.
-*   **Responsive**: Flawlessly optimized across Desktop and Mobile devices.
+<br />
 
-## 🏗 System Architecture
+## 🌟 Overview
 
-The project is structured as a Turborepo-style monorepo, decoupled into two primary domains to ensure scalable deployments:
+SettleMint redefines how people manage shared finances. Say goodbye to awkward money conversations and chaotic spreadsheets. Whether it's a weekend getaway, shared apartment bills, or splitting a dinner check, SettleMint provides intelligent, transparent, and aesthetically premium bill splitting.
 
-1.  **/app (Frontend)**
-    *   **Framework**: Next.js (App Router)
-    *   **Styling**: Pure Vanilla CSS Modules (No Tailwind dependencies)
-    *   **State Management**: React Query (TanStack)
-    *   **Deployment**: Optimized for Vercel edge delivery.
+---
 
-2.  **/api (Backend)**
-    *   **Framework**: Fastify (Node.js)
-    *   **ORM**: Drizzle ORM
-    *   **Database**: PostgreSQL (Neon.tech)
-    *   **Authentication**: JWT & Bcrypt
-    *   **Deployment**: Optimized for Render / Railway continuous instances.
+## ✨ Key Features
+
+- **👫 1-on-1 Splitting**: Easily split expenses with individual friends directly—no group required.
+- **🏝️ Group Ledgers**: Seamlessly manage complex housemate bills, group vacations, and shared activities.
+- **🔐 Secure Authentication**: Robust, stateless JWT authentication featuring custom OTP email verification powered by Resend.
+- **✉️ Transactional Emails**: Beautifully formatted welcome emails, password resets, and automated expense alerts.
+- **💱 Dynamic Currencies**: Intelligent currency handling and formatting mapped strictly to group preferences.
+- **🎨 Premium Interface**: Built utilizing strict "Anti-Slop" design principles, custom easing curves, glassmorphism, and vanilla CSS modules for lightning-fast edge delivery.
+
+---
+
+## 🏗️ System Architecture
+
+The project is structured as a scalable, decoupled monorepo, perfectly primed for modern edge deployments.
+
+### 💻 Frontend (`/app`)
+- **Framework:** Next.js 14 (App Router)
+- **Styling:** Pure Vanilla CSS Modules (Zero-bloat architecture)
+- **State & Data Fetching:** React Query (TanStack)
+- **Deployment:** Vercel (Edge Network)
+
+### ⚙️ Backend (`/api`)
+- **Framework:** Fastify (Node.js)
+- **Database ORM:** Drizzle ORM
+- **Database:** PostgreSQL (Neon.tech Serverless)
+- **Security:** Bcrypt (Hashing) & JSON Web Tokens
+- **Mail Service:** Resend (Amazon SES)
+- **Deployment:** Render (Continuous Instances)
+
+---
 
 ## 🚀 Getting Started
 
-### Prerequisites
-*   Node.js v20+
-*   PostgreSQL database (Local or Cloud)
-*   Resend API Key (for email services)
+To get a local copy up and running, follow these simple steps.
 
-### 1. Backend Setup (`/api`)
-Navigate to the `api` directory to initialize the database and backend server.
+### Prerequisites
+- [Node.js](https://nodejs.org/en/) (v18 or higher)
+- A running PostgreSQL database instance (local or cloud)
+- A free [Resend](https://resend.com/) API Key for testing emails.
+
+### 1. Backend Initialization
+
+Navigate to the API directory and install dependencies:
 ```bash
 cd api
 npm install
 ```
-Create a `.env` file in the `api` folder:
+
+Create a `.env` file inside the `/api` directory:
 ```env
-DATABASE_URL=postgres://user:pass@host:port/dbname
-JWT_SECRET=your_super_secret_key
-RESEND_API_KEY=re_your_api_key
+DATABASE_URL=postgres://user:password@localhost:5432/settlemint
+JWT_SECRET=your_super_secret_jwt_key
+RESEND_API_KEY=re_your_resend_api_key
 EMAIL_FROM="SettleMint <onboarding@resend.dev>"
 PORT=8000
 ```
-Run database migrations and start the server:
+
+Push the database schema and start the server:
 ```bash
 npm run db:push
 npm run dev
 ```
 
-### 2. Frontend Setup (`/app`)
-In a new terminal window, navigate to the `app` directory.
+### 2. Frontend Initialization
+
+In a new terminal window, navigate to the frontend directory:
 ```bash
 cd app
 npm install
 ```
+
 Start the Next.js development server:
 ```bash
 npm run dev
 ```
-The frontend will be live at [http://localhost:3000](http://localhost:3000).
+The application will be live at `http://localhost:3000`.
 
-## 🔒 Security & Privacy
+---
 
-*   All passwords are cryptographically hashed using `bcrypt` before storage.
-*   API Routes are strictly guarded via Bearer Token JWT Middleware.
-*   All routes are stateless, ensuring secure cross-origin scaling.
+## 🔒 Security & Privacy Standard
 
-## 📜 License
+- Passwords are cryptographically hashed using **Bcrypt** prior to persistence.
+- REST endpoints are strictly guarded via Bearer Token JWT Middleware.
+- Email verification safeguards against spoofed account creation and brute-force resets.
 
-This project is proprietary and confidential. Unauthorized copying of this file, via any medium, is strictly prohibited.
+<br />
+
+<div align="center">
+  <sub>Built with ❤️ by Umair. <br /> Split expenses, not friendships.</sub>
+</div>
