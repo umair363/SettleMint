@@ -81,6 +81,29 @@ export const sendOTPEmail = async (email: string, fullName: string, otp: string)
   return sendEmail(email, "Your SettleMint Verification Code", otpHtml);
 };
 
+export const sendPasswordResetEmail = async (email: string, fullName: string, otp: string) => {
+  const otpHtml = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 2rem; color: #1e293b;">
+      <h1 style="color: #3DD68C; font-size: 24px; font-weight: 700; margin-bottom: 1rem;">Reset your password</h1>
+      <p style="font-size: 16px; line-height: 1.6; color: #475569;">
+        Hi ${fullName},
+      </p>
+      <p style="font-size: 16px; line-height: 1.6; color: #475569;">
+        We received a request to reset your SettleMint password. Use the code below to securely reset it. This code expires in 15 minutes.
+      </p>
+      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #0f1219;">
+        ${otp}
+      </div>
+      <p style="font-size: 14px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 1.5rem; margin-top: 2rem;">
+        If you didn't request this, you can safely ignore this email.
+        <br/><br/>
+        The SettleMint Team &middot; Built with care.
+      </p>
+    </div>
+  `;
+  return sendEmail(email, "Reset your SettleMint password", otpHtml);
+};
+
 export const sendExpenseAlertEmail = async (to: string, userName: string, payerName: string, description: string, amount: string, currency: string) => {
   const symbol = currency === "USD" ? "$" : currency === "PKR" ? "Rs" : currency;
   const alertHtml = `

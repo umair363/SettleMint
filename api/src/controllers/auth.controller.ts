@@ -4,7 +4,7 @@ import { users } from "../db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { sendWelcomeEmail, sendOTPEmail } from "../utils/email";
+import { sendWelcomeEmail, sendOTPEmail, sendPasswordResetEmail } from "../utils/email";
 
 const JWT_SECRET = process.env.JWT_SECRET || "super-secret-jwt-key-settlemint-123";
 
@@ -222,6 +222,78 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
       },
       token,
     });
+  } catch (error) {
+    request.log.error(error);
+    return reply.code(500).send({ error: "Internal Server Error" });
+  }
+};
+
+export const forgotPassword = async (request: FastifyRequest, reply: FastifyReply) => {
+  const { email } = request.body as any;
+
+  if (!email) {
+    return reply.code(400).send({ error: "Email is required." });
+  }
+
+  try {
+    const userRecords = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const user = userRecords[0];
+
+    if (!user) {
+      // Return 200 even if user doesn't exist to prevent email enumeration attacks
+      return reply.code(200).send({ message: "If that email is in our system, we've sent a reset code." });
+    }
+
+    const otpCode = generateOTP();
+    const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
+    await db.update(users)
+      .set({ otpCode, otpExpiresAt })
+      .where(eq(users.id, user.id));
+
+    sendPasswordResetEmail(email, user.fullName, otpCode).catch(err => {
+      request.log.error("Password reset email failed: ", err);
+    });
+
+    return reply.code(200).send({ message: "If that email is in our system, we've sent a reset code." });
+  } catch (error) {
+    request.log.error(error);
+    return reply.code(500).send({ error: "Internal Server Error" });
+  }
+};
+
+export const resetPassword = async (request: FastifyRequest, reply: FastifyReply) => {
+  const { email, otp, newPassword } = request.body as any;
+
+  if (!email || !otp || !newPassword) {
+    return reply.code(400).send({ error: "Email, OTP, and new password are required." });
+  }
+
+  try {
+    const userRecords = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const user = userRecords[0];
+
+    if (!user) {
+      return reply.code(404).send({ error: "User not found." });
+    }
+
+    if (user.otpCode !== otp) {
+      return reply.code(401).send({ error: "Invalid reset code." });
+    }
+
+    if (!user.otpExpiresAt || user.otpExpiresAt.getTime() < Date.now()) {
+      return reply.code(401).send({ error: "Reset code has expired. Please request a new one." });
+    }
+
+    // Hash new password
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(newPassword, saltRounds);
+
+    await db.update(users)
+      .set({ passwordHash, otpCode: null, otpExpiresAt: null })
+      .where(eq(users.id, user.id));
+
+    return reply.code(200).send({ message: "Password has been successfully reset. You can now log in." });
   } catch (error) {
     request.log.error(error);
     return reply.code(500).send({ error: "Internal Server Error" });
