@@ -154,7 +154,7 @@ export const createExpense = async (request: AuthenticatedRequest, reply: Fastif
             .then(([payer]) => {
               const payerName = payer?.fullName || "Someone";
               notifiedUsers.forEach((u) => {
-                sendExpenseAlertEmail(u.email, u.fullName, payerName, description, amount.toString(), "USD")
+                sendExpenseAlertEmail(u.email, u.fullName, payerName, description, amount.toString(), currency || "USD")
                   .catch(err => request.log.error("Expense alert email failed: ", err));
               });
             })
