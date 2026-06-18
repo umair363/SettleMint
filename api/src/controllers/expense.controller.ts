@@ -40,7 +40,18 @@ export const getMyExpenses = async (request: AuthenticatedRequest, reply: Fastif
       .where(or(eq(expenses.paidBy, userId), eq(expenseSplits.userId, userId)))
       .groupBy(expenses.id, users.fullName);
 
-    return reply.code(200).send({ expenses: userExpenses });
+    const expenseIds = userExpenses.map(e => e.id);
+    let splits: any[] = [];
+    if (expenseIds.length > 0) {
+      splits = await db.select().from(expenseSplits).where(inArray(expenseSplits.expenseId, expenseIds));
+    }
+
+    const expensesWithSplits = userExpenses.map(e => ({
+      ...e,
+      splits: splits.filter(s => s.expenseId === e.id)
+    }));
+
+    return reply.code(200).send({ expenses: expensesWithSplits });
   } catch (error) {
     request.log.error(error);
     return reply.code(500).send({ error: "Internal Server Error" });
