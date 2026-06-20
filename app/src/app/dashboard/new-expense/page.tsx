@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import styles from "./new-expense.module.css";
@@ -18,26 +18,30 @@ const categories = [
   { id: "other", label: "Other", emoji: "📌" },
 ];
 
-const splitTypes = [
-  { id: "equal", label: "Split Equally", description: "Divide evenly among all members" },
-  { id: "unequal", label: "Exact Amounts", description: "Enter specific amount per person" },
-  { id: "percentage", label: "By Percentage", description: "Split by percentage shares" },
-  { id: "shares", label: "By Shares", description: "2:1:1 ratio style splitting" },
-];
+type SplitType = "equal" | "unequal" | "percentage" | "shares";
+
+interface MemberSplit {
+  userId: string;
+  fullName: string;
+  checked: boolean; // for equal mode
+  value: string;    // amount | percentage | shares depending on mode
+}
 
 export default function NewExpensePage() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  
+
   const [expenseMode, setExpenseMode] = useState<"group" | "individual">("group");
-  
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [selectedGroup, setSelectedGroup] = useState("");
   const [selectedFriend, setSelectedFriend] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("food");
-  const [selectedSplit, setSelectedSplit] = useState("equal");
-  
+  const [splitType, setSplitType] = useState<SplitType>("equal");
+  const [paidByUserId, setPaidByUserId] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [notes, setNotes] = useState("");
+  const [memberSplits, setMemberSplits] = useState<MemberSplit[]>([]);
   const [token, setToken] = useState("");
   const [currentUserId, setCurrentUserId] = useState("");
   const [defaultCurrency, setDefaultCurrency] = useState("USD");
@@ -50,15 +54,15 @@ export default function NewExpensePage() {
       setToken(parsed.token);
       setCurrentUserId(parsed.user.id);
       setDefaultCurrency(parsed.user.defaultCurrency || "USD");
+      setPaidByUserId(parsed.user.id);
     }
   }, []);
 
-  // Fetch user's groups
   const { data: groupsData, isLoading: groupsLoading } = useQuery({
     queryKey: ["groups"],
     queryFn: async () => {
       const res = await fetch("https://settlemint.onrender.com/api/groups", {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch groups");
       return res.json();
@@ -67,12 +71,11 @@ export default function NewExpensePage() {
   });
   const groups = groupsData?.groups || [];
 
-  // Fetch user's friends
   const { data: friendsData, isLoading: friendsLoading } = useQuery({
     queryKey: ["friends"],
     queryFn: async () => {
       const res = await fetch("https://settlemint.onrender.com/api/friends", {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch friends");
       return res.json();
@@ -81,46 +84,189 @@ export default function NewExpensePage() {
   });
   const friends = friendsData?.friends || [];
 
-  // Fetch selected group details to get members for splitting
   const { data: selectedGroupData, isLoading: groupDetailsLoading } = useQuery({
     queryKey: ["group", selectedGroup],
     queryFn: async () => {
-      const res = await fetch(`https://settlemint.onrender.com/api/groups/${selectedGroup}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await fetch(
+        `https://settlemint.onrender.com/api/groups/${selectedGroup}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       if (!res.ok) throw new Error("Failed to fetch group details");
       return res.json();
     },
     enabled: !!token && !!selectedGroup && expenseMode === "group",
   });
 
-  const activeCurrency = expenseMode === "group" 
-    ? (selectedGroupData?.group?.baseCurrency || defaultCurrency) 
-    : defaultCurrency;
-  
+  const activeCurrency =
+    expenseMode === "group"
+      ? selectedGroupData?.group?.baseCurrency || defaultCurrency
+      : defaultCurrency;
   const sym = getCurrencySymbol(activeCurrency);
+
+  // When group members load, initialise the split rows
+  useEffect(() => {
+    const members = selectedGroupData?.group?.members || [];
+    if (members.length > 0) {
+      setMemberSplits(
+        members.map((m: any) => ({
+          userId: m.id,
+          fullName: m.fullName,
+          checked: true,
+          value: "",
+        }))
+      );
+      // Default paid-by to current user if they're a member
+      if (members.find((m: any) => m.id === currentUserId)) {
+        setPaidByUserId(currentUserId);
+      } else {
+        setPaidByUserId(members[0].id);
+      }
+    }
+  }, [selectedGroupData, currentUserId]);
+
+  // When individual friend selected, seed a 2-person split
+  useEffect(() => {
+    if (expenseMode === "individual" && selectedFriend && currentUserId) {
+      const friend = friends.find((f: any) => f.friendId === selectedFriend);
+      setMemberSplits([
+        { userId: currentUserId, fullName: "You", checked: true, value: "" },
+        {
+          userId: selectedFriend,
+          fullName: friend?.friendName || "Friend",
+          checked: true,
+          value: "",
+        },
+      ]);
+      setPaidByUserId(currentUserId);
+    }
+  }, [selectedFriend, expenseMode, currentUserId]);
+
+  // Derived: participants (checked in equal mode / always all in other modes)
+  const participants = useMemo(
+    () =>
+      splitType === "equal"
+        ? memberSplits.filter((m) => m.checked)
+        : memberSplits,
+    [memberSplits, splitType]
+  );
+
+  const totalAmount = parseFloat(amount) || 0;
+
+  // Validation helpers
+  const splitValidation = useMemo(() => {
+    if (!amount || totalAmount <= 0) return { valid: false, message: "" };
+    if (splitType === "equal") {
+      if (participants.length === 0)
+        return { valid: false, message: "Select at least one person to split with." };
+      return { valid: true, message: "" };
+    }
+    if (splitType === "unequal") {
+      const sum = memberSplits.reduce(
+        (acc, m) => acc + (parseFloat(m.value) || 0),
+        0
+      );
+      const diff = Math.abs(sum - totalAmount);
+      if (diff > 0.01)
+        return {
+          valid: false,
+          message: `Amounts must add up to ${sym}${totalAmount.toFixed(2)}. Current total: ${sym}${sum.toFixed(2)}.`,
+        };
+      return { valid: true, message: "" };
+    }
+    if (splitType === "percentage") {
+      const sum = memberSplits.reduce(
+        (acc, m) => acc + (parseFloat(m.value) || 0),
+        0
+      );
+      const diff = Math.abs(sum - 100);
+      if (diff > 0.01)
+        return {
+          valid: false,
+          message: `Percentages must add up to 100%. Current total: ${sum.toFixed(1)}%.`,
+        };
+      return { valid: true, message: "" };
+    }
+    if (splitType === "shares") {
+      const totalShares = memberSplits.reduce(
+        (acc, m) => acc + (parseFloat(m.value) || 0),
+        0
+      );
+      if (totalShares <= 0)
+        return { valid: false, message: "Enter at least one share value." };
+      return { valid: true, message: "" };
+    }
+    return { valid: true, message: "" };
+  }, [splitType, memberSplits, totalAmount, amount, sym]);
+
+  // Compute preview splits
+  const splitPreviews = useMemo(() => {
+    if (!totalAmount || memberSplits.length === 0) return [];
+    if (splitType === "equal") {
+      const n = participants.length || 1;
+      const per = totalAmount / n;
+      return memberSplits.map((m) => ({
+        userId: m.userId,
+        amountOwed: m.checked ? per : 0,
+        label: m.checked ? `${sym}${per.toFixed(2)}` : "excluded",
+      }));
+    }
+    if (splitType === "unequal") {
+      return memberSplits.map((m) => ({
+        userId: m.userId,
+        amountOwed: parseFloat(m.value) || 0,
+        label: `${sym}${(parseFloat(m.value) || 0).toFixed(2)}`,
+      }));
+    }
+    if (splitType === "percentage") {
+      return memberSplits.map((m) => {
+        const pct = parseFloat(m.value) || 0;
+        const amt = (pct / 100) * totalAmount;
+        return {
+          userId: m.userId,
+          amountOwed: amt,
+          label: `${sym}${amt.toFixed(2)} (${pct}%)`,
+        };
+      });
+    }
+    if (splitType === "shares") {
+      const totalShares = memberSplits.reduce(
+        (acc, m) => acc + (parseFloat(m.value) || 0),
+        0
+      );
+      return memberSplits.map((m) => {
+        const sh = parseFloat(m.value) || 0;
+        const amt = totalShares > 0 ? (sh / totalShares) * totalAmount : 0;
+        return {
+          userId: m.userId,
+          amountOwed: amt,
+          label: `${sym}${amt.toFixed(2)} (${sh} share${sh !== 1 ? "s" : ""})`,
+        };
+      });
+    }
+    return [];
+  }, [splitType, memberSplits, totalAmount, participants, sym]);
+
+  function updateMemberValue(userId: string, val: string) {
+    setMemberSplits((prev) =>
+      prev.map((m) => (m.userId === userId ? { ...m, value: val } : m))
+    );
+  }
+
+  function toggleMemberCheck(userId: string) {
+    setMemberSplits((prev) =>
+      prev.map((m) =>
+        m.userId === userId ? { ...m, checked: !m.checked } : m
+      )
+    );
+  }
 
   const createExpenseMutation = useMutation({
     mutationFn: async () => {
-      let splits = [];
-      const totalAmount = parseFloat(amount);
+      const splits = splitPreviews
+        .filter((s) => s.amountOwed > 0)
+        .map((s) => ({ userId: s.userId, amountOwed: s.amountOwed.toFixed(2) }));
 
-      if (expenseMode === "group") {
-        const members = selectedGroupData?.group?.members || [];
-        if (members.length === 0) throw new Error("Group has no members");
-        const perPerson = totalAmount / members.length;
-        splits = members.map((m: any) => ({
-          userId: m.id,
-          amountOwed: perPerson.toFixed(2),
-        }));
-      } else {
-        if (!selectedFriend) throw new Error("No friend selected");
-        const perPerson = totalAmount / 2;
-        splits = [
-          { userId: currentUserId, amountOwed: perPerson.toFixed(2) },
-          { userId: selectedFriend, amountOwed: perPerson.toFixed(2) }
-        ];
-      }
+      if (splits.length === 0) throw new Error("No valid splits.");
 
       const res = await fetch("https://settlemint.onrender.com/api/expenses", {
         method: "POST",
@@ -135,6 +281,9 @@ export default function NewExpensePage() {
           category: selectedCategory,
           splits,
           currency: activeCurrency,
+          paidBy: paidByUserId,
+          date,
+          notes: notes || null,
         }),
       });
 
@@ -147,90 +296,89 @@ export default function NewExpensePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       queryClient.invalidateQueries({ queryKey: ["group"] });
-      queryClient.invalidateQueries({ queryKey: ["all_expenses"] });
       queryClient.invalidateQueries({ queryKey: ["recent_expenses"] });
-      
+      queryClient.invalidateQueries({ queryKey: ["activity"] });
       if (expenseMode === "group") {
         router.push(`/dashboard/groups/${selectedGroup}`);
       } else {
         router.push(`/dashboard/friends`);
       }
     },
-    onError: (err: any) => {
-      setErrorMsg(err.message);
-    }
+    onError: (err: any) => setErrorMsg(err.message),
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
-    if (expenseMode === "group" && !selectedGroupData) {
-      setErrorMsg("Please wait for group details to load or select a valid group.");
-      return;
-    }
-    if (expenseMode === "individual" && !selectedFriend) {
-      setErrorMsg("Please select a friend to split with.");
+    if (!splitValidation.valid) {
+      setErrorMsg(splitValidation.message);
       return;
     }
     createExpenseMutation.mutate();
   };
 
+  const members = selectedGroupData?.group?.members || [];
+  const canSubmit =
+    !createExpenseMutation.isPending &&
+    !!amount &&
+    !!description &&
+    (expenseMode === "group"
+      ? !!selectedGroup && !groupDetailsLoading && members.length > 0
+      : !!selectedFriend) &&
+    splitValidation.valid;
+
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        <h2 className={styles.title}>Add Expense</h2>
-        <p className={styles.subtitle}>
-          Log a new shared expense with a group or a friend directly.
-        </p>
+        {/* Header */}
+        <div className={styles.pageHeader}>
+          <div>
+            <h1 className={styles.title}>Add Expense</h1>
+            <p className={styles.subtitle}>
+              Log a shared expense and split it exactly how you want.
+            </p>
+          </div>
+        </div>
 
-        {/* Mode Selector */}
-        <div style={{ display: "flex", gap: "1rem", marginBottom: "2rem", background: "var(--bg-secondary)", padding: "0.5rem", borderRadius: "12px" }}>
-          <button 
+        {/* Mode Toggle */}
+        <div className={styles.modeToggle}>
+          <button
             type="button"
+            className={`${styles.modeBtn} ${expenseMode === "group" ? styles.modeBtnActive : ""}`}
             onClick={() => setExpenseMode("group")}
-            style={{ 
-              flex: 1, 
-              padding: "0.8rem", 
-              borderRadius: "8px", 
-              border: "none", 
-              fontWeight: 600,
-              backgroundColor: expenseMode === "group" ? "var(--bg-primary)" : "transparent",
-              color: expenseMode === "group" ? "var(--text-primary)" : "var(--text-secondary)",
-              boxShadow: expenseMode === "group" ? "0 4px 12px rgba(0,0,0,0.1)" : "none",
-              cursor: "pointer",
-              transition: "all 0.2s"
-            }}
           >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
+              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
             With a Group
           </button>
-          <button 
+          <button
             type="button"
+            className={`${styles.modeBtn} ${expenseMode === "individual" ? styles.modeBtnActive : ""}`}
             onClick={() => setExpenseMode("individual")}
-            style={{ 
-              flex: 1, 
-              padding: "0.8rem", 
-              borderRadius: "8px", 
-              border: "none", 
-              fontWeight: 600,
-              backgroundColor: expenseMode === "individual" ? "var(--bg-primary)" : "transparent",
-              color: expenseMode === "individual" ? "var(--text-primary)" : "var(--text-secondary)",
-              boxShadow: expenseMode === "individual" ? "0 4px 12px rgba(0,0,0,0.1)" : "none",
-              cursor: "pointer",
-              transition: "all 0.2s"
-            }}
           >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2"/>
+              <path d="M4 20v-1a8 8 0 0116 0v1" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
             Individual Friend
           </button>
         </div>
 
         {errorMsg && (
-          <div style={{ color: "#ff6b6b", background: "rgba(255, 107, 107, 0.1)", border: "1px solid rgba(255, 107, 107, 0.2)", borderRadius: "8px", padding: "0.8rem 1rem", marginBottom: "1.5rem", fontSize: "0.9rem" }}>
+          <div className={styles.errorBanner}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+              <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
             {errorMsg}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className={styles.form}>
-          {/* Amount - Big hero input */}
+          {/* HERO: Amount + Currency */}
           <div className={styles.amountSection}>
             <span className={styles.currencyPrefix}>{sym}</span>
             <input
@@ -247,84 +395,99 @@ export default function NewExpensePage() {
             />
           </div>
 
-          {/* Description */}
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="expense-desc">What was it for?</label>
-            <input
-              id="expense-desc"
-              type="text"
-              className={styles.input}
-              placeholder='e.g. "Dinner at Sakura" or "Uber to airport"'
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
-            />
+          {/* Description + Date row */}
+          <div className={styles.twoCol}>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="expense-desc">Description</label>
+              <input
+                id="expense-desc"
+                type="text"
+                className={styles.input}
+                placeholder='e.g. "Dinner at Sakura"'
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                required
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="expense-date">Date</label>
+              <input
+                id="expense-date"
+                type="date"
+                className={styles.input}
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
+            </div>
           </div>
 
-          {/* Context Selector */}
+          {/* Context: Group or Friend */}
           <div className={styles.field}>
             <label className={styles.label}>{expenseMode === "group" ? "Group" : "Friend"}</label>
-            
-            {expenseMode === "group" ? (
-              <div className={styles.groupPicker}>
-                {groupsLoading ? (
-                  <div className="text-secondary" style={{ fontSize: "0.9rem" }}>Loading your groups...</div>
+            <div className={styles.chipPicker}>
+              {expenseMode === "group" ? (
+                groupsLoading ? (
+                  <span className={styles.loadingHint}>Loading groups…</span>
                 ) : groups.length === 0 ? (
-                  <div className="text-secondary" style={{ fontSize: "0.9rem" }}>No groups found. Create a group first!</div>
+                  <span className={styles.loadingHint}>No groups. Create one first.</span>
                 ) : (
                   groups.map((g: any) => (
                     <button
                       key={g.id}
                       type="button"
-                      className={`${styles.groupChip} ${selectedGroup === g.id ? styles.groupChipSelected : ""}`}
-                      onClick={() => {
-                        setSelectedGroup(g.id);
-                        setErrorMsg("");
-                      }}
+                      className={`${styles.chip} ${selectedGroup === g.id ? styles.chipSelected : ""}`}
+                      onClick={() => { setSelectedGroup(g.id); setErrorMsg(""); }}
                       style={{ "--chip-color": g.color || "#3DD68C" } as React.CSSProperties}
                     >
                       <span className={styles.chipDot} style={{ background: g.color || "#3DD68C" }} />
+                      {g.emoji && <span>{g.emoji}</span>}
                       {g.name}
                     </button>
                   ))
-                )}
-              </div>
-            ) : (
-              <div className={styles.groupPicker}>
-                {friendsLoading ? (
-                  <div className="text-secondary" style={{ fontSize: "0.9rem" }}>Loading your friends...</div>
+                )
+              ) : (
+                friendsLoading ? (
+                  <span className={styles.loadingHint}>Loading friends…</span>
                 ) : friends.length === 0 ? (
-                  <div className="text-secondary" style={{ fontSize: "0.9rem" }}>No friends found. Add friends first!</div>
+                  <span className={styles.loadingHint}>No friends yet. Add friends first.</span>
                 ) : (
                   friends.map((f: any) => (
                     <button
                       key={f.friendId}
                       type="button"
-                      className={`${styles.groupChip} ${selectedFriend === f.friendId ? styles.groupChipSelected : ""}`}
-                      onClick={() => {
-                        setSelectedFriend(f.friendId);
-                        setErrorMsg("");
-                      }}
-                      style={{ "--chip-color": "#4a90e2" } as React.CSSProperties}
+                      className={`${styles.chip} ${selectedFriend === f.friendId ? styles.chipSelected : ""}`}
+                      onClick={() => { setSelectedFriend(f.friendId); setErrorMsg(""); }}
+                      style={{ "--chip-color": "#5B8DEF" } as React.CSSProperties}
                     >
-                      {f.friendAvatar ? (
-                        <img src={f.friendAvatar} alt="" style={{ width: 16, height: 16, borderRadius: "50%", marginRight: 6 }} />
-                      ) : (
-                        <span className={styles.chipDot} style={{ background: "#4a90e2" }} />
-                      )}
+                      <span className={styles.chipAvatar}>{(f.friendName || "?")[0].toUpperCase()}</span>
                       {f.friendName}
                     </button>
                   ))
-                )}
-              </div>
-            )}
-            
-            {expenseMode === "group" && selectedGroup && groupDetailsLoading && (
-              <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "0.5rem" }}>
-                Loading splitting participants...
-              </div>
-            )}
+                )
+              )}
+            </div>
           </div>
+
+          {/* Paid By */}
+          {memberSplits.length > 0 && (
+            <div className={styles.field}>
+              <label className={styles.label}>Paid by</label>
+              <div className={styles.chipPicker}>
+                {memberSplits.map((m) => (
+                  <button
+                    key={m.userId}
+                    type="button"
+                    className={`${styles.chip} ${paidByUserId === m.userId ? styles.chipSelectedGreen : ""}`}
+                    onClick={() => setPaidByUserId(m.userId)}
+                    style={{ "--chip-color": "#3DD68C" } as React.CSSProperties}
+                  >
+                    <span className={styles.chipAvatar}>{m.fullName[0].toUpperCase()}</span>
+                    {m.userId === currentUserId ? "You" : m.fullName}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Category */}
           <div className={styles.field}>
@@ -344,37 +507,147 @@ export default function NewExpensePage() {
             </div>
           </div>
 
-          {/* Split type */}
-          <div className={styles.field}>
-            <label className={styles.label}>How to split</label>
-            <div className={styles.splitOptions}>
-              {splitTypes.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  className={`${styles.splitOption} ${selectedSplit === s.id ? styles.splitOptionSelected : ""}`}
-                  onClick={() => setSelectedSplit(s.id)}
-                >
-                  <span className={styles.splitLabel}>{s.label}</span>
-                  <span className={styles.splitDesc}>{s.description}</span>
-                </button>
-              ))}
+          {/* Split Controls */}
+          {memberSplits.length > 0 && (
+            <div className={styles.field}>
+              <label className={styles.label}>How to split</label>
+
+              {/* Split type tabs */}
+              <div className={styles.splitTabs}>
+                {(["equal", "unequal", "percentage", "shares"] as SplitType[]).map((t) => {
+                  const labels: Record<SplitType, string> = {
+                    equal: "Equal",
+                    unequal: "Exact amounts",
+                    percentage: "Percentages",
+                    shares: "Shares (ratio)",
+                  };
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      className={`${styles.splitTab} ${splitType === t ? styles.splitTabActive : ""}`}
+                      onClick={() => setSplitType(t)}
+                    >
+                      {labels[t]}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Per-member inputs */}
+              <div className={styles.splitTable}>
+                {memberSplits.map((m, idx) => {
+                  const preview = splitPreviews[idx];
+                  return (
+                    <div key={m.userId} className={styles.splitRow}>
+                      {/* Equal: toggle checkbox */}
+                      {splitType === "equal" && (
+                        <button
+                          type="button"
+                          className={`${styles.splitCheck} ${m.checked ? styles.splitCheckOn : ""}`}
+                          onClick={() => toggleMemberCheck(m.userId)}
+                          aria-label={m.checked ? "Exclude" : "Include"}
+                        >
+                          {m.checked && (
+                            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                              <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                        </button>
+                      )}
+
+                      {/* Avatar + name */}
+                      <div className={styles.splitAvatar}>
+                        {m.fullName[0].toUpperCase()}
+                      </div>
+                      <span className={`${styles.splitName} ${splitType === "equal" && !m.checked ? styles.splitNameDimmed : ""}`}>
+                        {m.userId === currentUserId ? "You" : m.fullName}
+                      </span>
+
+                      {/* Input for non-equal types */}
+                      {splitType !== "equal" && (
+                        <div className={styles.splitInputWrapper}>
+                          {splitType === "unequal" && (
+                            <span className={styles.splitInputPrefix}>{sym}</span>
+                          )}
+                          <input
+                            type="number"
+                            className={styles.splitInput}
+                            placeholder={
+                              splitType === "unequal"
+                                ? "0.00"
+                                : splitType === "percentage"
+                                ? "0"
+                                : "1"
+                            }
+                            value={m.value}
+                            onChange={(e) => updateMemberValue(m.userId, e.target.value)}
+                            min="0"
+                            step={splitType === "unequal" ? "0.01" : "1"}
+                          />
+                          {splitType === "percentage" && (
+                            <span className={styles.splitInputSuffix}>%</span>
+                          )}
+                          {splitType === "shares" && (
+                            <span className={styles.splitInputSuffix}>sh</span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Preview amount */}
+                      <span className={`${styles.splitPreview} ${preview && preview.amountOwed > 0 ? styles.splitPreviewActive : ""}`}>
+                        {preview ? preview.label : "—"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Validation hint */}
+              {!splitValidation.valid && splitValidation.message && (
+                <p className={styles.splitError}>{splitValidation.message}</p>
+              )}
+              {splitValidation.valid && totalAmount > 0 && (
+                <p className={styles.splitSuccess}>
+                  ✓ Splits add up correctly
+                </p>
+              )}
             </div>
+          )}
+
+          {/* Notes */}
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="expense-notes">Notes (optional)</label>
+            <textarea
+              id="expense-notes"
+              className={`${styles.input} ${styles.textarea}`}
+              placeholder="Any extra details..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+            />
           </div>
 
           {/* Submit */}
           <button
             type="submit"
-            className={`btn btn-primary btn-lg ${styles.submitBtn}`}
-            disabled={
-              createExpenseMutation.isPending || 
-              !amount || 
-              !description || 
-              (expenseMode === "group" ? !selectedGroup || groupDetailsLoading : !selectedFriend)
-            }
+            className={`btn btn-primary ${styles.submitBtn}`}
+            disabled={!canSubmit}
             id="expense-submit"
           >
-            {createExpenseMutation.isPending ? "Adding..." : "Add Expense"}
+            {createExpenseMutation.isPending ? (
+              <>
+                <span className={styles.spinner} />
+                Adding…
+              </>
+            ) : (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+                </svg>
+                Add Expense
+              </>
+            )}
           </button>
         </form>
       </div>

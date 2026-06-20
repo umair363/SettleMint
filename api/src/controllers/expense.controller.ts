@@ -106,11 +106,14 @@ export const createExpense = async (request: AuthenticatedRequest, reply: Fastif
     const userId = request.user?.id;
     if (!userId) return reply.code(401).send({ error: "Unauthorized" });
 
-    const { groupId, description, amount, category, notes, splits, currency } = request.body as any;
+    const { groupId, description, amount, category, notes, splits, currency, paidBy: paidByOverride, date } = request.body as any;
 
     if (!description || !amount || !splits || !Array.isArray(splits)) {
       return reply.code(400).send({ error: "Missing required fields" });
     }
+
+    // Allow caller to specify who paid (must be a group member or the requester)
+    const actualPaidBy = paidByOverride || userId;
 
     if (groupId) {
       // Verify user is in the group
@@ -129,13 +132,14 @@ export const createExpense = async (request: AuthenticatedRequest, reply: Fastif
     const newExpense = await db.transaction(async (tx) => {
       // 1. Insert Expense
       const [insertedExpense] = await tx.insert(expenses).values({
-        groupId,
+        groupId: groupId || null,
         description,
         amount: amount.toString(),
-        paidBy: userId,
-        category: category || "General",
+        paidBy: actualPaidBy,
+        category: category || "other",
         notes: notes || null,
         currency: currency || "USD",
+        date: date ? new Date(date) : new Date(),
       }).returning();
 
       // 2. Insert Splits
@@ -143,7 +147,8 @@ export const createExpense = async (request: AuthenticatedRequest, reply: Fastif
         expenseId: insertedExpense.id,
         userId: split.userId,
         amountOwed: split.amountOwed.toString(),
-        isSettled: split.userId === userId ? true : false, // Payer doesn't owe themselves
+        // Payer's own split is pre-settled — they don't owe themselves
+        isSettled: split.userId === actualPaidBy,
       }));
 
       await tx.insert(expenseSplits).values(splitInserts);
