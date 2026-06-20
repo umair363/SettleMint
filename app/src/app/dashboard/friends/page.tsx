@@ -1,18 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Skeleton from "@/components/Skeleton";
+import styles from "./friends.module.css";
+import { getCurrencySymbol } from "@/utils/currency";
 
 export default function FriendsPage() {
   const [token, setToken] = useState("");
+  const [currentUserId, setCurrentUserId] = useState("");
+  const [defaultCurrency, setDefaultCurrency] = useState("USD");
   const [email, setEmail] = useState("");
+  const [addError, setAddError] = useState("");
   const queryClient = useQueryClient();
 
   useEffect(() => {
     const session = localStorage.getItem("settlemint_session");
     if (session) {
-      setToken(JSON.parse(session).token);
+      const parsed = JSON.parse(session);
+      setToken(parsed.token);
+      setCurrentUserId(parsed.user.id);
+      setDefaultCurrency(parsed.user.defaultCurrency || "USD");
     }
   }, []);
 
@@ -20,7 +29,7 @@ export default function FriendsPage() {
     queryKey: ["friends"],
     queryFn: async () => {
       const res = await fetch("https://settlemint.onrender.com/api/friends", {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch friends");
       return res.json();
@@ -32,83 +41,121 @@ export default function FriendsPage() {
     mutationFn: async (friendEmail: string) => {
       const res = await fetch("https://settlemint.onrender.com/api/friends", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ email: friendEmail })
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ email: friendEmail }),
       });
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to add friend");
+        const d = await res.json();
+        throw new Error(d.error || "Failed to add friend");
       }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["friends"] });
       setEmail("");
+      setAddError("");
     },
-    onError: (error: any) => {
-      alert(error.message);
-    }
+    onError: (err: any) => setAddError(err.message),
   });
 
   const friends = data?.friends || [];
+  const sym = getCurrencySymbol(defaultCurrency);
 
   return (
-    <div style={{ maxWidth: "800px", margin: "0 auto", padding: "2rem" }}>
-      <div style={{ marginBottom: "2rem", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "1rem" }}>
+    <div className={styles.page}>
+      {/* Header */}
+      <div className={styles.header}>
         <div>
-          <h1 style={{ fontSize: "2rem", fontWeight: "600", color: "var(--text-primary)" }}>Friends</h1>
-          <p style={{ color: "var(--text-secondary)", marginTop: "0.5rem" }}>
-            Split expenses 1-on-1 without creating a group.
-          </p>
+          <h1 className={styles.title}>Friends</h1>
+          <p className={styles.subtitle}>Split expenses 1-on-1, no group needed.</p>
         </div>
-        
-        <form 
-          onSubmit={(e) => { e.preventDefault(); if (email) addFriendMutation.mutate(email); }}
-          style={{ display: "flex", gap: "0.5rem" }}
+
+        <form
+          className={styles.addForm}
+          onSubmit={(e) => {
+            e.preventDefault();
+            setAddError("");
+            if (email) addFriendMutation.mutate(email);
+          }}
         >
-          <input 
-            type="email" 
-            placeholder="Friend's email" 
+          <input
+            type="email"
+            placeholder="Add by email address…"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            style={{ padding: "0.75rem 1rem", borderRadius: "8px", border: "1px solid var(--border-default)", background: "var(--bg-input)", color: "var(--text-primary)", outline: "none", width: "250px" }}
+            className={styles.emailInput}
             required
           />
-          <button 
+          <button
             type="submit"
-            disabled={addFriendMutation.isPending}
-            style={{ background: "var(--brand-mint)", color: "var(--slate-900)", padding: "0 1.5rem", borderRadius: "8px", fontWeight: "600", cursor: "pointer", border: "none", opacity: addFriendMutation.isPending ? 0.7 : 1 }}
+            className={`btn btn-primary ${styles.addBtn}`}
+            disabled={addFriendMutation.isPending || !email}
           >
-            {addFriendMutation.isPending ? "Adding..." : "Add Friend"}
+            {addFriendMutation.isPending ? "Adding…" : "Add Friend"}
           </button>
         </form>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      {addError && (
+        <div className={styles.errorBanner}>{addError}</div>
+      )}
+
+      {/* Friends list */}
+      <div className={styles.list}>
         {isLoading ? (
-          <>
-            <Skeleton height="70px" borderRadius="12px" />
-            <Skeleton height="70px" borderRadius="12px" />
-          </>
+          [...Array(3)].map((_, i) => <Skeleton key={i} height="84px" borderRadius="14px" />)
         ) : friends.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "3rem", color: "var(--text-secondary)", border: "1px dashed var(--border-default)", borderRadius: "12px" }}>
-            No friends yet. Add someone by their email to start splitting!
+          <div className={styles.empty}>
+            <span className={styles.emptyIcon}>🤝</span>
+            <h3 className={styles.emptyTitle}>No friends yet</h3>
+            <p className={styles.emptyText}>
+              Add a friend by their email to start splitting expenses 1-on-1.
+            </p>
           </div>
         ) : (
-          friends.map((friend: any) => (
-            <div key={friend.friendshipId} style={{ padding: "1.25rem", background: "var(--bg-card)", border: "1px solid var(--border-default)", borderRadius: "12px", display: "flex", alignItems: "center", gap: "1rem" }}>
-              <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "var(--slate-700)", color: "var(--text-primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.25rem", fontWeight: "600" }}>
-                {friend.friendName.charAt(0).toUpperCase()}
+          friends.map((friend: any) => {
+            const initials = (friend.friendName || "?").charAt(0).toUpperCase();
+            const balance = friend.balance || 0; // future: API will return this
+            const isPositive = balance >= 0;
+
+            return (
+              <div key={friend.friendshipId} className={styles.friendRow}>
+                <div className={styles.avatar}>{initials}</div>
+
+                <div className={styles.friendInfo}>
+                  <span className={styles.friendName}>{friend.friendName}</span>
+                  <span className={styles.friendEmail}>{friend.friendEmail || ""}</span>
+                </div>
+
+                <div className={styles.balanceArea}>
+                  {balance !== 0 ? (
+                    <span className={`${styles.balance} ${isPositive ? styles.owed : styles.owes}`}>
+                      {isPositive ? `They owe you ${sym}${Math.abs(balance).toFixed(2)}` : `You owe ${sym}${Math.abs(balance).toFixed(2)}`}
+                    </span>
+                  ) : (
+                    <span className={styles.settled}>All settled ✓</span>
+                  )}
+                </div>
+
+                <div className={styles.actions}>
+                  <Link
+                    href={`/dashboard/new-expense?friend=${friend.friendId}`}
+                    className={`btn btn-secondary ${styles.actionBtn}`}
+                  >
+                    Add expense
+                  </Link>
+                  {balance !== 0 && (
+                    <Link
+                      href={`/dashboard/settle?friend=${friend.friendId}`}
+                      className={`btn btn-primary ${styles.actionBtn}`}
+                    >
+                      Settle up
+                    </Link>
+                  )}
+                </div>
               </div>
-              <div style={{ flex: 1 }}>
-                <p style={{ color: "var(--text-primary)", fontWeight: "600", fontSize: "1.1rem" }}>{friend.friendName}</p>
-                <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", marginTop: "0.15rem" }}>Status: {friend.status}</p>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

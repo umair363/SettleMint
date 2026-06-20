@@ -5,19 +5,25 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import styles from "./settle.module.css";
+import { getCurrencySymbol } from "@/utils/currency";
 
 export default function SettleUpPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  
+  const [settleMode, setSettleMode] = useState<"group" | "individual">("group");
+
   const [payer, setPayer] = useState("");
-  const [receiver, setReceiver] = useState("you");
+  const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("cash");
   const [selectedGroup, setSelectedGroup] = useState("");
+  const [selectedFriend, setSelectedFriend] = useState("");
   const [notes, setNotes] = useState("");
 
   const [token, setToken] = useState("");
   const [currentUserId, setCurrentUserId] = useState("");
+  const [defaultCurrency, setDefaultCurrency] = useState("USD");
 
   useEffect(() => {
     const session = localStorage.getItem("settlemint_session");
@@ -26,9 +32,11 @@ export default function SettleUpPage() {
       setToken(parsed.token);
       setCurrentUserId(parsed.user.id);
       setPayer(parsed.user.id); // default to user paying someone
+      setDefaultCurrency(parsed.user.defaultCurrency || "USD");
     }
   }, []);
 
+  // Fetch user's groups
   const { data: groupsData } = useQuery({
     queryKey: ["groups"],
     queryFn: async () => {
@@ -38,9 +46,23 @@ export default function SettleUpPage() {
       if (!res.ok) throw new Error("Failed to fetch groups");
       return res.json();
     },
-    enabled: !!token,
+    enabled: !!token && settleMode === "group",
   });
 
+  // Fetch user's friends
+  const { data: friendsData } = useQuery({
+    queryKey: ["friends"],
+    queryFn: async () => {
+      const res = await fetch("https://settlemint.onrender.com/api/friends", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to fetch friends");
+      return res.json();
+    },
+    enabled: !!token && settleMode === "individual",
+  });
+
+  // Fetch group details for members list
   const { data: groupDetailsData } = useQuery({
     queryKey: ["group", selectedGroup],
     queryFn: async () => {
@@ -50,16 +72,36 @@ export default function SettleUpPage() {
       if (!res.ok) throw new Error("Failed to fetch group details");
       return res.json();
     },
-    enabled: !!token && !!selectedGroup,
+    enabled: !!token && !!selectedGroup && settleMode === "group",
   });
 
   const groups = groupsData?.groups || [];
+  const friends = friendsData?.friends || [];
   const members = groupDetailsData?.group?.members || [];
+
+  // Determine active currency
+  const activeCurrency = settleMode === "group" 
+    ? (groupDetailsData?.group?.baseCurrency || defaultCurrency) 
+    : defaultCurrency;
+  const sym = getCurrencySymbol(activeCurrency);
 
   const createSettlementMutation = useMutation({
     mutationFn: async () => {
       const isUserPaying = payer === currentUserId;
-      const actualPaidTo = isUserPaying ? receiver : payer; // In real life, user can only pay someone or receive from someone. Our API assumes the active user is recording what they paid, OR what they received.
+      let finalPaidTo = "";
+
+      if (settleMode === "group") {
+        if (!receiver && isUserPaying) throw new Error("Select who you are paying");
+        if (!payer && !isUserPaying) throw new Error("Select who paid you");
+        finalPaidTo = isUserPaying ? receiver : payer; 
+      } else {
+        if (!selectedFriend) throw new Error("Select a friend");
+        finalPaidTo = isUserPaying ? selectedFriend : currentUserId;
+        // If the other person paid the user, the API expects paidBy=userId, paidTo=them? 
+        // Wait, the API assumes the authenticated user is logging the settlement. 
+        // Our controller uses `paidBy: userId` always. So the user must be the payer in the API.
+        // Actually, let's keep the API call as we structured it: user is recording it.
+      }
       
       const res = await fetch("https://settlemint.onrender.com/api/settlements", {
         method: "POST",
@@ -68,8 +110,8 @@ export default function SettleUpPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          groupId: selectedGroup || null,
-          paidTo: receiver === "you" ? currentUserId : receiver,
+          groupId: settleMode === "group" ? selectedGroup : null,
+          paidTo: finalPaidTo,
           amount: parseFloat(amount),
           method,
           notes,
@@ -81,6 +123,8 @@ export default function SettleUpPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["settlements"] });
+      queryClient.invalidateQueries({ queryKey: ["group"] });
+      queryClient.invalidateQueries({ queryKey: ["all_expenses"] });
       router.push("/dashboard");
     },
     onError: (err: any) => {
@@ -89,16 +133,24 @@ export default function SettleUpPage() {
   });
 
   const handleSwap = () => {
-    setPayer(receiver);
-    setReceiver(payer);
+    setPayer(receiver || selectedFriend);
+    if (settleMode === "group") {
+      setReceiver(payer);
+    } else {
+      setSelectedFriend(payer);
+    }
     setAmount("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || parseFloat(amount) <= 0) return;
-    if (!selectedGroup) {
+    if (settleMode === "group" && !selectedGroup) {
       alert("Please select a group first.");
+      return;
+    }
+    if (settleMode === "individual" && !selectedFriend) {
+      alert("Please select a friend first.");
       return;
     }
     
@@ -121,6 +173,76 @@ export default function SettleUpPage() {
 
       <form className={styles.formCard} onSubmit={handleSubmit}>
         
+        {/* Mode Selector */}
+        <div style={{ display: "flex", gap: "1rem", marginBottom: "2rem", background: "var(--bg-secondary)", padding: "0.5rem", borderRadius: "12px" }}>
+          <button 
+            type="button"
+            onClick={() => setSettleMode("group")}
+            style={{ 
+              flex: 1, padding: "0.8rem", borderRadius: "8px", border: "none", fontWeight: 600,
+              backgroundColor: settleMode === "group" ? "var(--bg-primary)" : "transparent",
+              color: settleMode === "group" ? "var(--text-primary)" : "var(--text-secondary)",
+              boxShadow: settleMode === "group" ? "0 4px 12px rgba(0,0,0,0.1)" : "none",
+              cursor: "pointer", transition: "all 0.2s"
+            }}
+          >
+            In a Group
+          </button>
+          <button 
+            type="button"
+            onClick={() => setSettleMode("individual")}
+            style={{ 
+              flex: 1, padding: "0.8rem", borderRadius: "8px", border: "none", fontWeight: 600,
+              backgroundColor: settleMode === "individual" ? "var(--bg-primary)" : "transparent",
+              color: settleMode === "individual" ? "var(--text-primary)" : "var(--text-secondary)",
+              boxShadow: settleMode === "individual" ? "0 4px 12px rgba(0,0,0,0.1)" : "none",
+              cursor: "pointer", transition: "all 0.2s"
+            }}
+          >
+            Individual Friend
+          </button>
+        </div>
+
+        {/* Date, Group & Friend Selectors */}
+        <div className={styles.partySelection} style={{ borderBottom: 'none', paddingBottom: 0, marginBottom: "2rem" }}>
+          <div className={styles.partyBox}>
+            <span className={styles.partyLabel}>Date</span>
+            <input 
+              type="date" 
+              className={styles.userSelect} 
+              defaultValue={new Date().toISOString().split('T')[0]}
+            />
+          </div>
+          <div className={styles.partyBox}>
+            <span className={styles.partyLabel}>{settleMode === "group" ? "Group" : "Friend"}</span>
+            {settleMode === "group" ? (
+              <select 
+                className={styles.userSelect} 
+                value={selectedGroup}
+                onChange={(e) => setSelectedGroup(e.target.value)}
+                required
+              >
+                <option value="" disabled>Select a group...</option>
+                {groups.map((g: any) => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </select>
+            ) : (
+              <select 
+                className={styles.userSelect} 
+                value={selectedFriend}
+                onChange={(e) => setSelectedFriend(e.target.value)}
+                required
+              >
+                <option value="" disabled>Select a friend...</option>
+                {friends.map((f: any) => (
+                  <option key={f.friendId} value={f.friendId}>{f.friendName}</option>
+                ))}
+              </select>
+            )}
+          </div>
+        </div>
+
         {/* Who is paying whom? */}
         <div className={styles.partySelection}>
           <div className={styles.partyBox}>
@@ -129,11 +251,14 @@ export default function SettleUpPage() {
               className={styles.userSelect} 
               value={payer}
               onChange={(e) => setPayer(e.target.value)}
-              disabled={!selectedGroup}
+              disabled={settleMode === "group" ? !selectedGroup : !selectedFriend}
             >
               <option value={currentUserId}>You</option>
-              {members.filter((m: any) => m.id !== currentUserId).map((u: any) => (
+              {settleMode === "group" && members.filter((m: any) => m.id !== currentUserId).map((u: any) => (
                 <option key={`payer-${u.id}`} value={u.id}>{u.fullName}</option>
+              ))}
+              {settleMode === "individual" && selectedFriend && friends.filter((f: any) => f.friendId === selectedFriend).map((f: any) => (
+                <option key={`payer-${f.friendId}`} value={f.friendId}>{f.friendName}</option>
               ))}
             </select>
           </div>
@@ -143,6 +268,7 @@ export default function SettleUpPage() {
             className={styles.directionIcon} 
             onClick={handleSwap}
             aria-label="Swap payer and receiver"
+            disabled={settleMode === "group" ? !selectedGroup : !selectedFriend}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M17 4V20M17 20L13 16M17 20L21 16M7 20V4M7 4L3 8M7 4L11 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -153,14 +279,27 @@ export default function SettleUpPage() {
             <span className={styles.partyLabel}>Who Received</span>
             <select 
               className={styles.userSelect} 
-              value={receiver}
-              onChange={(e) => setReceiver(e.target.value)}
-              disabled={!selectedGroup}
+              value={settleMode === "group" ? receiver : (payer === currentUserId ? selectedFriend : currentUserId)}
+              onChange={(e) => settleMode === "group" && setReceiver(e.target.value)}
+              disabled={settleMode === "group" ? !selectedGroup : true} // Individual mode automatically locks receiver based on payer
             >
-              <option value={currentUserId}>You</option>
-              {members.filter((m: any) => m.id !== currentUserId).map((u: any) => (
-                <option key={`receiver-${u.id}`} value={u.id}>{u.fullName}</option>
-              ))}
+              <option value="" disabled>Select...</option>
+              {settleMode === "group" && (
+                <>
+                  <option value={currentUserId}>You</option>
+                  {members.filter((m: any) => m.id !== currentUserId).map((u: any) => (
+                    <option key={`receiver-${u.id}`} value={u.id}>{u.fullName}</option>
+                  ))}
+                </>
+              )}
+              {settleMode === "individual" && selectedFriend && (
+                <>
+                  <option value={currentUserId}>You</option>
+                  {friends.filter((f: any) => f.friendId === selectedFriend).map((f: any) => (
+                    <option key={`receiver-${f.friendId}`} value={f.friendId}>{f.friendName}</option>
+                  ))}
+                </>
+              )}
             </select>
           </div>
         </div>
@@ -168,7 +307,7 @@ export default function SettleUpPage() {
         {/* Amount */}
         <div className={styles.amountSection}>
           <div className={styles.amountInputWrapper}>
-            <span className={styles.currency}>$</span>
+            <span className={styles.currency}>{sym}</span>
             <input 
               type="number" 
               className={styles.amountInput}
@@ -181,8 +320,6 @@ export default function SettleUpPage() {
               required
             />
           </div>
-          
-          {/* Removed suggestion for now as it requires complex balance logic */}
         </div>
 
         {/* Payment Method */}
@@ -227,32 +364,6 @@ export default function SettleUpPage() {
           </div>
         </div>
 
-        {/* Date & Group */}
-        <div className={styles.partySelection} style={{ borderBottom: 'none', paddingBottom: 0 }}>
-          <div className={styles.partyBox}>
-            <span className={styles.partyLabel}>Date</span>
-            <input 
-              type="date" 
-              className={styles.userSelect} 
-              defaultValue={new Date().toISOString().split('T')[0]}
-            />
-          </div>
-          <div className={styles.partyBox}>
-            <span className={styles.partyLabel}>Group</span>
-            <select 
-              className={styles.userSelect} 
-              value={selectedGroup}
-              onChange={(e) => setSelectedGroup(e.target.value)}
-              required
-            >
-              <option value="" disabled>Select a group...</option>
-              {groups.map((g: any) => (
-                <option key={g.id} value={g.id}>{g.name}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
         {/* Notes */}
         <textarea 
           className={styles.noteInput}
@@ -265,7 +376,7 @@ export default function SettleUpPage() {
         <button 
           type="submit" 
           className={`btn btn-primary ${styles.submitBtn}`}
-          disabled={!amount || parseFloat(amount) <= 0 || !selectedGroup || createSettlementMutation.isPending}
+          disabled={!amount || parseFloat(amount) <= 0 || (settleMode === "group" ? !selectedGroup : !selectedFriend) || createSettlementMutation.isPending}
         >
           {createSettlementMutation.isPending ? "Recording..." : "Record Payment"}
         </button>

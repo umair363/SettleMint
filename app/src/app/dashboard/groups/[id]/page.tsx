@@ -6,85 +6,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import styles from "./group-detail.module.css";
 
-// --- Mock Data ---
-const mockGroup = {
-  id: "g1",
-  name: "SE Asia Trip",
-  emoji: "✈️",
-  color: "#5B8DEF",
-  mode: "Trip",
-  currency: "USD",
-  createdAt: "2026-05-10T10:00:00Z",
-  members: [
-    { id: "u1", name: "You", avatar: "Y" },
-    { id: "u2", name: "Sarah", avatar: "S" },
-    { id: "u3", name: "Hamza", avatar: "H" },
-    { id: "u4", name: "Ali", avatar: "A" },
-    { id: "u5", name: "Zara", avatar: "Z" },
-  ],
-  myBalance: 247.50, // Positive means I am owed
-  totalExpenses: 1450.25,
-};
-
-const mockExpenses = [
-  {
-    id: "e1",
-    description: "Airbnb Bangkok (4 nights)",
-    amount: 450.00,
-    paidBy: "u1", // You
-    paidByName: "You",
-    date: "2026-06-12",
-    category: "Lodging",
-    categoryIcon: "🏠",
-    color: "#B197FC",
-    splitSummary: "You lent $360.00",
-    splitStatus: "lent", // 'lent', 'borrowed', 'settled'
-  },
-  {
-    id: "e2",
-    description: "Dinner at Night Market",
-    amount: 85.50,
-    paidBy: "u2", // Sarah
-    paidByName: "Sarah",
-    date: "2026-06-13",
-    category: "Food",
-    categoryIcon: "🍜",
-    color: "#FF6B6B",
-    splitSummary: "You borrowed $17.10",
-    splitStatus: "borrowed",
-  },
-  {
-    id: "e3",
-    description: "Train to Chiang Mai",
-    amount: 120.00,
-    paidBy: "u3", // Hamza
-    paidByName: "Hamza",
-    date: "2026-06-14",
-    category: "Transport",
-    categoryIcon: "🚆",
-    color: "#5B8DEF",
-    splitSummary: "You borrowed $24.00",
-    splitStatus: "borrowed",
-  },
-  {
-    id: "e4",
-    description: "TukTuk rides",
-    amount: 15.00,
-    paidBy: "u1", // You
-    paidByName: "You",
-    date: "2026-06-14",
-    category: "Transport",
-    categoryIcon: "🚕",
-    color: "#5B8DEF",
-    splitSummary: "You lent $12.00",
-    splitStatus: "lent",
-  }
-];
-
-const mockSettlements = [
-  { from: "Hamza", to: "You", amount: 120.50 },
-  { from: "Sarah", to: "You", amount: 127.00 },
-];
 
 export default function GroupDetailPage() {
   const params = useParams();
@@ -93,6 +14,8 @@ export default function GroupDetailPage() {
   const [filter, setFilter] = useState<"all" | "yours">("all");
   const [token, setToken] = useState("");
   const [currentUserId, setCurrentUserId] = useState("");
+  const [inviteUrl, setInviteUrl] = useState("");
+  const [inviteCopied, setInviteCopied] = useState(false);
 
   useEffect(() => {
     const session = localStorage.getItem("settlemint_session");
@@ -177,18 +100,37 @@ export default function GroupDetailPage() {
         </div>
         
         <div className={styles.headerActions}>
-          <button className={`btn btn-secondary ${styles.actionBtn}`}>
+          <button
+            className={`btn btn-secondary ${styles.actionBtn}`}
+            onClick={async () => {
+              try {
+                const res = await fetch(`https://settlemint.onrender.com/api/groups/${groupId}/invite`, {
+                  method: "POST",
+                  headers: { Authorization: `Bearer ${token}` },
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+                setInviteUrl(data.inviteUrl);
+                await navigator.clipboard.writeText(data.inviteUrl);
+                setInviteCopied(true);
+                setTimeout(() => setInviteCopied(false), 3000);
+              } catch (err: any) {
+                alert("Could not generate invite link: " + err.message);
+              }
+            }}
+          >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M12 4V20M20 12H4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            Invite
+            {inviteCopied ? "Link Copied! ✓" : "Invite"}
           </button>
-          <button className={`btn btn-secondary ${styles.actionBtn}`} aria-label="Settings">
+          <Link href={`/dashboard/new-expense?group=${groupId}`} className={`btn btn-primary ${styles.actionBtn}`}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
-              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" strokeWidth="2"/>
+              <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
             </svg>
-          </button>
+            Add Expense
+          </Link>
         </div>
       </header>
 

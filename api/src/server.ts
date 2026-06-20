@@ -29,6 +29,7 @@ import userRoutes from "./routes/user.routes";
 import friendshipRoutes from "./routes/friendship.routes";
 import activityRoutes from "./routes/activity.routes";
 import notificationRoutes from "./routes/notification.routes";
+import inviteRoutes from "./routes/invite.routes";
 
 // Health check route
 server.get("/health", async (request, reply) => {
@@ -44,6 +45,7 @@ server.register(userRoutes, { prefix: "/api/users" });
 server.register(friendshipRoutes, { prefix: "/api/friends" });
 server.register(activityRoutes, { prefix: "/api/activity" });
 server.register(notificationRoutes, { prefix: "/api/notifications" });
+server.register(inviteRoutes, { prefix: "/api/invite" });
 
 // Main async start function
 const start = async () => {

@@ -25,6 +25,8 @@ export const groups = pgTable("groups", {
   emoji: varchar("emoji", { length: 10 }),
   color: varchar("color", { length: 7 }),
   createdBy: uuid("created_by").references(() => users.id).notNull(),
+  inviteToken: varchar("invite_token", { length: 64 }),
+  inviteExpiresAt: timestamp("invite_expires_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

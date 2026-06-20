@@ -1,5 +1,6 @@
 import { FastifyInstance } from "fastify";
 import * as groupController from "../controllers/group.controller";
+import * as inviteController from "../controllers/invite.controller";
 import { authenticate } from "../middleware/auth.middleware";
 
 export default async function groupRoutes(server: FastifyInstance) {
@@ -9,4 +10,5 @@ export default async function groupRoutes(server: FastifyInstance) {
   server.get("/", groupController.getAllGroups);
   server.get("/:id", groupController.getGroupById);
   server.post("/", groupController.createGroup);
+  server.post("/:id/invite", inviteController.generateInviteLink);
 }
