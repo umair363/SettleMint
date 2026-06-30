@@ -70,6 +70,71 @@ export function calculateBalances(
 }
 
 /**
+ * Calculates strict, unsimplified 1-to-1 debts.
+ * If A paid $30 for B, B owes A $30. If B paid $10 for A, A owes B $10.
+ * This nets them out so B owes A $20, but it does NOT transfer debts to a third party C.
+ */
+export function calculateStrictSettlements(
+  expenses: Expense[],
+  splits: ExpenseSplit[],
+  settlements: Settlement[]
+): SettlementTransaction[] {
+  // graph[debtor][creditor] = amount
+  const graph: Record<string, Record<string, number>> = {};
+
+  const addDebt = (debtor: string, creditor: string, amount: number) => {
+    if (debtor === creditor) return;
+    if (!graph[debtor]) graph[debtor] = {};
+    if (!graph[debtor][creditor]) graph[debtor][creditor] = 0;
+    graph[debtor][creditor] += amount;
+  };
+
+  // 1. Process all expense splits
+  const expenseMap = new Map<string, Expense>();
+  expenses.forEach(e => expenseMap.set(e.id, e));
+
+  splits.forEach(split => {
+    const expense = expenseMap.get(split.expenseId);
+    if (!expense) return;
+    addDebt(split.userId, expense.paidBy, Number(split.amountOwed));
+  });
+
+  // 2. Process all settlements (repayments)
+  settlements.forEach(st => {
+    addDebt(st.paidBy, st.paidTo, -Number(st.amount));
+  });
+
+  // 3. Net out the pairwise debts (A->B vs B->A)
+  const transactions: SettlementTransaction[] = [];
+  const processedPairs = new Set<string>();
+
+  for (const debtor in graph) {
+    for (const creditor in graph[debtor]) {
+      const pairKey1 = `${debtor}_${creditor}`;
+      const pairKey2 = `${creditor}_${debtor}`;
+      
+      if (processedPairs.has(pairKey1) || processedPairs.has(pairKey2)) continue;
+
+      const debtToCreditor = graph[debtor][creditor] || 0;
+      const creditToDebtor = (graph[creditor] && graph[creditor][debtor]) ? graph[creditor][debtor] : 0;
+
+      const net = debtToCreditor - creditToDebtor;
+      const roundedNet = Math.round(net * 100) / 100;
+
+      if (roundedNet > 0) {
+        transactions.push({ from: debtor, to: creditor, amount: roundedNet });
+      } else if (roundedNet < 0) {
+        transactions.push({ from: creditor, to: debtor, amount: Math.abs(roundedNet) });
+      }
+
+      processedPairs.add(pairKey1);
+    }
+  }
+
+  return transactions;
+}
+
+/**
  * Calculates the minimum number of transactions needed to settle all debts.
  * Uses a greedy algorithm: match highest debtor with highest creditor.
  */

@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, numeric, varchar, boolean } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, timestamp, numeric, varchar, boolean, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 // --- Users ---
@@ -14,7 +14,9 @@ export const users = pgTable("users", {
   otpExpiresAt: timestamp("otp_expires_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (t) => [
+  uniqueIndex("users_email_idx").on(t.email),
+]);
 
 // --- Groups ---
 export const groups = pgTable("groups", {
@@ -29,7 +31,10 @@ export const groups = pgTable("groups", {
   inviteExpiresAt: timestamp("invite_expires_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (t) => [
+  index("groups_created_by_idx").on(t.createdBy),
+  uniqueIndex("groups_invite_token_idx").on(t.inviteToken),
+]);
 
 // --- Group Members ---
 export const groupMembers = pgTable("group_members", {
@@ -38,7 +43,11 @@ export const groupMembers = pgTable("group_members", {
   userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   joinedAt: timestamp("joined_at").defaultNow().notNull(),
   role: varchar("role", { length: 50 }).default("member").notNull(), // 'admin', 'member'
-});
+}, (t) => [
+  index("group_members_group_id_idx").on(t.groupId),
+  index("group_members_user_id_idx").on(t.userId),
+  uniqueIndex("group_members_group_user_idx").on(t.groupId, t.userId),
+]);
 
 // --- Expenses ---
 export const expenses = pgTable("expenses", {
@@ -54,7 +63,11 @@ export const expenses = pgTable("expenses", {
   receiptUrl: text("receipt_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (t) => [
+  index("expenses_group_id_idx").on(t.groupId),
+  index("expenses_paid_by_idx").on(t.paidBy),
+  index("expenses_date_idx").on(t.date),
+]);
 
 // --- Expense Splits ---
 export const expenseSplits = pgTable("expense_splits", {
@@ -63,7 +76,10 @@ export const expenseSplits = pgTable("expense_splits", {
   userId: uuid("user_id").references(() => users.id).notNull(),
   amountOwed: numeric("amount_owed", { precision: 12, scale: 2 }).notNull(),
   isSettled: boolean("is_settled").default(false).notNull(),
-});
+}, (t) => [
+  index("expense_splits_expense_id_idx").on(t.expenseId),
+  index("expense_splits_user_id_idx").on(t.userId),
+]);
 
 // --- Settlements (Payments) ---
 export const settlements = pgTable("settlements", {
@@ -77,7 +93,11 @@ export const settlements = pgTable("settlements", {
   notes: text("notes"),
   date: timestamp("date").defaultNow().notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (t) => [
+  index("settlements_group_id_idx").on(t.groupId),
+  index("settlements_paid_by_idx").on(t.paidBy),
+  index("settlements_paid_to_idx").on(t.paidTo),
+]);
 
 // --- Relations Definitions ---
 export const usersRelations = relations(users, ({ many }) => ({
@@ -122,7 +142,10 @@ export const friendships = pgTable("friendships", {
   user2Id: uuid("user2_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   status: varchar("status", { length: 50 }).default("accepted").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (t) => [
+  index("friendships_user1_id_idx").on(t.user1Id),
+  index("friendships_user2_id_idx").on(t.user2Id),
+]);
 
 // --- Activity Logs ---
 export const activityLogs = pgTable("activity_logs", {
@@ -132,7 +155,9 @@ export const activityLogs = pgTable("activity_logs", {
   action: varchar("action", { length: 255 }).notNull(),
   description: text("description").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (t) => [
+  index("activity_logs_group_id_idx").on(t.groupId),
+]);
 
 // --- Notifications ---
 export const notifications = pgTable("notifications", {
@@ -143,4 +168,7 @@ export const notifications = pgTable("notifications", {
   type: varchar("type", { length: 50 }).notNull(),
   isRead: boolean("is_read").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (t) => [
+  index("notifications_user_id_idx").on(t.userId),
+  index("notifications_is_read_idx").on(t.isRead),
+]);

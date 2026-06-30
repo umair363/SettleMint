@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import { db } from "../db";
 import { settlements, users, activityLogs } from "../db/schema";
 import { eq, or } from "drizzle-orm";
+import { Cache } from "../utils/cache";
 
 interface AuthenticatedRequest extends FastifyRequest {
   user?: {
@@ -59,6 +60,10 @@ export const createSettlement = async (request: AuthenticatedRequest, reply: Fas
       action: "Payment Recorded",
       description: `Paid ${receiver?.fullName || "someone"} ${amount.toString()}`,
     });
+
+    if (groupId) {
+      Cache.delete(`group_balances_${groupId}`);
+    }
 
     return reply.code(201).send({ message: "Settlement recorded", settlement: newSettlement });
   } catch (error) {

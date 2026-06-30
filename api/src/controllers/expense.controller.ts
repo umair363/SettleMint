@@ -3,6 +3,7 @@ import { db } from "../db";
 import { expenses, expenseSplits, groupMembers, users, activityLogs } from "../db/schema";
 import { eq, and, or, inArray } from "drizzle-orm";
 import { sendExpenseAlertEmail } from "../utils/email";
+import { Cache } from "../utils/cache";
 
 interface AuthenticatedRequest extends FastifyRequest {
   user?: {
@@ -100,16 +101,21 @@ export const getGroupExpenses = async (request: AuthenticatedRequest, reply: Fas
   }
 };
 
+import { calculateSplits, SplitType, SplitInput } from "../utils/splitCalculator";
+
 // POST /api/expenses - Create a new expense
 export const createExpense = async (request: AuthenticatedRequest, reply: FastifyReply) => {
   try {
     const userId = request.user?.id;
     if (!userId) return reply.code(401).send({ error: "Unauthorized" });
 
-    const { groupId, description, amount, category, notes, splits, currency, paidBy: paidByOverride, date } = request.body as any;
+    const { 
+      groupId, description, amount, category, notes, currency, 
+      paidBy: paidByOverride, date, splitType, participants 
+    } = request.body as any;
 
-    if (!description || !amount || !splits || !Array.isArray(splits)) {
-      return reply.code(400).send({ error: "Missing required fields" });
+    if (!description || !amount || !splitType || !participants || !Array.isArray(participants)) {
+      return reply.code(400).send({ error: "Missing required fields: description, amount, splitType, participants" });
     }
 
     // Allow caller to specify who paid (must be a group member or the requester)
@@ -128,6 +134,14 @@ export const createExpense = async (request: AuthenticatedRequest, reply: Fastif
       }
     }
 
+    // 0. Compute precise splits securely on the backend
+    let computedSplits;
+    try {
+      computedSplits = calculateSplits(Number(amount), splitType as SplitType, participants as SplitInput[]);
+    } catch (e: any) {
+      return reply.code(400).send({ error: `Split calculation failed: ${e.message}` });
+    }
+
     // Run within a transaction
     const newExpense = await db.transaction(async (tx) => {
       // 1. Insert Expense
@@ -143,7 +157,7 @@ export const createExpense = async (request: AuthenticatedRequest, reply: Fastif
       }).returning();
 
       // 2. Insert Splits
-      const splitInserts = splits.map((split: any) => ({
+      const splitInserts = computedSplits.map((split) => ({
         expenseId: insertedExpense.id,
         userId: split.userId,
         amountOwed: split.amountOwed.toString(),
@@ -163,6 +177,11 @@ export const createExpense = async (request: AuthenticatedRequest, reply: Fastif
 
       return insertedExpense;
     });
+
+    // Invalidate group balance cache
+    if (groupId) {
+      Cache.delete(`group_balances_${groupId}`);
+    }
 
     // Send expense notification emails asynchronously
     const userIds = splits.map((s: any) => s.userId).filter((uid: string) => uid !== userId);
