@@ -1,5 +1,7 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import helmet from "@fastify/helmet";
+import rateLimit from "@fastify/rate-limit";
 import * as dotenv from "dotenv";
 
 dotenv.config();
@@ -16,9 +18,22 @@ const server = Fastify({
   },
 });
 
+// Security Headers
+server.register(helmet, {
+  contentSecurityPolicy: process.env.NODE_ENV === "production",
+});
+
+// Rate Limiting
+server.register(rateLimit, {
+  max: 100, // default 100 reqs
+  timeWindow: "1 minute",
+});
+
+// CORS Optimization
 server.register(cors, {
-  origin: "*", // Adjust this in production
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  origin: process.env.FRONTEND_URL || (process.env.NODE_ENV === "production" ? false : "*"),
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
 });
 
 import authRoutes from "./routes/auth.routes";
@@ -30,6 +45,7 @@ import friendshipRoutes from "./routes/friendship.routes";
 import activityRoutes from "./routes/activity.routes";
 import notificationRoutes from "./routes/notification.routes";
 import inviteRoutes from "./routes/invite.routes";
+import aiRoutes from "./routes/ai.routes";
 
 // Health check route
 server.get("/health", async (request, reply) => {
@@ -46,6 +62,7 @@ server.register(friendshipRoutes, { prefix: "/api/friends" });
 server.register(activityRoutes, { prefix: "/api/activity" });
 server.register(notificationRoutes, { prefix: "/api/notifications" });
 server.register(inviteRoutes, { prefix: "/api/invite" });
+server.register(aiRoutes, { prefix: "/api/ai" });
 
 // Main async start function
 const start = async () => {

@@ -2,7 +2,8 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import { db } from "../db";
 import { groups, groupMembers, users, expenses, expenseSplits, settlements, activityLogs } from "../db/schema";
 import { eq, and, sql, inArray } from "drizzle-orm";
-import { calculateBalances, calculateSuggestedSettlements } from "../utils/settlementEngine";
+import { calculateBalances, calculateSuggestedSettlements, calculateStrictSettlements } from "../utils/settlementEngine";
+import { Cache } from "../utils/cache";
 
 // Define a custom request type containing the auth user
 interface AuthenticatedRequest extends FastifyRequest {
@@ -85,43 +86,70 @@ export const getGroupById = async (request: AuthenticatedRequest, reply: Fastify
       .where(eq(groupMembers.groupId, id));
 
     // Get all expenses for the group
-    const groupExpenses = await db.select().from(expenses).where(eq(expenses.groupId, id));
-    
-    // Get all splits for those expenses
-    let groupSplits: any[] = [];
-    if (groupExpenses.length > 0) {
-      const expenseIds = groupExpenses.map(e => e.id);
-      groupSplits = await db.select().from(expenseSplits).where(inArray(expenseSplits.expenseId, expenseIds));
+    const cacheKey = `group_balances_${id}`;
+    let cachedMath = Cache.get<any>(cacheKey);
+
+    let balances: any;
+    let suggestedSettlements: any;
+    let strictSettlements: any;
+
+    if (cachedMath) {
+      balances = cachedMath.balances;
+      suggestedSettlements = cachedMath.suggestedSettlements;
+      strictSettlements = cachedMath.strictSettlements;
+    } else {
+      const groupExpenses = await db.select().from(expenses).where(eq(expenses.groupId, id));
+      
+      // Get all splits for those expenses
+      let groupSplits: any[] = [];
+      if (groupExpenses.length > 0) {
+        const expenseIds = groupExpenses.map(e => e.id);
+        groupSplits = await db.select().from(expenseSplits).where(inArray(expenseSplits.expenseId, expenseIds));
+      }
+
+      // Get all settlements for the group
+      const groupSettlements = await db.select().from(settlements).where(eq(settlements.groupId, id));
+
+      const mappedExpenses = groupExpenses.map(e => ({ id: e.id, amount: Number(e.amount), paidBy: e.paidBy }));
+      const mappedSplits = groupSplits.map(s => ({ expenseId: s.expenseId, userId: s.userId, amountOwed: Number(s.amountOwed), isSettled: s.isSettled }));
+      const mappedSettlements = groupSettlements.map(s => ({ paidBy: s.paidBy, paidTo: s.paidTo, amount: Number(s.amount) }));
+
+      // Calculate balances and debts
+      balances = calculateBalances(mappedExpenses, mappedSplits, mappedSettlements);
+
+      const suggestedSettlementsRaw = calculateSuggestedSettlements(balances);
+      const strictSettlementsRaw = calculateStrictSettlements(mappedExpenses, mappedSplits, mappedSettlements);
+
+      // Map suggested settlements user IDs to full names for the frontend
+      const userMap = new Map(members.map(m => [m.id, m.fullName]));
+      
+      suggestedSettlements = suggestedSettlementsRaw.map(s => ({
+        from: userMap.get(s.from) || "Unknown",
+        fromId: s.from,
+        to: userMap.get(s.to) || "Unknown",
+        toId: s.to,
+        amount: s.amount
+      }));
+
+      strictSettlements = strictSettlementsRaw.map(s => ({
+        from: userMap.get(s.from) || "Unknown",
+        fromId: s.from,
+        to: userMap.get(s.to) || "Unknown",
+        toId: s.to,
+        amount: s.amount
+      }));
+
+      // Cache it!
+      Cache.set(cacheKey, { balances, suggestedSettlements, strictSettlements });
     }
-
-    // Get all settlements for the group
-    const groupSettlements = await db.select().from(settlements).where(eq(settlements.groupId, id));
-
-    // Calculate balances and debts
-    const balances = calculateBalances(
-      groupExpenses.map(e => ({ id: e.id, amount: Number(e.amount), paidBy: e.paidBy })),
-      groupSplits.map(s => ({ expenseId: s.expenseId, userId: s.userId, amountOwed: Number(s.amountOwed), isSettled: s.isSettled })),
-      groupSettlements.map(s => ({ paidBy: s.paidBy, paidTo: s.paidTo, amount: Number(s.amount) }))
-    );
-
-    const suggestedSettlementsRaw = calculateSuggestedSettlements(balances);
-
-    // Map suggested settlements user IDs to full names for the frontend
-    const userMap = new Map(members.map(m => [m.id, m.fullName]));
-    const suggestedSettlements = suggestedSettlementsRaw.map(s => ({
-      from: userMap.get(s.from) || "Unknown",
-      fromId: s.from,
-      to: userMap.get(s.to) || "Unknown",
-      toId: s.to,
-      amount: s.amount
-    }));
 
     return reply.code(200).send({
       group: {
         ...group,
         members,
         balances,
-        suggestedSettlements
+        suggestedSettlements,
+        strictSettlements
       }
     });
   } catch (error) {
