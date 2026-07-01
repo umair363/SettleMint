@@ -44,7 +44,7 @@ export default function DashboardLayout({
         }
 
         // Verify token with backend
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}`/api/auth/me", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/auth/me`, {
           headers: {
             "Authorization": `Bearer ${parsed.token}`
           }
