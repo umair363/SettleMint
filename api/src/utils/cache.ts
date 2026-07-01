@@ -3,6 +3,11 @@ import Redis from 'ioredis';
 // Connect to Redis. Defaults to localhost if not specified in env.
 export const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
 
+// Prevent unhandled errors from crashing the server
+redis.on('error', (err) => {
+  console.error('Redis Connection Error:', err.message);
+});
+
 // Cache expiration in seconds (5 minutes)
 const TTL_SECONDS = 5 * 60;
 
