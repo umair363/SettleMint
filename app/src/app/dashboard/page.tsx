@@ -62,7 +62,7 @@ export default function DashboardHome() {
   const { data: groupsData, isLoading } = useQuery({
     queryKey: ["groups"],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}`/api/groups", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/groups`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Network response was not ok");
@@ -74,7 +74,7 @@ export default function DashboardHome() {
   const { data: expensesData, isLoading: expensesLoading } = useQuery({
     queryKey: ["recent_expenses"],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}`/api/expenses/me", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/expenses/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch expenses");
@@ -86,7 +86,7 @@ export default function DashboardHome() {
   const { data: settlementsData } = useQuery({
     queryKey: ["settlements"],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}`/api/settlements", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/settlements`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch settlements");

@@ -40,7 +40,7 @@ export default function SettleUpPage() {
   const { data: groupsData } = useQuery({
     queryKey: ["groups"],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}`/api/groups", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/groups`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch groups");
@@ -53,7 +53,7 @@ export default function SettleUpPage() {
   const { data: friendsData } = useQuery({
     queryKey: ["friends"],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}`/api/friends", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/friends`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch friends");
@@ -103,7 +103,7 @@ export default function SettleUpPage() {
         // Actually, let's keep the API call as we structured it: user is recording it.
       }
       
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}`/api/settlements", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/settlements`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
