@@ -4,6 +4,7 @@ import { expenses, expenseSplits, groupMembers, users, activityLogs } from "../d
 import { eq, and, or, inArray } from "drizzle-orm";
 import { sendExpenseAlertEmail } from "../utils/email";
 import { Cache } from "../utils/cache";
+import { indexExpense, searchExpenses } from "../utils/typesense";
 
 interface AuthenticatedRequest extends FastifyRequest {
   user?: {
@@ -178,13 +179,28 @@ export const createExpense = async (request: AuthenticatedRequest, reply: Fastif
       return insertedExpense;
     });
 
+    // Index in Typesense asynchronously
+    const userIdsInvolved = Array.from(new Set([actualPaidBy, ...computedSplits.map((s: any) => s.userId)]));
+    indexExpense({
+      id: newExpense.id,
+      description: newExpense.description,
+      amount: Number(newExpense.amount),
+      currency: newExpense.currency,
+      paidBy: newExpense.paidBy,
+      date: newExpense.date,
+      category: newExpense.category,
+      notes: newExpense.notes,
+      groupId: newExpense.groupId,
+      userIds: userIdsInvolved,
+    }).catch(err => request.log.error("Typesense index failed: ", err));
+
     // Invalidate group balance cache
     if (groupId) {
-      Cache.delete(`group_balances_${groupId}`);
+      await Cache.delete(`group_balances_${groupId}`);
     }
 
     // Send expense notification emails asynchronously
-    const userIds = splits.map((s: any) => s.userId).filter((uid: string) => uid !== userId);
+    const userIds = computedSplits.map((s: any) => s.userId).filter((uid: string) => uid !== userId);
     if (userIds.length > 0) {
       db.select({ email: users.email, fullName: users.fullName })
         .from(users)
@@ -207,6 +223,62 @@ export const createExpense = async (request: AuthenticatedRequest, reply: Fastif
     }
 
     return reply.code(201).send({ message: "Expense created successfully", expense: newExpense });
+  } catch (error) {
+    request.log.error(error);
+    return reply.code(500).send({ error: "Internal Server Error" });
+  }
+};
+
+// GET /api/expenses/search - Search expenses using Typesense
+export const searchMyExpenses = async (request: AuthenticatedRequest, reply: FastifyReply) => {
+  try {
+    const userId = request.user?.id;
+    if (!userId) return reply.code(401).send({ error: "Unauthorized" });
+
+    const { q, groupId } = request.query as { q?: string; groupId?: string };
+    if (!q) {
+      return reply.code(200).send({ expenses: [] });
+    }
+
+    const searchResults = await searchExpenses(userId, q, groupId);
+    const expenseIds = searchResults.map((doc: any) => doc.id);
+
+    if (expenseIds.length === 0) {
+      return reply.code(200).send({ expenses: [] });
+    }
+
+    // Fetch the detailed expenses from DB
+    const matchedExpenses = await db
+      .select({
+        id: expenses.id,
+        description: expenses.description,
+        amount: expenses.amount,
+        currency: expenses.currency,
+        date: expenses.date,
+        category: expenses.category,
+        paidBy: expenses.paidBy,
+        payerName: users.fullName,
+      })
+      .from(expenses)
+      .innerJoin(users, eq(expenses.paidBy, users.id))
+      .where(inArray(expenses.id, expenseIds));
+
+    // Get splits for these expenses
+    const splits = await db
+      .select()
+      .from(expenseSplits)
+      .where(inArray(expenseSplits.expenseId, expenseIds));
+
+    // Sort matchedExpenses according to the order returned by Typesense (relevance/date)
+    const orderMap = new Map(expenseIds.map((id, index) => [id, index]));
+    const sortedExpenses = matchedExpenses
+      .map(e => ({
+        ...e,
+        splits: splits.filter(s => s.expenseId === e.id)
+      }))
+      .sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
+
+    return reply.code(200).send({ expenses: sortedExpenses });
   } catch (error) {
     request.log.error(error);
     return reply.code(500).send({ error: "Internal Server Error" });

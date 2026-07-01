@@ -64,12 +64,17 @@ server.register(notificationRoutes, { prefix: "/api/notifications" });
 server.register(inviteRoutes, { prefix: "/api/invite" });
 server.register(aiRoutes, { prefix: "/api/ai" });
 
+import { initTypesense } from "./utils/typesense";
+
 // Main async start function
 const start = async () => {
   try {
     const port = parseInt(process.env.PORT || "8000", 10);
     await server.listen({ port, host: "0.0.0.0" });
     server.log.info(`Server listening on port ${port}`);
+    
+    // Initialize Typesense
+    await initTypesense();
   } catch (err) {
     server.log.error(err);
     process.exit(1);

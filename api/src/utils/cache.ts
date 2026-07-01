@@ -1,46 +1,49 @@
-// In-memory cache for balance computations.
-// In a full production environment, this would be backed by Redis (ioredis).
+import Redis from 'ioredis';
 
-interface CacheEntry<T> {
-  data: T;
-  timestamp: number;
-}
+// Connect to Redis. Defaults to localhost if not specified in env.
+export const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
 
-const memoryCache = new Map<string, CacheEntry<any>>();
-
-// Cache expiration in milliseconds (e.g., 5 minutes)
-const TTL = 5 * 60 * 1000;
+// Cache expiration in seconds (5 minutes)
+const TTL_SECONDS = 5 * 60;
 
 export const Cache = {
-  get: <T>(key: string): T | null => {
-    const entry = memoryCache.get(key);
-    if (!entry) return null;
-
-    if (Date.now() - entry.timestamp > TTL) {
-      memoryCache.delete(key);
+  get: async <T>(key: string): Promise<T | null> => {
+    try {
+      const data = await redis.get(key);
+      if (!data) return null;
+      return JSON.parse(data) as T;
+    } catch (err) {
+      console.error('Redis GET Error:', err);
       return null;
     }
-
-    return entry.data as T;
   },
 
-  set: <T>(key: string, data: T): void => {
-    memoryCache.set(key, {
-      data,
-      timestamp: Date.now(),
-    });
+  set: async <T>(key: string, data: T): Promise<void> => {
+    try {
+      await redis.set(key, JSON.stringify(data), 'EX', TTL_SECONDS);
+    } catch (err) {
+      console.error('Redis SET Error:', err);
+    }
   },
 
-  delete: (key: string): void => {
-    memoryCache.delete(key);
+  delete: async (key: string): Promise<void> => {
+    try {
+      await redis.del(key);
+    } catch (err) {
+      console.error('Redis DEL Error:', err);
+    }
   },
 
-  // Invalidates all keys that start with a certain prefix
-  invalidatePrefix: (prefix: string): void => {
-    for (const key of memoryCache.keys()) {
-      if (key.startsWith(prefix)) {
-        memoryCache.delete(key);
+  // Note: KEYS is generally not recommended in production for large datasets,
+  // but for prefix invalidation at this scale it suffices.
+  invalidatePrefix: async (prefix: string): Promise<void> => {
+    try {
+      const keys = await redis.keys(`${prefix}*`);
+      if (keys.length > 0) {
+        await redis.del(...keys);
       }
+    } catch (err) {
+      console.error('Redis Invalidate Prefix Error:', err);
     }
   },
 };

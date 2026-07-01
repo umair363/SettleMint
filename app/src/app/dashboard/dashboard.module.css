@@ -30,8 +30,10 @@
 /* Sidebar */
 .sidebar {
   width: 260px;
-  background: var(--slate-900);
-  border-right: 1px solid var(--border-subtle);
+  background: rgba(15, 18, 25, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -43,8 +45,7 @@
 }
 
 .sidebarHeader {
-  padding: var(--space-lg) var(--space-xl);
-  border-bottom: 1px solid var(--border-subtle);
+  padding: var(--space-xl) var(--space-xl) var(--space-lg);
 }
 
 .sidebarLogo {
@@ -66,55 +67,73 @@
   padding: var(--space-md);
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .navItem {
   display: flex;
   align-items: center;
   gap: var(--space-md);
-  padding: 0.625rem var(--space-md);
+  padding: 0.75rem var(--space-md);
   border-radius: var(--radius-md);
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 500;
   color: var(--text-secondary);
   text-decoration: none;
-  transition: background 200ms var(--ease-out), color 200ms var(--ease-out);
+  transition: all 200ms var(--ease-out);
+  position: relative;
+  overflow: hidden;
 }
 
 .navItem:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.03);
   color: var(--text-primary);
+  transform: translateX(2px);
 }
 
 .navItemActive {
-  background: rgba(61, 214, 140, 0.08);
+  background: linear-gradient(90deg, rgba(61, 214, 140, 0.12), transparent);
   color: var(--mint-400);
+  border-left: 2px solid var(--mint-400);
+  transform: translateX(0);
+}
+
+.navItemActive:hover {
+  transform: translateX(0);
 }
 
 .sidebarFooter {
-  padding: var(--space-md) var(--space-lg);
-  border-top: 1px solid var(--border-subtle);
+  padding: var(--space-lg);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  background: linear-gradient(to top, rgba(0,0,0,0.2), transparent);
 }
 
 .userCard {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-md);
+  padding: 0.5rem;
+  border-radius: var(--radius-md);
+  transition: background 200ms;
+}
+
+.userCard:hover {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .userAvatar {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-sm);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   background: var(--mint-400);
   color: var(--slate-950);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.6875rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   flex-shrink: 0;
+  box-shadow: 0 0 15px rgba(61, 214, 140, 0.2);
 }
 
 .userInfo {
@@ -125,7 +144,7 @@
 }
 
 .userName {
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--text-primary);
   white-space: nowrap;
@@ -134,7 +153,7 @@
 }
 
 .userEmail {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
   white-space: nowrap;
   overflow: hidden;
@@ -142,21 +161,22 @@
 }
 
 .logoutBtn {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-tertiary);
   cursor: pointer;
-  transition: color 200ms, background 200ms;
+  transition: all 200ms ease;
   flex-shrink: 0;
 }
 
 .logoutBtn:hover {
   color: #ff6b6b;
-  background: rgba(255, 107, 107, 0.08);
+  background: rgba(255, 107, 107, 0.1);
+  transform: scale(1.05);
 }
 
 /* Overlay */
@@ -231,12 +251,30 @@
 
 .notifDot {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 6px;
-  height: 6px;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--danger);
   border-radius: 50%;
-  background: #ff6b6b;
+  border: 2px solid var(--bg-primary);
+}
+
+.offlineBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.offlineText {
+  white-space: nowrap;
 }
 
 .addBtn {

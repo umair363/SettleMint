@@ -43,7 +43,7 @@ export default function Hero() {
 
           <div className={`${styles.ctas} animate-fade-up stagger-4`}>
             <a href="/signup" className="btn btn-primary btn-lg" id="hero-cta-primary">
-              Start Splitting Free
+              Create Free Account
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path
                   d="M6 3L11 8L6 13"
@@ -54,8 +54,8 @@ export default function Hero() {
                 />
               </svg>
             </a>
-            <a href="#how-it-works" className="btn btn-secondary btn-lg" id="hero-cta-secondary">
-              See How It Works
+            <a href="/login" className="btn btn-secondary btn-lg" id="hero-cta-login">
+              Log In
             </a>
           </div>
 

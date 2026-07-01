@@ -35,9 +35,12 @@ function VerifyContent() {
     setLoading(true);
 
     try {
-      const response = await fetch("https://settlemint.onrender.com/api/auth/verify-otp", {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com";
+      const response = await fetch(`${baseUrl}/api/auth/verify-otp`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ email, otp }),
       });
 
@@ -74,9 +77,12 @@ function VerifyContent() {
     setResendLoading(true);
 
     try {
-      const response = await fetch("https://settlemint.onrender.com/api/auth/resend-otp", {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com";
+      const response = await fetch(`${baseUrl}/api/auth/resend-otp`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ email }),
       });
 
