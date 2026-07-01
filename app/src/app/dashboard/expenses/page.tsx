@@ -24,10 +24,12 @@ export default function ExpensesPage() {
 
   const sym = getCurrencySymbol(defaultCurrency);
 
-  const { data: expensesData, isLoading } = useQuery({
+  // Fetch all user's expenses
+  const { data: expensesData, isLoading: isAllLoading } = useQuery({
     queryKey: ["all_expenses"],
     queryFn: async () => {
-      const res = await fetch("https://settlemint.onrender.com/api/expenses/me", {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com";
+      const res = await fetch(`${baseUrl}/api/expenses/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch expenses");
@@ -36,12 +38,52 @@ export default function ExpensesPage() {
     enabled: !!token,
   });
 
-  const expenses = expensesData?.expenses || [];
-
-  const filtered = expenses.filter((e: any) => {
-    const matchSearch = e.description.toLowerCase().includes(search.toLowerCase());
-    return matchSearch;
+  // Fetch user's groups to populate dropdown
+  const { data: groupsData } = useQuery({
+    queryKey: ["my_groups"],
+    queryFn: async () => {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com";
+      const res = await fetch(`${baseUrl}/api/groups`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to fetch groups");
+      return res.json();
+    },
+    enabled: !!token,
   });
+
+  // Fetch search results via Typesense if query is active
+  const { data: searchData, isLoading: isSearchLoading } = useQuery({
+    queryKey: ["expenses_search", search, filterGroup],
+    queryFn: async () => {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com";
+      let url = `${baseUrl}/api/expenses/search?q=${encodeURIComponent(search)}`;
+      if (filterGroup !== "all") {
+        url += `&groupId=${filterGroup}`;
+      }
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to search expenses");
+      return res.json();
+    },
+    enabled: !!token && search.trim().length > 0,
+  });
+
+  const groupsList = groupsData?.groups || [];
+  const rawExpenses = search.trim().length > 0 
+    ? (searchData?.expenses || []) 
+    : (expensesData?.expenses || []);
+
+  // Client-side group filter when search is not active, or as backup
+  const filtered = rawExpenses.filter((e: any) => {
+    if (filterGroup !== "all" && e.groupId !== filterGroup) {
+      return false;
+    }
+    return true;
+  });
+
+  const isLoading = isAllLoading || (search.trim().length > 0 && isSearchLoading);
 
   const totalSpent = filtered.reduce((sum: number, e: any) => {
     const amountInDefault = convertCurrency(parseFloat(e.amount), e.currency || "USD", defaultCurrency);
@@ -82,6 +124,11 @@ export default function ExpensesPage() {
           id="expenses-group-filter"
         >
           <option value="all">All Groups</option>
+          {groupsList.map((g: any) => (
+            <option key={g.id} value={g.id}>
+              {g.name}
+            </option>
+          ))}
         </select>
       </div>
 

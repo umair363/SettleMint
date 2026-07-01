@@ -25,9 +25,12 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("https://settlemint.onrender.com/api/auth/login", {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com";
+      const response = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ email, password }),
       });
 

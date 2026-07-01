@@ -40,9 +40,6 @@ export default function Navbar() {
           <a href="#how-it-works" className={styles.link} id="nav-how">
             How it Works
           </a>
-          <a href="#pricing" className={styles.link} id="nav-pricing">
-            Pricing
-          </a>
           <a href="#modes" className={styles.link} id="nav-modes">
             Modes
           </a>
@@ -86,13 +83,6 @@ export default function Navbar() {
             How it Works
           </a>
           <a
-            href="#pricing"
-            className={styles.mobileLink}
-            onClick={() => setMobileOpen(false)}
-          >
-            Pricing
-          </a>
-          <a
             href="#modes"
             className={styles.mobileLink}
             onClick={() => setMobileOpen(false)}
@@ -100,8 +90,11 @@ export default function Navbar() {
             Modes
           </a>
           <div className={styles.mobileCta}>
+            <a href="/login" className="btn btn-secondary btn-lg" style={{ width: "100%", marginBottom: "0.75rem" }}>
+              Log In
+            </a>
             <a href="/signup" className="btn btn-primary btn-lg" style={{ width: "100%" }}>
-              Get Started Free
+              Create Account
             </a>
           </div>
         </div>

@@ -13,5 +13,26 @@ services:
       - settlemint_pgdata:/var/lib/postgresql/data
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - settlemint_redisdata:/data
+    restart: unless-stopped
+
+  typesense:
+    image: typesense/typesense:26.0
+    environment:
+      TYPESENSE_DATA_DIR: /data
+      TYPESENSE_API_KEY: settlemint_search_key
+    ports:
+      - "8108:8108"
+    volumes:
+      - settlemint_tsdata:/data
+    restart: unless-stopped
+
 volumes:
   settlemint_pgdata:
+  settlemint_redisdata:
+  settlemint_tsdata:

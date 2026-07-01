@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import styles from "./dashboard.module.css";
+import { offlineSync } from "../../utils/offlineSync";
 
 interface User {
   id: string;
@@ -22,6 +23,7 @@ export default function DashboardLayout({
   const [user, setUser] = useState<User | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [offlineCount, setOfflineCount] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -78,8 +80,32 @@ export default function DashboardLayout({
     };
 
     window.addEventListener("user-profile-updated", handleUpdate);
+    
+    // Offline sync
+    const handleOnline = () => {
+      const sessionStr = localStorage.getItem("settlemint_session");
+      if (sessionStr) {
+        const parsed = JSON.parse(sessionStr);
+        if (parsed.token) {
+          offlineSync.syncAll(parsed.token);
+        }
+      }
+    };
+
+    const handleOfflineQueueUpdate = () => {
+      setOfflineCount(offlineSync.getQueueCount());
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline-queue-updated", handleOfflineQueueUpdate);
+    
+    // Check initial queue count
+    handleOfflineQueueUpdate();
+
     return () => {
       window.removeEventListener("user-profile-updated", handleUpdate);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline-queue-updated", handleOfflineQueueUpdate);
     };
   }, [router]);
 
@@ -309,6 +335,16 @@ export default function DashboardLayout({
           </button>
 
           <div className={styles.topbarRight}>
+            {offlineCount > 0 && (
+              <div className={styles.offlineBadge} title={`${offlineCount} expenses waiting to sync`}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M19.38 10A8.99 8.99 0 0012 2a9 9 0 00-7.38 8M12 2v8m0 4v8m7.38-4A8.99 8.99 0 0012 22a9 9 0 00-7.38-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M3 3l18 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+                <span className={styles.offlineText}>{offlineCount} Offline</span>
+              </div>
+            )}
+
             <Link href="/dashboard/notifications" className={styles.iconBtn} aria-label="Notifications" id="topbar-notifications">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path

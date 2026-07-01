@@ -17,6 +17,24 @@ interface Group {
   role: string;
 }
 
+const CATEGORY_ICONS: Record<string, string> = {
+  food: "🍽️", transport: "🚗", accommodation: "🏨",
+  entertainment: "🎬", shopping: "🛍️", utilities: "⚡",
+  health: "💊", travel: "✈️", default: "💳",
+};
+
+function getCategoryIcon(category?: string) {
+  if (!category) return CATEGORY_ICONS.default;
+  return CATEGORY_ICONS[category.toLowerCase()] ?? CATEGORY_ICONS.default;
+}
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
 export default function DashboardHome() {
   const [userName, setUserName] = useState("");
   const [userId, setUserId] = useState("");
@@ -34,13 +52,9 @@ export default function DashboardHome() {
         setToken(parsed.token);
       }
     };
-
     loadSession();
-
     window.addEventListener("user-profile-updated", loadSession);
-    return () => {
-      window.removeEventListener("user-profile-updated", loadSession);
-    };
+    return () => window.removeEventListener("user-profile-updated", loadSession);
   }, []);
 
   const sym = getCurrencySymbol(defaultCurrency);
@@ -49,7 +63,7 @@ export default function DashboardHome() {
     queryKey: ["groups"],
     queryFn: async () => {
       const res = await fetch("https://settlemint.onrender.com/api/groups", {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Network response was not ok");
       return res.json();
@@ -61,7 +75,7 @@ export default function DashboardHome() {
     queryKey: ["recent_expenses"],
     queryFn: async () => {
       const res = await fetch("https://settlemint.onrender.com/api/expenses/me", {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch expenses");
       return res.json();
@@ -73,7 +87,7 @@ export default function DashboardHome() {
     queryKey: ["settlements"],
     queryFn: async () => {
       const res = await fetch("https://settlemint.onrender.com/api/settlements", {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch settlements");
       return res.json();
@@ -84,181 +98,168 @@ export default function DashboardHome() {
   const groups: Group[] = groupsData?.groups || [];
   const expenses = expensesData?.expenses || [];
 
-  // Calculate real balances converted to default currency
   let totalOwed = 0;
   let totalOwe = 0;
 
-  // 1. Process Expenses & Splits
   expenses.forEach((exp: any) => {
     const isPayer = exp.paidBy === userId;
-    
     exp.splits?.forEach((split: any) => {
       const splitAmount = convertCurrency(parseFloat(split.amountOwed), exp.currency || "USD", defaultCurrency);
-      if (split.userId === userId && !isPayer) {
-        // I owe this amount
-        totalOwe += splitAmount;
-      } else if (split.userId !== userId && isPayer) {
-        // Someone owes me this amount
-        totalOwed += splitAmount;
-      }
+      if (split.userId === userId && !isPayer) totalOwe += splitAmount;
+      else if (split.userId !== userId && isPayer) totalOwed += splitAmount;
     });
   });
 
-  // 2. Process Settlements
   const settlements = settlementsData?.settlements || [];
   settlements.forEach((st: any) => {
-    const group = groups.find(g => g.id === st.groupId);
+    const group = groups.find((g) => g.id === st.groupId);
     const currency = group ? group.baseCurrency : defaultCurrency;
     const amount = convertCurrency(parseFloat(st.amount), currency, defaultCurrency);
-
-    if (st.paidBy === userId) {
-      // I paid someone back, so my debt decreases
-      totalOwe -= amount;
-    } else if (st.paidTo === userId) {
-      // Someone paid me back, so what they owe me decreases
-      totalOwed -= amount;
-    }
+    if (st.paidBy === userId) totalOwe -= amount;
+    else if (st.paidTo === userId) totalOwed -= amount;
   });
 
   totalOwe = Math.max(0, totalOwe);
   totalOwed = Math.max(0, totalOwed);
-
   const netBalance = totalOwed - totalOwe;
+  const firstName = userName ? userName.split(" ")[0] : "there";
 
   return (
     <div className={styles.page}>
-      <div className={styles.greeting}>
-        <h1 className={styles.title}>
-          Welcome back, {userName ? userName.split(" ")[0] : "there"}
-        </h1>
-        <p className={styles.subtitle}>
-          Here is what is happening across your groups.
-        </p>
+
+      {/* ── Header ── */}
+      <div className={styles.pageHeader}>
+        <div>
+          <p className={styles.greeting}>{getGreeting()},</p>
+          <h1 className={styles.title}>{firstName}</h1>
+        </div>
+        <Link href="/dashboard/new-expense" className={`btn btn-primary ${styles.headerCta}`} id="dashboard-add-expense">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 3V13M3 8H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          Add Expense
+        </Link>
       </div>
 
-      {/* Balance overview cards */}
-      <div className={styles.balanceCards}>
-        <div className={`${styles.balanceCard} ${styles.balanceNet}`}>
-          <span className={styles.balanceLabel}>Net Balance</span>
-          <span className={`${styles.balanceValue} ${netBalance >= 0 ? styles.positive : styles.negative}`}>
-            {netBalance >= 0 ? "+" : "-"}{sym}{Math.abs(netBalance).toFixed(2)}
-          </span>
-          <span className={styles.balanceSub}>Across {groups.length} groups</span>
-        </div>
-        <div className={styles.balanceCard}>
-          <span className={styles.balanceLabel}>You are owed</span>
-          <span className={`${styles.balanceValue} ${styles.positive}`}>
-            {sym}{totalOwed.toFixed(2)}
-          </span>
-        </div>
-        <div className={styles.balanceCard}>
-          <span className={styles.balanceLabel}>You owe</span>
-          <span className={`${styles.balanceValue} ${styles.negative}`}>
-            {sym}{totalOwe.toFixed(2)}
-          </span>
-        </div>
-      </div>
-
-      {/* Groups + Recent Activity */}
-      <div className={styles.twoCol}>
-        {/* Groups */}
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>Your Groups</h2>
-            <Link href="/dashboard/groups" className={styles.seeAll}>
-              See all
-            </Link>
+      {/* ── Balance strip ── */}
+      <div className={styles.balanceStrip}>
+        <div className={`${styles.balanceCard} ${styles.balanceNet} ${netBalance >= 0 ? styles.netPositive : styles.netNegative}`}>
+          <div className={styles.balanceCardInner}>
+            <span className={styles.balanceLabel}>Net Balance</span>
+            <span className={styles.balanceValue}>
+              {netBalance >= 0 ? "+" : "-"}{sym}{Math.abs(netBalance).toFixed(2)}
+            </span>
+            <span className={styles.balanceSub}>{groups.length} active group{groups.length !== 1 ? "s" : ""}</span>
           </div>
-          <div className={styles.groupList}>
+          <div className={styles.balanceGlow} />
+        </div>
+
+        <div className={styles.balanceCard}>
+          <div className={styles.balanceCardInner}>
+            <span className={styles.balanceLabel}>You are owed</span>
+            <span className={`${styles.balanceValue} ${styles.positive}`}>{sym}{totalOwed.toFixed(2)}</span>
+          </div>
+          <svg className={styles.balanceIcon} width="36" height="36" viewBox="0 0 24 24" fill="none">
+            <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+
+        <div className={styles.balanceCard}>
+          <div className={styles.balanceCardInner}>
+            <span className={styles.balanceLabel}>You owe</span>
+            <span className={`${styles.balanceValue} ${styles.negative}`}>{sym}{totalOwe.toFixed(2)}</span>
+          </div>
+          <svg className={styles.balanceIcon} width="36" height="36" viewBox="0 0 24 24" fill="none">
+            <path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+      </div>
+
+      {/* ── Main grid ── */}
+      <div className={styles.mainGrid}>
+
+        {/* Groups */}
+        <div className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <h2 className={styles.panelTitle}>Groups</h2>
+            <Link href="/dashboard/groups" className={styles.panelLink}>View all →</Link>
+          </div>
+          <div className={styles.panelBody}>
             {isLoading ? (
-              <div className="text-secondary">Loading groups...</div>
+              <div className={styles.skeletonStack}>
+                <Skeleton height="52px" borderRadius="10px" />
+                <Skeleton height="52px" borderRadius="10px" />
+                <Skeleton height="52px" borderRadius="10px" />
+              </div>
             ) : groups.length === 0 ? (
-              <div className="text-secondary" style={{ padding: '1rem', border: '1px dashed var(--border-default)', borderRadius: '12px', textAlign: 'center' }}>
-                You aren't in any groups yet.
+              <div className={styles.emptyState}>
+                <div className={styles.emptyIcon}>👥</div>
+                <p>No groups yet</p>
+                <Link href="/dashboard/groups/new" className={styles.emptyAction}>Create your first group</Link>
               </div>
             ) : (
-              groups.map((group) => (
-                <Link
-                  key={group.id}
-                  href={`/dashboard/groups/${group.id}`}
-                  className={styles.groupCard}
-                >
-                  <div
-                    className={styles.groupIcon}
-                    style={{ background: `${group.color || '#5B8DEF'}20`, color: group.color || '#5B8DEF' }}
-                  >
-                    {group.emoji || group.name[0]}
-                  </div>
-                  <div className={styles.groupInfo}>
-                    <span className={styles.groupName}>{group.name}</span>
-                    <span className={styles.groupMeta}>
-                      {group.mode || "Group"} &middot; {group.role}
-                    </span>
-                  </div>
-                  <span className={`${styles.groupBalance} ${styles.neutral}`}>
-                    {getCurrencySymbol(group.baseCurrency || "USD")}0.00
-                  </span>
+              <>
+                {groups.slice(0, 5).map((group) => (
+                  <Link key={group.id} href={`/dashboard/groups/${group.id}`} className={styles.listRow}>
+                    <div className={styles.rowIcon} style={{ background: `${group.color || "#5B8DEF"}18`, color: group.color || "#5B8DEF" }}>
+                      {group.emoji || group.name[0]}
+                    </div>
+                    <div className={styles.rowBody}>
+                      <span className={styles.rowTitle}>{group.name}</span>
+                      <span className={styles.rowSub}>{group.mode || "Group"} · {group.role}</span>
+                    </div>
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className={styles.rowChevron}>
+                      <path d="M6 3L11 8L6 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </Link>
+                ))}
+                <Link href="/dashboard/groups/new" className={styles.addRow} id="dashboard-new-group">
+                  <span className={styles.addRowPlus}>+</span>
+                  New Group
                 </Link>
-              ))
+              </>
             )}
-            <Link href="/dashboard/groups/new" className={styles.newGroupBtn} id="dashboard-new-group">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path
-                  d="M9 3.75V14.25M3.75 9H14.25"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-              Create New Group
-            </Link>
           </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>Recent Expenses</h2>
-            <Link href="/dashboard/expenses" className={styles.seeAll}>
-              See all
-            </Link>
+        {/* Expenses */}
+        <div className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <h2 className={styles.panelTitle}>Recent Expenses</h2>
+            <Link href="/dashboard/expenses" className={styles.panelLink}>View all →</Link>
           </div>
-          <div className={styles.expenseList}>
+          <div className={styles.panelBody}>
             {expensesLoading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <Skeleton height="60px" borderRadius="12px" />
-                <Skeleton height="60px" borderRadius="12px" />
-                <Skeleton height="60px" borderRadius="12px" />
+              <div className={styles.skeletonStack}>
+                <Skeleton height="52px" borderRadius="10px" />
+                <Skeleton height="52px" borderRadius="10px" />
+                <Skeleton height="52px" borderRadius="10px" />
               </div>
             ) : expenses.length === 0 ? (
-              <div className="text-secondary" style={{ padding: '1rem', border: '1px dashed var(--border-default)', borderRadius: '12px', textAlign: 'center' }}>
-                No recent activity.
+              <div className={styles.emptyState}>
+                <div className={styles.emptyIcon}>🧾</div>
+                <p>No expenses yet</p>
+                <Link href="/dashboard/new-expense" className={styles.emptyAction}>Add your first expense</Link>
               </div>
             ) : (
-              expenses.slice(0, 5).map((exp: any) => {
+              expenses.slice(0, 6).map((exp: any) => {
                 const convertedAmt = convertCurrency(parseFloat(exp.amount), exp.currency || "USD", defaultCurrency);
+                const isPayer = exp.paidBy === userId;
                 return (
-                  <div key={exp.id} className={styles.expenseRow}>
-                    <div
-                      className={styles.expenseCat}
-                      style={{ background: `rgba(91, 141, 239, 0.15)`, color: "#5B8DEF" }}
-                    >
-                      📝
+                  <div key={exp.id} className={styles.listRow}>
+                    <div className={styles.rowIcon} style={{ background: "rgba(91,141,239,0.12)", color: "#5B8DEF" }}>
+                      {getCategoryIcon(exp.category)}
                     </div>
-                    <div className={styles.expenseInfo}>
-                      <span className={styles.expenseDesc}>{exp.description}</span>
-                      <span className={styles.expenseMeta}>
-                        {exp.payerName} &middot; {new Date(exp.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    <div className={styles.rowBody}>
+                      <span className={styles.rowTitle}>{exp.description}</span>
+                      <span className={styles.rowSub}>
+                        {isPayer ? "You paid" : exp.payerName} · {new Date(exp.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                       </span>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                      <span className={styles.expenseAmount}>
-                        {getCurrencySymbol(exp.currency)}{parseFloat(exp.amount).toFixed(2)}
-                      </span>
+                    <div className={styles.rowAmount}>
+                      <span className={styles.rowAmountMain}>{getCurrencySymbol(exp.currency)}{parseFloat(exp.amount).toFixed(2)}</span>
                       {exp.currency !== defaultCurrency && (
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                          ({sym}{convertedAmt.toFixed(2)})
-                        </span>
+                        <span className={styles.rowAmountSub}>{sym}{convertedAmt.toFixed(2)}</span>
                       )}
                     </div>
                   </div>
@@ -269,50 +270,34 @@ export default function DashboardHome() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className={styles.quickActions}>
-        <h2 className={styles.sectionTitle}>Quick Actions</h2>
-        <div className={styles.actionGrid}>
-          <Link href="/dashboard/new-expense" className={styles.actionCard} id="quick-add-expense">
-            <div className={styles.actionIcon} style={{ background: "rgba(61, 214, 140, 0.1)", color: "var(--mint-400)" }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </div>
-            <span className={styles.actionLabel}>Add Expense</span>
-          </Link>
-          <Link href="/dashboard/scan" className={styles.actionCard} id="quick-scan-receipt">
-            <div className={styles.actionIcon} style={{ background: "rgba(91, 141, 239, 0.1)", color: "#5B8DEF" }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M7 12H17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M3 8H21" stroke="currentColor" strokeWidth="1" opacity="0.3" />
-                <path d="M3 16H21" stroke="currentColor" strokeWidth="1" opacity="0.3" />
-              </svg>
-            </div>
-            <span className={styles.actionLabel}>Scan Receipt</span>
-          </Link>
-          <Link href="/dashboard/settle" className={styles.actionCard} id="quick-settle-up">
-            <div className={styles.actionIcon} style={{ background: "rgba(255, 169, 77, 0.1)", color: "#FFA94D" }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
-              </svg>
-            </div>
-            <span className={styles.actionLabel}>Settle Up</span>
-          </Link>
-          <Link href="/dashboard/groups/new" className={styles.actionCard} id="quick-new-group">
-            <div className={styles.actionIcon} style={{ background: "rgba(177, 151, 252, 0.1)", color: "#B197FC" }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <circle cx="9" cy="7" r="3" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M2 21V18C2 15.79 3.79 14 6 14H12C14.21 14 16 15.79 16 18V21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M19 8V14M16 11H22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </div>
-            <span className={styles.actionLabel}>New Group</span>
-          </Link>
-        </div>
+      {/* ── Quick actions ── */}
+      <div className={styles.quickRow}>
+        <Link href="/dashboard/new-expense" className={styles.quickCard} id="quick-add-expense">
+          <div className={styles.quickIcon} style={{ background: "rgba(61,214,140,0.1)", color: "var(--mint-400)" }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+          </div>
+          <span className={styles.quickLabel}>Add Expense</span>
+        </Link>
+        <Link href="/dashboard/settle" className={styles.quickCard} id="quick-settle">
+          <div className={styles.quickIcon} style={{ background: "rgba(255,169,77,0.1)", color: "#FFA94D" }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" /></svg>
+          </div>
+          <span className={styles.quickLabel}>Settle Up</span>
+        </Link>
+        <Link href="/dashboard/groups/new" className={styles.quickCard} id="quick-new-group">
+          <div className={styles.quickIcon} style={{ background: "rgba(177,151,252,0.1)", color: "#B197FC" }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="7" r="3" stroke="currentColor" strokeWidth="1.5" /><path d="M2 21V18C2 15.79 3.79 14 6 14H12C14.21 14 16 15.79 16 18V21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M19 8V14M16 11H22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+          </div>
+          <span className={styles.quickLabel}>New Group</span>
+        </Link>
+        <Link href="/dashboard/activity" className={styles.quickCard} id="quick-activity">
+          <div className={styles.quickIcon} style={{ background: "rgba(91,141,239,0.1)", color: "#5B8DEF" }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </div>
+          <span className={styles.quickLabel}>Activity</span>
+        </Link>
       </div>
+
     </div>
   );
 }

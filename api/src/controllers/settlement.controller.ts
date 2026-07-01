@@ -62,7 +62,7 @@ export const createSettlement = async (request: AuthenticatedRequest, reply: Fas
     });
 
     if (groupId) {
-      Cache.delete(`group_balances_${groupId}`);
+      await Cache.delete(`group_balances_${groupId}`);
     }
 
     return reply.code(201).send({ message: "Settlement recorded", settlement: newSettlement });

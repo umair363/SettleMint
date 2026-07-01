@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import styles from "./new-expense.module.css";
 import { getCurrencySymbol } from "@/utils/currency";
+import { offlineSync } from "@/utils/offlineSync";
 
 const categories = [
   { id: "food", label: "Food & Drink", emoji: "🍽" },
@@ -46,6 +47,10 @@ export default function NewExpensePage() {
   const [currentUserId, setCurrentUserId] = useState("");
   const [defaultCurrency, setDefaultCurrency] = useState("USD");
   const [errorMsg, setErrorMsg] = useState("");
+
+  // AI states
+  const [mintBotText, setMintBotText] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const session = localStorage.getItem("settlemint_session");
@@ -260,6 +265,66 @@ export default function NewExpensePage() {
     );
   }
 
+  // --- AI MUTATIONS --- //
+  const parseNLPMutation = useMutation({
+    mutationFn: async (text: string) => {
+      const res = await fetch("https://settlemint.onrender.com/api/ai/parse-nlp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) throw new Error("Failed to parse natural language");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      const { description: nlpDesc, totalAmount, currency, splitType: nlpSplitType } = data.result;
+      if (nlpDesc) setDescription(nlpDesc);
+      if (totalAmount) setAmount(totalAmount.toString());
+      if (nlpSplitType) setSplitType(nlpSplitType.toLowerCase() as SplitType);
+      setMintBotText(""); // clear input after success
+    },
+    onError: (err: any) => setErrorMsg(err.message),
+  });
+
+  const handleMintBotSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (mintBotText.trim()) {
+      parseNLPMutation.mutate(mintBotText);
+    }
+  };
+
+  const scanReceiptMutation = useMutation({
+    mutationFn: async (base64Image: string) => {
+      const res = await fetch("https://settlemint.onrender.com/api/ai/scan-receipt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ base64Image }),
+      });
+      if (!res.ok) throw new Error("Failed to scan receipt");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      const { merchantName, totalAmount, date: receiptDate } = data.result;
+      if (merchantName) setDescription(merchantName);
+      if (totalAmount) setAmount(totalAmount.toString());
+      if (receiptDate) setDate(receiptDate);
+    },
+    onError: (err: any) => setErrorMsg(err.message),
+  });
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      scanReceiptMutation.mutate(base64);
+    };
+    reader.readAsDataURL(file);
+  };
+  // --------------------- //
+
   const createExpenseMutation = useMutation({
     mutationFn: async () => {
       const splits = splitPreviews
@@ -268,30 +333,42 @@ export default function NewExpensePage() {
 
       if (splits.length === 0) throw new Error("No valid splits.");
 
-      const res = await fetch("https://settlemint.onrender.com/api/expenses", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          groupId: expenseMode === "group" ? selectedGroup : null,
-          description,
-          amount: totalAmount,
-          category: selectedCategory,
-          splits,
-          currency: activeCurrency,
-          paidBy: paidByUserId,
-          date,
-          notes: notes || null,
-        }),
-      });
+      const payload = {
+        groupId: expenseMode === "group" ? selectedGroup : null,
+        description,
+        amount: totalAmount,
+        category: selectedCategory,
+        splits,
+        currency: activeCurrency,
+        paidBy: paidByUserId,
+        date,
+        notes: notes || null,
+      };
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to create expense");
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/expenses`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || "Failed to create expense");
+        }
+        return res.json();
+      } catch (err: any) {
+        // TypeError indicates a network error (e.g. offline)
+        if (err.name === "TypeError" || (typeof navigator !== "undefined" && !navigator.onLine)) {
+          console.warn("Network error creating expense, queuing offline...");
+          offlineSync.queueExpense(payload);
+          return { offline: true };
+        }
+        throw err;
       }
-      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
@@ -376,6 +453,55 @@ export default function NewExpensePage() {
             {errorMsg}
           </div>
         )}
+
+        {/* --- AI Magic Tools Section --- */}
+        <div className={styles.aiContainer}>
+          <div className={styles.aiHeader}>
+            <span className={styles.aiBadge}>✨ AI Tools</span>
+            <p className={styles.aiSub}>Auto-fill your expense instantly.</p>
+          </div>
+          
+          <div className={styles.aiToolsGrid}>
+            <div className={styles.mintBotBox}>
+              <form onSubmit={handleMintBotSubmit} className={styles.mintBotForm}>
+                <input
+                  type="text"
+                  placeholder="e.g. Dinner 4500 split 3 ways I paid"
+                  className={styles.mintBotInput}
+                  value={mintBotText}
+                  onChange={(e) => setMintBotText(e.target.value)}
+                />
+                <button type="submit" className={styles.mintBotBtn} disabled={parseNLPMutation.isPending}>
+                  {parseNLPMutation.isPending ? "Parsing..." : "Ask MintBot"}
+                </button>
+              </form>
+            </div>
+
+            <div className={styles.receiptBox}>
+              <input 
+                type="file" 
+                accept="image/*" 
+                ref={fileInputRef} 
+                onChange={handleFileUpload} 
+                className={styles.hiddenFile}
+                style={{ display: 'none' }}
+              />
+              <button 
+                type="button" 
+                className={styles.receiptBtn} 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={scanReceiptMutation.isPending}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M3 15l4-4c1.33-1.33 3.67-1.33 5 0l2 2m2-2c1.33-1.33 3.67-1.33 5 0l4 4" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+                {scanReceiptMutation.isPending ? "Scanning..." : "Scan Receipt"}
+              </button>
+            </div>
+          </div>
+        </div>
+        {/* ------------------------------- */}
 
         <form onSubmit={handleSubmit} className={styles.form}>
           {/* HERO: Amount + Currency */}

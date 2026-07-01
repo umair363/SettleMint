@@ -532,6 +532,127 @@
   to { transform: rotate(360deg); }
 }
 
+/* ===== AI Magic Tools ===== */
+.aiContainer {
+  background: linear-gradient(145deg, rgba(61, 214, 140, 0.05) 0%, rgba(91, 141, 239, 0.05) 100%);
+  border: 1px solid rgba(61, 214, 140, 0.2);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: var(--space-xl);
+}
+
+.aiHeader {
+  margin-bottom: 1rem;
+}
+
+.aiBadge {
+  display: inline-block;
+  background: linear-gradient(90deg, var(--mint-400), #5B8DEF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.aiSub {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.aiToolsGrid {
+  display: flex;
+  gap: 1rem;
+}
+
+.mintBotBox {
+  flex: 2;
+}
+
+.mintBotForm {
+  display: flex;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 200ms, box-shadow 200ms;
+}
+
+.mintBotForm:focus-within {
+  border-color: var(--mint-400);
+  box-shadow: 0 0 0 3px rgba(61, 214, 140, 0.08);
+}
+
+.mintBotInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 0.6rem 0.8rem;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-family: var(--font-sans);
+  outline: none;
+}
+
+.mintBotInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+.mintBotBtn {
+  background: rgba(255, 255, 255, 0.03);
+  border: none;
+  border-left: 1px solid var(--border-default);
+  padding: 0 1rem;
+  color: var(--mint-400);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 200ms;
+}
+
+.mintBotBtn:hover:not(:disabled) {
+  background: rgba(61, 214, 140, 0.1);
+}
+
+.mintBotBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: var(--text-tertiary);
+}
+
+.receiptBox {
+  flex: 1;
+  display: flex;
+}
+
+.receiptBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: rgba(91, 141, 239, 0.1);
+  border: 1px solid rgba(91, 141, 239, 0.3);
+  border-radius: 8px;
+  color: #8fb6ff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 200ms;
+}
+
+.receiptBtn:hover:not(:disabled) {
+  background: rgba(91, 141, 239, 0.15);
+  border-color: rgba(91, 141, 239, 0.5);
+}
+
+.receiptBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .page {
@@ -557,5 +678,9 @@
 
   .splitTab {
     flex: none;
+  }
+
+  .aiToolsGrid {
+    flex-direction: column;
   }
 }

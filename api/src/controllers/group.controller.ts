@@ -87,7 +87,7 @@ export const getGroupById = async (request: AuthenticatedRequest, reply: Fastify
 
     // Get all expenses for the group
     const cacheKey = `group_balances_${id}`;
-    let cachedMath = Cache.get<any>(cacheKey);
+    let cachedMath = await Cache.get<any>(cacheKey);
 
     let balances: any;
     let suggestedSettlements: any;
@@ -140,7 +140,7 @@ export const getGroupById = async (request: AuthenticatedRequest, reply: Fastify
       }));
 
       // Cache it!
-      Cache.set(cacheKey, { balances, suggestedSettlements, strictSettlements });
+      await Cache.set(cacheKey, { balances, suggestedSettlements, strictSettlements });
     }
 
     return reply.code(200).send({
