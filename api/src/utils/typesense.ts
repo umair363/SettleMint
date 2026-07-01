@@ -2,15 +2,26 @@ import Typesense from 'typesense';
 import { db } from '../db';
 import { expenses, expenseSplits } from '../db/schema';
 
+// Validate required Typesense env vars at startup — fail loudly rather than
+// silently connecting to localhost with a public API key.
+const TYPESENSE_HOST = process.env.TYPESENSE_HOST;
+const TYPESENSE_API_KEY = process.env.TYPESENSE_API_KEY;
+
+if (!TYPESENSE_HOST || !TYPESENSE_API_KEY) {
+  console.warn(
+    'WARNING: TYPESENSE_HOST or TYPESENSE_API_KEY is not set. Search will be disabled.'
+  );
+}
+
 export const typesense = new Typesense.Client({
   nodes: [
     {
-      host: process.env.TYPESENSE_HOST || 'localhost',
+      host: TYPESENSE_HOST || 'localhost',
       port: Number(process.env.TYPESENSE_PORT) || 8108,
-      protocol: process.env.TYPESENSE_PROTOCOL || 'http',
+      protocol: process.env.TYPESENSE_PROTOCOL || 'https',
     },
   ],
-  apiKey: process.env.TYPESENSE_API_KEY || 'settlemint_search_key',
+  apiKey: TYPESENSE_API_KEY || 'invalid-key',
   connectionTimeoutSeconds: 2,
 });
 
