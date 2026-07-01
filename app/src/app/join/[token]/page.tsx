@@ -20,7 +20,7 @@ export default function JoinGroupPage() {
     if (session) setAuthToken(JSON.parse(session).token);
 
     // Preview the invite (public endpoint)
-    fetch(`https://settlemint.onrender.com/api/invite/${token}`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/invite/${token}`)
       .then((res) => {
         if (!res.ok) return res.json().then((d) => { throw new Error(d.error); });
         return res.json();
@@ -44,7 +44,7 @@ export default function JoinGroupPage() {
 
     setStatus("joining");
     try {
-      const res = await fetch(`https://settlemint.onrender.com/api/invite/${token}/join`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/invite/${token}/join`, {
         method: "POST",
         headers: { Authorization: `Bearer ${authToken}` },
       });

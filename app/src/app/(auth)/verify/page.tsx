@@ -35,7 +35,7 @@ function VerifyContent() {
     setLoading(true);
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com";
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}`";
       const response = await fetch(`${baseUrl}/api/auth/verify-otp`, {
         method: "POST",
         headers: {
@@ -77,7 +77,7 @@ function VerifyContent() {
     setResendLoading(true);
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com";
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}`";
       const response = await fetch(`${baseUrl}/api/auth/resend-otp`, {
         method: "POST",
         headers: {

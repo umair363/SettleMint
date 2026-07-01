@@ -28,7 +28,7 @@ export default function ExpensesPage() {
   const { data: expensesData, isLoading: isAllLoading } = useQuery({
     queryKey: ["all_expenses"],
     queryFn: async () => {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com";
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}`";
       const res = await fetch(`${baseUrl}/api/expenses/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -42,7 +42,7 @@ export default function ExpensesPage() {
   const { data: groupsData } = useQuery({
     queryKey: ["my_groups"],
     queryFn: async () => {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com";
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}`";
       const res = await fetch(`${baseUrl}/api/groups`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -56,7 +56,7 @@ export default function ExpensesPage() {
   const { data: searchData, isLoading: isSearchLoading } = useQuery({
     queryKey: ["expenses_search", search, filterGroup],
     queryFn: async () => {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com";
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}`";
       let url = `${baseUrl}/api/expenses/search?q=${encodeURIComponent(search)}`;
       if (filterGroup !== "all") {
         url += `&groupId=${filterGroup}`;

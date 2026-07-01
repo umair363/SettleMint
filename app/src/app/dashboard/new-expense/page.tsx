@@ -66,7 +66,7 @@ export default function NewExpensePage() {
   const { data: groupsData, isLoading: groupsLoading } = useQuery({
     queryKey: ["groups"],
     queryFn: async () => {
-      const res = await fetch("https://settlemint.onrender.com/api/groups", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}`/api/groups", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch groups");
@@ -79,7 +79,7 @@ export default function NewExpensePage() {
   const { data: friendsData, isLoading: friendsLoading } = useQuery({
     queryKey: ["friends"],
     queryFn: async () => {
-      const res = await fetch("https://settlemint.onrender.com/api/friends", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}`/api/friends", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch friends");
@@ -93,7 +93,7 @@ export default function NewExpensePage() {
     queryKey: ["group", selectedGroup],
     queryFn: async () => {
       const res = await fetch(
-        `https://settlemint.onrender.com/api/groups/${selectedGroup}`,
+        `${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/groups/${selectedGroup}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!res.ok) throw new Error("Failed to fetch group details");
@@ -268,7 +268,7 @@ export default function NewExpensePage() {
   // --- AI MUTATIONS --- //
   const parseNLPMutation = useMutation({
     mutationFn: async (text: string) => {
-      const res = await fetch("https://settlemint.onrender.com/api/ai/parse-nlp", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}`/api/ai/parse-nlp", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ text }),
@@ -295,7 +295,7 @@ export default function NewExpensePage() {
 
   const scanReceiptMutation = useMutation({
     mutationFn: async (base64Image: string) => {
-      const res = await fetch("https://settlemint.onrender.com/api/ai/scan-receipt", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}`/api/ai/scan-receipt", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ base64Image }),
@@ -346,7 +346,7 @@ export default function NewExpensePage() {
       };
 
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/expenses`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}`"}/api/expenses`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
