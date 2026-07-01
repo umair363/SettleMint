@@ -57,7 +57,7 @@ export const offlineSync = {
       
       for (const item of queue) {
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/expenses`, {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}`"}/api/expenses`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

@@ -29,7 +29,7 @@ export default function SettingsPage() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch("https://settlemint.onrender.com/api/users/me", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}`/api/users/me", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

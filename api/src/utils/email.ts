@@ -40,6 +40,7 @@ export const sendEmail = async (to: string, subject: string, htmlContent: string
 };
 
 export const sendWelcomeEmail = async (email: string, fullName: string) => {
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
   const welcomeHtml = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 2rem; color: #1e293b;">
       <h1 style="color: #3DD68C; font-size: 24px; font-weight: 700; margin-bottom: 1rem;">Welcome to SettleMint, ${fullName}!</h1>
@@ -50,7 +51,7 @@ export const sendWelcomeEmail = async (email: string, fullName: string) => {
         Log into your dashboard to start creating your groups:
       </p>
       <div style="margin: 2rem 0;">
-        <a href="http://localhost:3000/login" style="background-color: #3DD68C; color: #0f1219; padding: 0.8rem 1.5rem; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">Go to Dashboard</a>
+        <a href="${frontendUrl}/login" style="background-color: #3DD68C; color: #0f1219; padding: 0.8rem 1.5rem; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">Go to Dashboard</a>
       </div>
       <p style="font-size: 14px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 1.5rem; margin-top: 2rem;">
         The SettleMint Team &middot; Built with care.
@@ -106,6 +107,7 @@ export const sendPasswordResetEmail = async (email: string, fullName: string, ot
 
 export const sendExpenseAlertEmail = async (to: string, userName: string, payerName: string, description: string, amount: string, currency: string) => {
   const symbol = currency === "USD" ? "$" : currency === "PKR" ? "Rs" : currency;
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
   const alertHtml = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 2rem; color: #1e293b;">
       <h2 style="font-size: 20px; font-weight: 700; color: #0f1219; margin-bottom: 1rem;">New Expense Added</h2>
@@ -120,7 +122,7 @@ export const sendExpenseAlertEmail = async (to: string, userName: string, payerN
         <span style="font-size: 28px; font-weight: 700; color: #0f1219;">${symbol}${parseFloat(amount).toFixed(2)}</span>
       </div>
       <div style="margin: 2rem 0;">
-        <a href="http://localhost:3000/dashboard/expenses" style="background-color: #3DD68C; color: #0f1219; padding: 0.8rem 1.5rem; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">View Transaction Details</a>
+        <a href="${frontendUrl}/dashboard/expenses" style="background-color: #3DD68C; color: #0f1219; padding: 0.8rem 1.5rem; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">View Transaction Details</a>
       </div>
       <p style="font-size: 14px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 1.5rem; margin-top: 2rem;">
         You received this because you are part of the splitting group. Turn off email alerts in SettleMint Settings.
