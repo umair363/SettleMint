@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import styles from "./dashboard.module.css";
 import { offlineSync } from "../../utils/offlineSync";
+import GlobalSearch from "../../components/GlobalSearch";
 
 interface User {
   id: string;
@@ -333,6 +334,9 @@ export default function DashboardLayout({
               />
             </svg>
           </button>
+
+          {/* Global Search — Typesense powered */}
+          <GlobalSearch />
 
           <div className={styles.topbarRight}>
             {offlineCount > 0 && (
