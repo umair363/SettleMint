@@ -200,7 +200,8 @@
   z-index: var(--z-sticky);
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: var(--space-md);
   padding: var(--space-md) var(--space-xl);
   background: rgba(15, 18, 25, 0.8);
   backdrop-filter: blur(12px);
