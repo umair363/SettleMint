@@ -31,8 +31,7 @@ server.register(rateLimit, {
 
 // CORS Optimization
 server.register(cors, {
-  // Allow the frontend URL if specified, otherwise allow Vercel domains or fallback to allow all for testing
-  origin: process.env.FRONTEND_URL || (process.env.NODE_ENV === "production" ? [/\.vercel\.app$/, "*"] : "*"),
+  origin: process.env.FRONTEND_URL || true, // 'true' reflects the origin back, fixing the credentials error
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
 });
