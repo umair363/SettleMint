@@ -6,7 +6,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { sendWelcomeEmail, sendOTPEmail, sendPasswordResetEmail } from "../utils/email";
 
-const JWT_SECRET = process.env.JWT_SECRET || "super-secret-jwt-key-settlemint-123";
+// Sourced from middleware — guaranteed to be defined at startup (middleware throws if missing).
+const JWT_SECRET = process.env.JWT_SECRET as string;
 
 // Generate 6 digit OTP
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();

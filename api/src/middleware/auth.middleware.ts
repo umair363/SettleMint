@@ -1,7 +1,12 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "super-secret-jwt-key-settlemint-123";
+// Fail fast at startup if the secret is not configured.
+// A missing JWT_SECRET in production would silently allow forged tokens.
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error("FATAL: JWT_SECRET environment variable is not set. Server cannot start.");
+}
 
 export interface UserPayload {
   id: string;
