@@ -11,34 +11,84 @@ export interface ReceiptScanResult {
   currency: string;
   date: string;
   items: ScannedItem[];
-  confidence: number; // 0 to 1
+  confidence: number;
 }
 
 /**
- * AI Receipt Scanner Service (Claude Vision Simulator)
- * In production, this would send the image buffer to Anthropic's claude-3-5-sonnet API
- * with a prompt to extract the receipt data strictly as JSON.
+ * AI Receipt Scanner Service
+ * Uses Gemini Vision API to extract receipt data strictly as JSON.
  */
 export async function scanReceipt(base64Image: string): Promise<ReceiptScanResult> {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  // NOTE: Production implementation requires Anthropic API key
-  // Example prompt:
-  // "You are a specialized receipt parser. Extract the merchant name, total amount, currency (3 letter code), date (YYYY-MM-DD), and line items (name, price) from this image. Return ONLY valid JSON matching this schema..."
-  
-  // Simulated perfect extraction response
-  return {
-    merchantName: "Carrefour",
-    totalAmount: 125.50,
-    currency: "USD",
-    date: new Date().toISOString().split("T")[0],
-    items: [
-      { name: "Coffee Beans", price: 15.00 },
-      { name: "Avocados", price: 6.50 },
-      { name: "Steak", price: 45.00 },
-      { name: "Household Supplies", price: 59.00 }
-    ],
-    confidence: 0.94,
-  };
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is not set in environment variables. Please add it to enable Receipt Scanning.");
+  }
+
+  // Remove the data URI prefix if present (e.g. data:image/jpeg;base64,...)
+  const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, "");
+
+  const systemInstruction = `You are a highly accurate receipt parsing AI. 
+Analyze the provided receipt image and extract the data strictly as JSON matching this schema:
+{
+  "merchantName": string,
+  "totalAmount": number,
+  "currency": string (3 letter code, default USD),
+  "date": string (YYYY-MM-DD),
+  "items": [{"name": string, "price": number}],
+  "confidence": number (0 to 1)
 }
+Return ONLY valid JSON. Do not include markdown code block formatting.`;
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemInstruction }] },
+        contents: [
+          {
+            parts: [
+              { text: "Extract the receipt details." },
+              {
+                inline_data: {
+                  mime_type: "image/jpeg",
+                  data: base64Data
+                }
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          response_mime_type: "application/json",
+          temperature: 0.1
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(()=>({}));
+      console.error("Gemini Vision API Error:", err);
+      throw new Error("Failed to process receipt image with AI");
+    }
+
+    const data = await response.json();
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!rawText) throw new Error("Empty response from AI Vision");
+
+    const parsed = JSON.parse(rawText) as ReceiptScanResult;
+    
+    return {
+      merchantName: parsed.merchantName || "Unknown Merchant",
+      totalAmount: parsed.totalAmount || 0,
+      currency: parsed.currency || "USD",
+      date: parsed.date || new Date().toISOString().split("T")[0],
+      items: Array.isArray(parsed.items) ? parsed.items : [],
+      confidence: parsed.confidence || 0.9,
+    };
+  } catch (error) {
+    console.error("Receipt Scan Error:", error);
+    throw new Error("AI could not read that receipt. Please ensure the image is clear.");
+  }
+}
+
