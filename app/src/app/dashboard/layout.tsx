@@ -166,22 +166,19 @@ export default function DashboardLayout({
       label: "Expenses",
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <rect
-            x="2"
-            y="5"
-            width="20"
-            height="14"
-            rx="3"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          />
+          <rect x="2" y="5" width="20" height="14" rx="3" stroke="currentColor" strokeWidth="1.5" />
           <path d="M2 10H22" stroke="currentColor" strokeWidth="1.5" />
-          <path
-            d="M6 15H10"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
+          <path d="M6 15H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      ),
+    },
+    {
+      href: "/dashboard/budget",
+      label: "Budget",
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M3 3v18h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          <path d="M7 16l4-4 4 4 4-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       ),
     },

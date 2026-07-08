@@ -57,6 +57,7 @@ import activityRoutes from "./routes/activity.routes";
 import notificationRoutes from "./routes/notification.routes";
 import inviteRoutes from "./routes/invite.routes";
 import aiRoutes from "./routes/ai.routes";
+import budgetRoutes from "./routes/budget.routes";
 
 // ─── Global Error Handler ───────────────────────────────────────────────────
 // Catches any unhandled error thrown in a route handler.
@@ -98,6 +99,7 @@ server.register(activityRoutes, { prefix: "/api/activity" });
 server.register(notificationRoutes, { prefix: "/api/notifications" });
 server.register(inviteRoutes, { prefix: "/api/invite" });
 server.register(aiRoutes, { prefix: "/api/ai" });
+server.register(budgetRoutes, { prefix: "/api/budget" });
 
 import { initTypesense } from "./utils/typesense";
 

@@ -172,3 +172,51 @@ export const notifications = pgTable("notifications", {
   index("notifications_user_id_idx").on(t.userId),
   index("notifications_is_read_idx").on(t.isRead),
 ]);
+
+// ─── Personal Budget Tracker ─────────────────────────────────────────────────
+
+// --- Personal Transactions ---
+export const personalTransactions = pgTable("personal_transactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+  type: varchar("type", { length: 10 }).default("expense").notNull(), // 'expense' | 'income'
+  category: varchar("category", { length: 100 }).notNull(),
+  description: text("description").notNull(),
+  wallet: varchar("wallet", { length: 50 }).default("card").notNull(), // 'cash' | 'bank' | 'card'
+  currency: varchar("currency", { length: 3 }).default("USD").notNull(),
+  date: timestamp("date").defaultNow().notNull(),
+  notes: text("notes"),
+  isRecurring: boolean("is_recurring").default(false).notNull(),
+  recurringFrequency: varchar("recurring_frequency", { length: 20 }), // 'daily'|'weekly'|'monthly'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => [
+  index("personal_txn_user_id_idx").on(t.userId),
+  index("personal_txn_date_idx").on(t.date),
+  index("personal_txn_type_idx").on(t.type),
+]);
+
+// --- Budget Goals ---
+export const budgets = pgTable("budgets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  category: varchar("category", { length: 100 }).notNull(),
+  limitAmount: numeric("limit_amount", { precision: 12, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("USD").notNull(),
+  month: numeric("month", { precision: 2, scale: 0 }).notNull(), // 1-12
+  year: numeric("year", { precision: 4, scale: 0 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => [
+  index("budgets_user_id_idx").on(t.userId),
+  index("budgets_month_year_idx").on(t.month, t.year),
+]);
+
+// --- Budget Tracker Relations ---
+export const personalTransactionsRelations = relations(personalTransactions, ({ one }) => ({
+  user: one(users, { fields: [personalTransactions.userId], references: [users.id] }),
+}));
+
+export const budgetsRelations = relations(budgets, ({ one }) => ({
+  user: one(users, { fields: [budgets.userId], references: [users.id] }),
+}));
+
