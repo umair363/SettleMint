@@ -47,6 +47,8 @@ function formatDate(iso: string) {
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com";
 
+import PullToRefresh from "@/components/PullToRefresh";
+
 export default function DashboardHome() {
   const [userName, setUserName] = useState("");
   const [userId, setUserId] = useState("");
@@ -71,7 +73,7 @@ export default function DashboardHome() {
 
   const sym = getCurrencySymbol(defaultCurrency);
 
-  const { data: groupsData, isLoading } = useQuery({
+  const { data: groupsData, isLoading, refetch: refetchGroups } = useQuery({
     queryKey: ["groups"],
     queryFn: async () => {
       const res = await fetch(`${API}/api/groups`, {
@@ -83,7 +85,7 @@ export default function DashboardHome() {
     enabled: !!token,
   });
 
-  const { data: expensesData, isLoading: expensesLoading } = useQuery({
+  const { data: expensesData, isLoading: expensesLoading, refetch: refetchExpenses } = useQuery({
     queryKey: ["recent_expenses"],
     queryFn: async () => {
       const res = await fetch(`${API}/api/expenses/me`, {
@@ -95,7 +97,7 @@ export default function DashboardHome() {
     enabled: !!token,
   });
 
-  const { data: settlementsData } = useQuery({
+  const { data: settlementsData, refetch: refetchSettlements } = useQuery({
     queryKey: ["settlements"],
     queryFn: async () => {
       const res = await fetch(`${API}/api/settlements`, {
@@ -106,6 +108,14 @@ export default function DashboardHome() {
     },
     enabled: !!token,
   });
+
+  const handleRefresh = async () => {
+    await Promise.all([
+      refetchGroups(),
+      refetchExpenses(),
+      refetchSettlements()
+    ]);
+  };
 
   const groups: Group[] = groupsData?.groups || [];
   const expenses = expensesData?.expenses || [];
@@ -138,7 +148,8 @@ export default function DashboardHome() {
   const initials   = userName ? userName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) : "?";
 
   return (
-    <div className={styles.page}>
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className={styles.page}>
 
       {/* ══════════════════════════════════════
           MOBILE LAYOUT
@@ -480,5 +491,6 @@ export default function DashboardHome() {
       </div>
 
     </div>
+    </PullToRefresh>
   );
 }

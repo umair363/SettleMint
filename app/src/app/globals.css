@@ -617,3 +617,19 @@ body {
   overscroll-behavior-y: contain;
 }
 
+/* ══ PWA Native Page Transitions ══ */
+.page-transition {
+  animation: pageSlideIn 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes pageSlideIn {
+  from {
+    transform: translateY(16px) scale(0.98);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
