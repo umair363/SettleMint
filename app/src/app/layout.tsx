@@ -14,6 +14,8 @@ export const metadata: Metadata = {
     "splitwise alternative",
     "bill splitter",
     "shared costs",
+    "budget tracker",
+    "personal finance",
   ],
   openGraph: {
     title: "SettleMint - Split Expenses, Not Friendships",
@@ -22,12 +24,28 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     siteName: "SettleMint",
+    images: [{ url: "/icon-512.png", width: 512, height: 512, alt: "SettleMint" }],
+  },
+  twitter: {
+    card: "summary",
+    title: "SettleMint",
+    description: "Split expenses, not friendships.",
+    images: ["/icon-512.png"],
   },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "SettleMint",
+    startupImage: "/icon-512.png",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+    "msapplication-TileColor": "#0a0e17",
+    "msapplication-TileImage": "/icon-192.png",
   },
 };
 
