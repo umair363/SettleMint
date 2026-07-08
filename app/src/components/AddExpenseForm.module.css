@@ -1,34 +1,23 @@
 /* ===== New Expense Page ===== */
 
-.page {
+.formContainer {
   display: flex;
-  justify-content: center;
-  padding: var(--space-xl) var(--space-lg);
-  padding-bottom: 4rem;
-}
-
-.card {
+  flex-direction: column;
+  gap: 16px;
   width: 100%;
-  max-width: 660px;
 }
 
-/* Header */
 .pageHeader {
-  margin-bottom: var(--space-xl);
-}
-
-.title {
-  font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--text-primary);
-  margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
 }
 
 .subtitle {
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   color: var(--text-secondary);
-  line-height: 1.5;
+  margin-top: 4px;
 }
 
 /* Mode Toggle */
@@ -323,6 +312,26 @@
 /* ===== Split Section ===== */
 
 /* Tab bar */
+.formContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
 .splitTabs {
   display: flex;
   gap: 0.375rem;

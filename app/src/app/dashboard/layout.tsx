@@ -6,6 +6,8 @@ import Link from "next/link";
 import styles from "./dashboard.module.css";
 import { offlineSync } from "../../utils/offlineSync";
 import GlobalSearch from "../../components/GlobalSearch";
+import BottomSheet from "../../components/BottomSheet";
+import AddExpenseForm from "../../components/AddExpenseForm";
 
 interface User {
   id: string;
@@ -25,6 +27,7 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [offlineCount, setOfflineCount] = useState(0);
+  const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -365,7 +368,7 @@ export default function DashboardLayout({
               <span className={styles.notifDot} />
             </Link>
 
-            <Link href="/dashboard/new-expense" className={`btn btn-primary ${styles.addBtn}`} id="topbar-add-expense">
+            <button onClick={() => setIsAddExpenseOpen(true)} className={`btn btn-primary ${styles.addBtn}`} id="topbar-add-expense">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path
                   d="M8 3V13M3 8H13"
@@ -375,7 +378,7 @@ export default function DashboardLayout({
                 />
               </svg>
               <span className={styles.addBtnText}>Add Expense</span>
-            </Link>
+            </button>
           </div>
         </header>
 
@@ -407,13 +410,11 @@ export default function DashboardLayout({
 
         {/* Centre FAB */}
         <div className={styles.bottomNavAdd}>
-          <Link href="/dashboard/new-expense" aria-label="Add expense" id="mobile-bottomnav-add">
-            <button className={styles.bottomNavAddBtn}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
-              </svg>
-            </button>
-          </Link>
+          <button className={styles.bottomNavAddBtn} onClick={() => setIsAddExpenseOpen(true)} aria-label="Add expense" id="mobile-bottomnav-add">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
+            </svg>
+          </button>
         </div>
 
         <Link href="/dashboard/budget" className={`${styles.bottomNavItem} ${pathname.startsWith("/dashboard/budget") ? styles.bottomNavItemActive : ""}`}>
@@ -437,6 +438,14 @@ export default function DashboardLayout({
           <span className={styles.bottomNavLabel}>Expenses</span>
         </Link>
       </nav>
+
+      {/* ── Global Bottom Sheets ── */}
+      <BottomSheet 
+        isOpen={isAddExpenseOpen} 
+        onClose={() => setIsAddExpenseOpen(false)}
+      >
+        <AddExpenseForm onSuccess={() => setIsAddExpenseOpen(false)} />
+      </BottomSheet>
     </div>
   );
 }
