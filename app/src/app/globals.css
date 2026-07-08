@@ -480,3 +480,140 @@ option { background-color: #1a1f2e; color: #f9fafb; }
     background-position: 0 50%;
   }
 }
+
+/* ─────────────── PWA / Mobile Fixes ─────────────── */
+
+/* Safe area insets for notched devices */
+:root {
+  --safe-top:    env(safe-area-inset-top,    0px);
+  --safe-right:  env(safe-area-inset-right,  0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left:   env(safe-area-inset-left,   0px);
+}
+
+/* Remove tap highlight on mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent text size adjustment on orientation change */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Smooth momentum scrolling on iOS */
+.scrollable,
+[data-scroll],
+.txnList,
+.panelBody {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Better touch targets — minimum 44px */
+button,
+a,
+[role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Override for decorative / icon-only buttons that should stay compact */
+.iconBtn,
+.deleteBtn,
+.monthBtn,
+.modalClose {
+  min-height: unset;
+  min-width: unset;
+}
+
+/* Prevent double-tap zoom on buttons */
+button,
+a {
+  touch-action: manipulation;
+}
+
+/* Full height on mobile browsers */
+body {
+  min-height: 100dvh;
+}
+
+/* Bottom padding for home indicator on iOS */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .dashboardLayout,
+  main {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* Prevent horizontal overflow on small screens */
+.page,
+.mainGrid,
+.summaryGrid,
+.balanceStrip,
+.quickRow {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Mobile-specific dashboard sidebar — hide on very small screens */
+@media (max-width: 480px) {
+  /* Give more breathing room in cards */
+  .balanceCard,
+  .panel,
+  .quickCard,
+  .goalCard,
+  .summaryCard {
+    padding: 1rem !important;
+  }
+
+  /* Shrink hero number on tiny screens */
+  .balanceValue,
+  .summaryCardValue,
+  .kpiValue {
+    font-size: 1.25rem !important;
+  }
+
+  /* Single-column layouts */
+  .mainGrid,
+  .chartsGrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .summaryGrid,
+  .kpiRow {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Full-width modals */
+  .modal {
+    border-radius: 20px 20px 0 0 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    max-width: 100% !important;
+    max-height: 85vh !important;
+  }
+
+  .modalOverlay {
+    align-items: flex-end !important;
+  }
+}
+
+/* Ensure inputs don't zoom on iOS (font-size >= 16px) */
+input,
+select,
+textarea {
+  font-size: max(16px, 1rem) !important;
+}
+
+/* Overscroll bounce control */
+html,
+body {
+  overscroll-behavior-y: contain;
+}
+

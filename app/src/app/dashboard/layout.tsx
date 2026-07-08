@@ -381,6 +381,62 @@ export default function DashboardLayout({
 
         <div className={styles.content}>{children}</div>
       </div>
+
+      {/* ── Mobile Bottom Nav ── */}
+      <nav className={styles.bottomNav} aria-label="Mobile navigation">
+        <Link href="/dashboard" className={`${styles.bottomNavItem} ${pathname === "/dashboard" ? styles.bottomNavItemActive : ""}`}>
+          <span className={styles.bottomNavIcon}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M9 21V12h6v9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </span>
+          <span className={styles.bottomNavLabel}>Home</span>
+        </Link>
+
+        <Link href="/dashboard/groups" className={`${styles.bottomNavItem} ${pathname.startsWith("/dashboard/groups") ? styles.bottomNavItemActive : ""}`}>
+          <span className={styles.bottomNavIcon}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </span>
+          <span className={styles.bottomNavLabel}>Groups</span>
+        </Link>
+
+        {/* Centre FAB */}
+        <div className={styles.bottomNavAdd}>
+          <Link href="/dashboard/new-expense" aria-label="Add expense" id="mobile-bottomnav-add">
+            <button className={styles.bottomNavAddBtn}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </Link>
+        </div>
+
+        <Link href="/dashboard/budget" className={`${styles.bottomNavItem} ${pathname.startsWith("/dashboard/budget") ? styles.bottomNavItemActive : ""}`}>
+          <span className={styles.bottomNavIcon}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M3 3v18h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M7 16l4-4 4 4 4-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </span>
+          <span className={styles.bottomNavLabel}>Budget</span>
+        </Link>
+
+        <Link href="/dashboard/expenses" className={`${styles.bottomNavItem} ${pathname.startsWith("/dashboard/expenses") ? styles.bottomNavItemActive : ""}`}>
+          <span className={styles.bottomNavIcon}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <rect x="2" y="5" width="20" height="14" rx="3" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M2 10h20" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M6 15h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </span>
+          <span className={styles.bottomNavLabel}>Expenses</span>
+        </Link>
+      </nav>
     </div>
   );
 }

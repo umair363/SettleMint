@@ -1,22 +1,50 @@
 {
   "name": "SettleMint",
   "short_name": "SettleMint",
-  "description": "Modern, open-source bill splitting & expense sharing platform.",
-  "start_url": "/",
+  "description": "Split expenses, not friendships. Track shared bills and personal budgets.",
+  "start_url": "/dashboard",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#0a0e17",
   "theme_color": "#0a0e17",
   "orientation": "portrait-primary",
+  "lang": "en",
+  "categories": ["finance", "productivity", "utilities"],
   "icons": [
     {
-      "src": "https://i.imgur.com/gK98hWq.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "https://i.imgur.com/gK98hWq.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add Expense",
+      "short_name": "Add",
+      "description": "Log a new shared expense",
+      "url": "/dashboard/new-expense",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "My Budget",
+      "short_name": "Budget",
+      "description": "View personal budget tracker",
+      "url": "/dashboard/budget",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
