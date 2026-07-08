@@ -1,0 +1,41 @@
+.container {
+  position: relative;
+  min-height: 100vh;
+  /* Prevent browser's native pull-to-refresh */
+  overscroll-behavior-y: none;
+}
+
+.indicator {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+  z-index: 50;
+  will-change: transform, opacity;
+}
+
+.indicator svg {
+  width: 32px;
+  height: 32px;
+  background: var(--surface-card, rgba(26, 31, 46, 0.6));
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+  border-radius: 50%;
+  padding: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.content {
+  will-change: transform;
+}

@@ -1,0 +1,94 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+}
+
+.sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--surface-primary, #0f1219);
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  z-index: 101;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.4);
+  /* Use a nice spring-like bezier for native feel */
+  transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+}
+
+.fadeIn { animation: fadeIn 0.3s ease-out forwards; }
+.fadeOut { animation: fadeOut 0.3s ease-out forwards; }
+
+.slideIn { animation: slideIn 0.4s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
+.slideOut { animation: slideOut 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+@keyframes slideIn {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes slideOut {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+.dragHandleContainer {
+  padding: 12px;
+  display: flex;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none; /* Prevent scrolling when dragging handle */
+}
+
+.dragHandleContainer:active { cursor: grabbing; }
+
+.dragHandle {
+  width: 40px;
+  height: 5px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.closeBtn {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--mint-400, #3DD68C);
+  background: none;
+  border: none;
+  padding: 8px 0;
+  cursor: pointer;
+}
+
+.content {
+  padding: 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Add safe area inset for bottom */
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+}

@@ -379,7 +379,7 @@ export default function DashboardLayout({
           </div>
         </header>
 
-        <div className={styles.content}>{children}</div>
+        <div key={pathname} className={`${styles.content} page-transition`}>{children}</div>
       </div>
 
       {/* ── Mobile Bottom Nav ── */}
