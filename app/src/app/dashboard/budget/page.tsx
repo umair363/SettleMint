@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Skeleton from "@/components/Skeleton";
+import BottomSheet from "@/components/BottomSheet";
 import { getCurrencySymbol } from "@/utils/currency";
 import styles from "./budget.module.css";
 
@@ -50,6 +51,8 @@ export default function BudgetPage() {
     wallet: "card",
     date: new Date().toISOString().split("T")[0],
     notes: "",
+    isRecurring: false,
+    recurringFrequency: "monthly",
   });
 
   const now = new Date();
@@ -121,7 +124,7 @@ export default function BudgetPage() {
       queryClient.invalidateQueries({ queryKey: ["budget_txns"] });
       queryClient.invalidateQueries({ queryKey: ["budget_analytics"] });
       setShowModal(false);
-      setForm({ amount: "", type: "expense", category: "food", description: "", wallet: "card", date: new Date().toISOString().split("T")[0], notes: "" });
+      setForm({ amount: "", type: "expense", category: "food", description: "", wallet: "card", date: new Date().toISOString().split("T")[0], notes: "", isRecurring: false, recurringFrequency: "monthly" });
     },
   });
 
@@ -381,124 +384,140 @@ export default function BudgetPage() {
         </div>
       </div>
 
-      {/* ── Quick-Add Modal ── */}
-      {showModal && (
-        <div className={styles.modalOverlay} onClick={(e) => e.target === e.currentTarget && setShowModal(false)}>
-          <div className={styles.modal}>
-            <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>Add Transaction</h2>
-              <button className={styles.modalClose} onClick={() => setShowModal(false)} aria-label="Close">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              </button>
+      {/* ── Quick-Add Bottom Sheet ── */}
+      <BottomSheet isOpen={showModal} onClose={() => setShowModal(false)}>
+        <div className={styles.modalHeader}>
+          <h2 className={styles.modalTitle}>Add Transaction</h2>
+          <p className={styles.modalSubtitle}>Log a personal expense or income.</p>
+        </div>
+
+        <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(); }} className={styles.bottomSheetForm}>
+          {/* Type toggle */}
+          <div className={styles.typeToggle}>
+            <button
+              type="button"
+              className={`${styles.typeBtn} ${form.type === "expense" ? styles.typeBtnExpense : ""}`}
+              onClick={() => setForm(f => ({ ...f, type: "expense" }))}
+            >💸 Expense</button>
+            <button
+              type="button"
+              className={`${styles.typeBtn} ${form.type === "income" ? styles.typeBtnIncome : ""}`}
+              onClick={() => setForm(f => ({ ...f, type: "income" }))}
+            >💰 Income</button>
+          </div>
+
+          {/* Amount */}
+          <div className={styles.amountSection}>
+            <span className={styles.currencyPrefix}>{sym}</span>
+            <input
+              id="modal-amount"
+              type="number"
+              className={styles.amountInput}
+              placeholder="0.00"
+              value={form.amount}
+              onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+              step="0.01" min="0" required autoFocus
+            />
+          </div>
+
+          <div className={styles.formGrid}>
+            {/* Description */}
+            <div className={styles.field}>
+              <label className={styles.fieldLabel}>Description</label>
+              <input
+                type="text"
+                className={styles.input}
+                placeholder='e.g. "Chai at Burns Road"'
+                value={form.description}
+                onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                required
+              />
             </div>
 
-            <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(); }}>
-
-              {/* Type toggle */}
-              <div className={styles.typeToggle}>
-                <button
-                  type="button"
-                  className={`${styles.typeBtn} ${form.type === "expense" ? styles.typeBtnExpense : ""}`}
-                  onClick={() => setForm(f => ({ ...f, type: "expense" }))}
-                >💸 Expense</button>
-                <button
-                  type="button"
-                  className={`${styles.typeBtn} ${form.type === "income" ? styles.typeBtnIncome : ""}`}
-                  onClick={() => setForm(f => ({ ...f, type: "income" }))}
-                >💰 Income</button>
-              </div>
-
-              {/* Amount */}
-              <div className={styles.amountSection}>
-                <span className={styles.currencyPrefix}>{sym}</span>
-                <input
-                  id="modal-amount"
-                  type="number"
-                  className={styles.amountInput}
-                  placeholder="0.00"
-                  value={form.amount}
-                  onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-                  step="0.01" min="0" required autoFocus
-                />
-              </div>
-
-              <div className={styles.formGrid}>
-                {/* Description */}
-                <div className={styles.field}>
-                  <label className={styles.fieldLabel}>Description</label>
-                  <input
-                    type="text"
-                    className={styles.input}
-                    placeholder='e.g. "Chai at Burns Road"'
-                    value={form.description}
-                    onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                    required
-                  />
-                </div>
-
-                {/* Date */}
-                <div className={styles.field}>
-                  <label className={styles.fieldLabel}>Date</label>
-                  <input
-                    type="date"
-                    className={styles.input}
-                    value={form.date}
-                    onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                  />
-                </div>
-              </div>
-
-              {/* Category */}
-              <div className={styles.field}>
-                <label className={styles.fieldLabel}>Category</label>
-                <div className={styles.categoryGrid}>
-                  {CATEGORIES.map(c => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      className={`${styles.catBtn} ${form.category === c.id ? styles.catBtnSelected : ""}`}
-                      style={{ "--cat-color": c.color } as React.CSSProperties}
-                      onClick={() => setForm(f => ({ ...f, category: c.id }))}
-                    >
-                      <span>{c.emoji}</span>
-                      <span className={styles.catBtnLabel}>{c.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Wallet */}
-              <div className={styles.field}>
-                <label className={styles.fieldLabel}>Wallet</label>
-                <div className={styles.walletPicker}>
-                  {WALLETS.map(w => (
-                    <button
-                      key={w.id}
-                      type="button"
-                      className={`${styles.walletBtn} ${form.wallet === w.id ? styles.walletBtnSelected : ""}`}
-                      onClick={() => setForm(f => ({ ...f, wallet: w.id }))}
-                    >
-                      {w.emoji} {w.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Submit */}
-              <button
-                type="submit"
-                className={styles.submitBtn}
-                disabled={createMutation.isPending || !form.amount || !form.description}
-                id="modal-submit"
-              >
-                {createMutation.isPending ? "Saving…" : "Save Transaction"}
-              </button>
-            </form>
+            {/* Date */}
+            <div className={styles.field}>
+              <label className={styles.fieldLabel}>Date</label>
+              <input
+                type="date"
+                className={styles.input}
+                value={form.date}
+                onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+              />
+            </div>
           </div>
-        </div>
-      )}
+
+          {/* Recurring Toggle */}
+          <div className={styles.recurringField}>
+            <label className={styles.recurringToggle}>
+              <input 
+                type="checkbox" 
+                checked={form.isRecurring} 
+                onChange={e => setForm(f => ({ ...f, isRecurring: e.target.checked }))} 
+                className={styles.recurringCheckbox}
+              />
+              <span className={styles.recurringLabel}>🔁 Make this a recurring {form.type}</span>
+            </label>
+            {form.isRecurring && (
+              <select 
+                className={styles.recurringSelect}
+                value={form.recurringFrequency}
+                onChange={e => setForm(f => ({ ...f, recurringFrequency: e.target.value }))}
+              >
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            )}
+          </div>
+
+          {/* Category */}
+          <div className={styles.field}>
+            <label className={styles.fieldLabel}>Category</label>
+            <div className={styles.categoryGrid}>
+              {CATEGORIES.map(c => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={`${styles.catBtn} ${form.category === c.id ? styles.catBtnSelected : ""}`}
+                  style={{ "--cat-color": c.color } as React.CSSProperties}
+                  onClick={() => setForm(f => ({ ...f, category: c.id }))}
+                >
+                  <span>{c.emoji}</span>
+                  <span className={styles.catBtnLabel}>{c.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Wallet */}
+          <div className={styles.field}>
+            <label className={styles.fieldLabel}>Wallet</label>
+            <div className={styles.walletPicker}>
+              {WALLETS.map(w => (
+                <button
+                  key={w.id}
+                  type="button"
+                  className={`${styles.walletBtn} ${form.wallet === w.id ? styles.walletBtnSelected : ""}`}
+                  onClick={() => setForm(f => ({ ...f, wallet: w.id }))}
+                >
+                  {w.emoji} {w.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            className={styles.submitBtn}
+            disabled={createMutation.isPending || !form.amount || !form.description}
+            id="modal-submit"
+          >
+            {createMutation.isPending ? "Saving…" : "Save Transaction"}
+          </button>
+        </form>
+      </BottomSheet>
     </div>
   );
 }
