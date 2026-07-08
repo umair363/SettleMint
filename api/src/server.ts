@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
@@ -5,6 +6,16 @@ import rateLimit from "@fastify/rate-limit";
 import * as dotenv from "dotenv";
 
 dotenv.config();
+
+// ─── Sentry: must be initialized before any other imports ───────────────────
+// SENTRY_DSN is optional — if not set, Sentry is a no-op (safe for local dev).
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  environment: process.env.NODE_ENV || "development",
+  // Capture 100% of transactions in production for a startup at low volume.
+  // Reduce to 0.1 once traffic scales.
+  tracesSampleRate: 1.0,
+});
 
 const server = Fastify({
   logger: {
@@ -47,6 +58,30 @@ import notificationRoutes from "./routes/notification.routes";
 import inviteRoutes from "./routes/invite.routes";
 import aiRoutes from "./routes/ai.routes";
 
+// ─── Global Error Handler ───────────────────────────────────────────────────
+// Catches any unhandled error thrown in a route handler.
+// Reports to Sentry with full context, then returns a clean 500 to the client.
+server.setErrorHandler((error, request, reply) => {
+  Sentry.withScope((scope) => {
+    scope.setTag("route", request.routeOptions?.url || request.url);
+    scope.setTag("method", request.method);
+    // Attach userId if authenticated
+    if ((request as any).user?.id) {
+      scope.setUser({ id: (request as any).user.id, email: (request as any).user.email });
+    }
+    Sentry.captureException(error);
+  });
+
+  request.log.error({ err: error }, "Unhandled error");
+
+  // Don't leak internal details to the client
+  const statusCode = error.statusCode ?? 500;
+  return reply.code(statusCode).send({
+    error: statusCode >= 500 ? "Internal Server Error" : error.message,
+  });
+});
+
+// ─── Health check ───────────────────────────────────────────────────────────
 // Health check route
 server.get("/health", async (request, reply) => {
   return { status: "ok", timestamp: new Date().toISOString() };
@@ -80,5 +115,19 @@ const start = async () => {
     process.exit(1);
   }
 };
+
+// ─── Process-level safety nets ───────────────────────────────────────────────
+// Captures crashes that escape all try/catch blocks and reports to Sentry
+// before the process exits, so nothing is silently lost.
+process.on("unhandledRejection", (reason) => {
+  Sentry.captureException(reason);
+  server.log.error({ err: reason }, "Unhandled promise rejection");
+});
+
+process.on("uncaughtException", (error) => {
+  Sentry.captureException(error);
+  server.log.error({ err: error }, "Uncaught exception — shutting down");
+  process.exit(1);
+});
 
 start();
