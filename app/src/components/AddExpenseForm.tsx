@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import styles from "./new-expense.module.css";
+import styles from "./AddExpenseForm.module.css";
 import { getCurrencySymbol } from "@/utils/currency";
 import { offlineSync } from "@/utils/offlineSync";
 
@@ -28,7 +28,12 @@ interface MemberSplit {
   value: string;    // amount | percentage | shares depending on mode
 }
 
-export default function NewExpensePage() {
+interface AddExpenseFormProps {
+  onSuccess?: () => void;
+  onCancel?: () => void;
+}
+
+export default function AddExpenseForm({ onSuccess, onCancel }: AddExpenseFormProps = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -371,17 +376,17 @@ export default function NewExpensePage() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["expenses"] });
-      queryClient.invalidateQueries({ queryKey: ["group"] });
-      queryClient.invalidateQueries({ queryKey: ["recent_expenses"] });
-      queryClient.invalidateQueries({ queryKey: ["activity"] });
-      if (expenseMode === "group") {
-        router.push(`/dashboard/groups/${selectedGroup}`);
+      // Clear form
+      setDescription("");
+      setAmount("");
+      
+      if (onSuccess) {
+        onSuccess();
       } else {
-        router.push(`/dashboard/friends`);
+        router.push("/dashboard");
       }
     },
-    onError: (err: any) => setErrorMsg(err.message),
+    onError: (err: any) => {setErrorMsg(err.message)},
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -405,17 +410,13 @@ export default function NewExpensePage() {
     splitValidation.valid;
 
   return (
-    <div className={styles.page}>
-      <div className={styles.card}>
-        {/* Header */}
-        <div className={styles.pageHeader}>
-          <div>
-            <h1 className={styles.title}>Add Expense</h1>
-            <p className={styles.subtitle}>
-              Log a shared expense and split it exactly how you want.
-            </p>
-          </div>
-        </div>
+    <div className={styles.formContainer}>
+      {/* Header handled by BottomSheet, but we keep a subtitle if needed, or remove completely */}
+      <div className={styles.pageHeader}>
+        <p className={styles.subtitle}>
+          Log a shared expense and split it exactly how you want.
+        </p>
+      </div>
 
         {/* Mode Toggle */}
         <div className={styles.modeToggle}>
@@ -776,7 +777,6 @@ export default function NewExpensePage() {
             )}
           </button>
         </form>
-      </div>
     </div>
   );
 }
