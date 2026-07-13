@@ -312,25 +312,6 @@
 /* ===== Split Section ===== */
 
 /* Tab bar */
-.formContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  width: 100%;
-}
-
-.pageHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 8px;
-}
-
-.subtitle {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin-top: 4px;
-}
 
 .splitTabs {
   display: flex;

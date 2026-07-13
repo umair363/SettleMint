@@ -31,8 +31,15 @@
   line-height: 1;
 }
 
-/* ── Mobile header (hidden on desktop) ── */
-.mobileHeader {
+/* ── Mobile-only elements: hidden on desktop ── */
+.mobileHeader,
+.mobileHero,
+.mobileQuickActions,
+.mobileSectionHeader,
+.mobileGroupsScroll,
+.mobileActivityFeed,
+.mobileFooterSpace,
+.mobileEmptyFeed {
   display: none;
 }
 
@@ -284,7 +291,18 @@
   .mainGrid    { display: none; }
   .quickRow    { display: none; }
 
-  /* Show mobile header */
+  /* Show mobile elements */
+  .mobileHeader,
+  .mobileHero,
+  .mobileQuickActions,
+  .mobileSectionHeader,
+  .mobileGroupsScroll,
+  .mobileActivityFeed,
+  .mobileFooterSpace,
+  .mobileEmptyFeed {
+    display: block; /* Re-enable; individual rules below set flex/grid as needed */
+  }
+
   .mobileHeader {
     display: flex;
     align-items: center;
