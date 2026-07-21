@@ -6,18 +6,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import styles from "./AddExpenseForm.module.css";
 import { getCurrencySymbol } from "@/utils/currency";
 import { offlineSync } from "@/utils/offlineSync";
-
-const categories = [
-  { id: "food", label: "Food & Drink", emoji: "🍽" },
-  { id: "transport", label: "Transport", emoji: "🚕" },
-  { id: "accommodation", label: "Accommodation", emoji: "🏨" },
-  { id: "entertainment", label: "Entertainment", emoji: "🎬" },
-  { id: "shopping", label: "Shopping", emoji: "🛍" },
-  { id: "bills", label: "Bills & Utilities", emoji: "💡" },
-  { id: "groceries", label: "Groceries", emoji: "🛒" },
-  { id: "health", label: "Health", emoji: "💊" },
-  { id: "other", label: "Other", emoji: "📌" },
-];
+import { CATEGORIES as categories, getApiUrl, normalizeSplitType } from "@settlemint/shared";
+import CategoryPicker from "./CategoryPicker";
 
 type SplitType = "equal" | "unequal" | "percentage" | "shares";
 
@@ -32,6 +22,8 @@ interface AddExpenseFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
 }
+
+const API = getApiUrl();
 
 export default function AddExpenseForm({ onSuccess, onCancel }: AddExpenseFormProps = {}) {
   const router = useRouter();
@@ -71,7 +63,7 @@ export default function AddExpenseForm({ onSuccess, onCancel }: AddExpenseFormPr
   const { data: groupsData, isLoading: groupsLoading } = useQuery({
     queryKey: ["groups"],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/groups`, {
+      const res = await fetch(`${API}/api/groups`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch groups");
@@ -84,7 +76,7 @@ export default function AddExpenseForm({ onSuccess, onCancel }: AddExpenseFormPr
   const { data: friendsData, isLoading: friendsLoading } = useQuery({
     queryKey: ["friends"],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/friends`, {
+      const res = await fetch(`${API}/api/friends`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch friends");
@@ -98,7 +90,7 @@ export default function AddExpenseForm({ onSuccess, onCancel }: AddExpenseFormPr
     queryKey: ["group", selectedGroup],
     queryFn: async () => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/groups/${selectedGroup}`,
+        `${API}/api/groups/${selectedGroup}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!res.ok) throw new Error("Failed to fetch group details");
@@ -273,7 +265,7 @@ export default function AddExpenseForm({ onSuccess, onCancel }: AddExpenseFormPr
   // --- AI MUTATIONS --- //
   const parseNLPMutation = useMutation({
     mutationFn: async (text: string) => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/ai/parse-nlp`, {
+      const res = await fetch(`${API}/api/ai/parse-nlp`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ text }),
@@ -299,11 +291,11 @@ export default function AddExpenseForm({ onSuccess, onCancel }: AddExpenseFormPr
   };
 
   const scanReceiptMutation = useMutation({
-    mutationFn: async (base64Image: string) => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/ai/scan-receipt`, {
+    mutationFn: async ({ imageBase64, mimeType }: { imageBase64: string; mimeType: string }) => {
+      const res = await fetch(`${API}/api/ai/scan-receipt`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ base64Image }),
+        body: JSON.stringify({ imageBase64, mimeType }),
       });
       if (!res.ok) throw new Error("Failed to scan receipt");
       return res.json();
@@ -324,7 +316,7 @@ export default function AddExpenseForm({ onSuccess, onCancel }: AddExpenseFormPr
     const reader = new FileReader();
     reader.onload = (event) => {
       const base64 = event.target?.result as string;
-      scanReceiptMutation.mutate(base64);
+      scanReceiptMutation.mutate({ imageBase64: base64, mimeType: file.type || "image/jpeg" });
     };
     reader.readAsDataURL(file);
   };
@@ -332,18 +324,28 @@ export default function AddExpenseForm({ onSuccess, onCancel }: AddExpenseFormPr
 
   const createExpenseMutation = useMutation({
     mutationFn: async () => {
-      const splits = splitPreviews
-        .filter((s) => s.amountOwed > 0)
-        .map((s) => ({ userId: s.userId, amountOwed: s.amountOwed.toFixed(2) }));
+      // Send raw per-participant inputs (not precomputed amounts) — the
+      // backend recomputes authoritative splits server-side via
+      // calculateSplits(), so the client-side splitPreviews above are for
+      // live UI feedback only and are never trusted as the source of truth.
+      const backendSplitType = normalizeSplitType(splitType);
+      if (!backendSplitType) throw new Error(`Unsupported split type: ${splitType}`);
 
-      if (splits.length === 0) throw new Error("No valid splits.");
+      const relevantMembers = splitType === "equal" ? participants : memberSplits;
+      const rawParticipants = relevantMembers.map((m) => ({
+        userId: m.userId,
+        value: splitType === "equal" ? undefined : parseFloat(m.value) || 0,
+      }));
+
+      if (rawParticipants.length === 0) throw new Error("No valid splits.");
 
       const payload = {
         groupId: expenseMode === "group" ? selectedGroup : null,
         description,
         amount: totalAmount,
         category: selectedCategory,
-        splits,
+        splitType: backendSplitType,
+        participants: rawParticipants,
         currency: activeCurrency,
         paidBy: paidByUserId,
         date,
@@ -351,7 +353,7 @@ export default function AddExpenseForm({ onSuccess, onCancel }: AddExpenseFormPr
       };
 
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/expenses`, {
+        const res = await fetch(`${API}/api/expenses`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -617,22 +619,12 @@ export default function AddExpenseForm({ onSuccess, onCancel }: AddExpenseFormPr
           )}
 
           {/* Category */}
-          <div className={styles.field}>
-            <label className={styles.label}>Category</label>
-            <div className={styles.categoryGrid}>
-              {categories.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  className={`${styles.categoryBtn} ${selectedCategory === c.id ? styles.categoryBtnSelected : ""}`}
-                  onClick={() => setSelectedCategory(c.id)}
-                >
-                  <span className={styles.categoryEmoji}>{c.emoji}</span>
-                  <span className={styles.categoryLabel}>{c.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+          <CategoryPicker
+            categories={categories}
+            value={selectedCategory}
+            onChange={setSelectedCategory}
+            label="Category"
+          />
 
           {/* Split Controls */}
           {memberSplits.length > 0 && (

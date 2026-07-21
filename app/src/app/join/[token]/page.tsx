@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { getApiUrl } from "@settlemint/shared";
 import styles from "./join.module.css";
 
 export default function JoinGroupPage() {
@@ -20,7 +21,7 @@ export default function JoinGroupPage() {
     if (session) setAuthToken(JSON.parse(session).token);
 
     // Preview the invite (public endpoint)
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/invite/${token}`)
+    fetch(`${getApiUrl()}/api/invite/${token}`)
       .then((res) => {
         if (!res.ok) return res.json().then((d) => { throw new Error(d.error); });
         return res.json();
@@ -44,7 +45,7 @@ export default function JoinGroupPage() {
 
     setStatus("joining");
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/invite/${token}/join`, {
+      const res = await fetch(`${getApiUrl()}/api/invite/${token}/join`, {
         method: "POST",
         headers: { Authorization: `Bearer ${authToken}` },
       });

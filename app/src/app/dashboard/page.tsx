@@ -6,32 +6,19 @@ import { useQuery } from "@tanstack/react-query";
 import Skeleton from "@/components/Skeleton";
 import styles from "./page.module.css";
 import { getCurrencySymbol, convertCurrency } from "@/utils/currency";
+import { getCategoryMeta, getApiUrl } from "@settlemint/shared";
 
 interface Group {
   id: string; name: string; mode: string;
   emoji: string; color: string; baseCurrency: string; role: string;
 }
 
-const CATEGORY_ICONS: Record<string, string> = {
-  food: "🍽️", transport: "🚗", accommodation: "🏨",
-  entertainment: "🎬", shopping: "🛍️", utilities: "⚡",
-  health: "💊", travel: "✈️", default: "💳",
-};
-
-const CATEGORY_COLORS: Record<string, string> = {
-  food: "#FF6B6B", transport: "#FFA94D", accommodation: "#74C0FC",
-  entertainment: "#B197FC", shopping: "#F783AC", utilities: "#63E6BE",
-  health: "#74C0FC", travel: "#FFA94D", default: "#5B8DEF",
-};
-
 function getCategoryIcon(category?: string) {
-  if (!category) return CATEGORY_ICONS.default;
-  return CATEGORY_ICONS[category.toLowerCase()] ?? CATEGORY_ICONS.default;
+  return getCategoryMeta(category).emoji;
 }
 
 function getCategoryColor(category?: string) {
-  if (!category) return CATEGORY_COLORS.default;
-  return CATEGORY_COLORS[category.toLowerCase()] ?? CATEGORY_COLORS.default;
+  return getCategoryMeta(category).color;
 }
 
 function getGreeting() {
@@ -45,7 +32,7 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-const API = process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com";
+const API = getApiUrl();
 
 import PullToRefresh from "@/components/PullToRefresh";
 
@@ -195,6 +182,12 @@ export default function DashboardHome() {
             <span className={styles.mobileHeroStatValue}>{groups.length}</span>
           </div>
         </div>
+
+        {totalOwe > 0 && (
+          <Link href="/dashboard/settle" className={styles.settleNudge}>
+            You owe {sym}{totalOwe.toFixed(2)} — settle up →
+          </Link>
+        )}
       </div>
 
       {/* Quick Actions */}
@@ -365,6 +358,11 @@ export default function DashboardHome() {
           <div className={styles.balanceCardInner}>
             <span className={styles.balanceLabel}>You owe</span>
             <span className={`${styles.balanceValue} ${styles.negative}`}>{sym}{totalOwe.toFixed(2)}</span>
+            {totalOwe > 0 && (
+              <Link href="/dashboard/settle" className={styles.settleNudge}>
+                Settle up →
+              </Link>
+            )}
           </div>
           <svg className={styles.balanceIcon} width="36" height="36" viewBox="0 0 24 24" fill="none">
             <path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>

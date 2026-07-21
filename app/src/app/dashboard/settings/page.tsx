@@ -2,13 +2,22 @@
 
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { getApiUrl } from "@settlemint/shared";
+import { getStoredTheme, setTheme as persistTheme, type Theme } from "@/utils/theme";
 import styles from "./settings.module.css";
+
+const THEME_OPTIONS: { value: Theme; label: string; icon: string }[] = [
+  { value: "light", label: "Light", icon: "☀️" },
+  { value: "dark", label: "Dark", icon: "🌙" },
+  { value: "system", label: "System", icon: "💻" },
+];
 
 export default function SettingsPage() {
   const [fullName, setFullName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [defaultCurrency, setDefaultCurrency] = useState("USD");
   const [token, setToken] = useState("");
+  const [theme, setThemeState] = useState<Theme>("system");
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const showToast = (message: string, type: "success" | "error" = "success") => {
@@ -25,11 +34,17 @@ export default function SettingsPage() {
       setAvatarUrl(parsed.user.avatarUrl || "");
       setDefaultCurrency(parsed.user.defaultCurrency || "USD");
     }
+    setThemeState(getStoredTheme());
   }, []);
+
+  const handleThemeChange = (next: Theme) => {
+    setThemeState(next);
+    persistTheme(next);
+  };
 
   const updateProfileMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/users/me`, {
+      const res = await fetch(`${getApiUrl()}/api/users/me`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -74,6 +89,27 @@ export default function SettingsPage() {
         <h1 className={styles.title}>Settings</h1>
         <p className={styles.subtitle}>Manage your profile and preferences.</p>
       </header>
+
+      <div className={styles.card}>
+        <div className={styles.field}>
+          <label className={styles.label}>Appearance</label>
+          <div className={styles.themeToggle} role="radiogroup" aria-label="Theme">
+            {THEME_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                role="radio"
+                aria-checked={theme === opt.value}
+                className={`${styles.themeOption} ${theme === opt.value ? styles.themeOptionActive : ""}`}
+                onClick={() => handleThemeChange(opt.value)}
+              >
+                <span aria-hidden="true">{opt.icon}</span>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
 
       <div className={styles.card}>
         <form className={styles.form} onSubmit={handleSubmit}>

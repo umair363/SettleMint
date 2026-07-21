@@ -91,6 +91,85 @@
   --z-modal: 50;
 }
 
+/* ─────────────── Light theme ─────────────── */
+/* Overrides only the semantic surface/text/border/shadow tokens — the raw
+   mint and slate color ramps and every component built on the semantic
+   tokens stay untouched. Applied via [data-theme="light"] on <html>, set
+   by the theme toggle in Settings (src/utils/theme.ts); falls back to the
+   OS preference on first load via the prefers-color-scheme block below. */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --surface-primary: var(--slate-50);
+  --surface-elevated: #ffffff;
+  --surface-overlay: rgba(255, 255, 255, 0.85);
+  --surface-card: rgba(255, 255, 255, 0.7);
+
+  --text-primary: var(--slate-900);
+  --text-secondary: var(--slate-600);
+  --text-tertiary: var(--slate-500);
+  --text-accent: var(--mint-600);
+
+  --border-subtle: rgba(15, 18, 25, 0.06);
+  --border-default: rgba(15, 18, 25, 0.1);
+  --border-accent: rgba(9, 149, 84, 0.3);
+
+  --shadow-sm: 0 1px 2px rgba(15, 18, 25, 0.06);
+  --shadow-md: 0 4px 12px rgba(15, 18, 25, 0.08);
+  --shadow-lg: 0 8px 32px rgba(15, 18, 25, 0.12);
+  --shadow-glow: 0 0 40px rgba(9, 149, 84, 0.12);
+  --shadow-glow-lg: 0 0 80px rgba(9, 149, 84, 0.16);
+}
+
+:root[data-theme="light"] body {
+  background-color: var(--slate-50);
+}
+
+:root[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: var(--slate-300);
+}
+
+:root[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--slate-400);
+}
+
+:root[data-theme="light"] option {
+  background-color: #ffffff;
+  color: var(--slate-900);
+}
+
+/* System-preference fallback for users who haven't picked a theme yet —
+   only applies with no explicit [data-theme] attribute set on <html>. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    color-scheme: light;
+
+    --surface-primary: var(--slate-50);
+    --surface-elevated: #ffffff;
+    --surface-overlay: rgba(255, 255, 255, 0.85);
+    --surface-card: rgba(255, 255, 255, 0.7);
+
+    --text-primary: var(--slate-900);
+    --text-secondary: var(--slate-600);
+    --text-tertiary: var(--slate-500);
+    --text-accent: var(--mint-600);
+
+    --border-subtle: rgba(15, 18, 25, 0.06);
+    --border-default: rgba(15, 18, 25, 0.1);
+    --border-accent: rgba(9, 149, 84, 0.3);
+
+    --shadow-sm: 0 1px 2px rgba(15, 18, 25, 0.06);
+    --shadow-md: 0 4px 12px rgba(15, 18, 25, 0.08);
+    --shadow-lg: 0 8px 32px rgba(15, 18, 25, 0.12);
+    --shadow-glow: 0 0 40px rgba(9, 149, 84, 0.12);
+    --shadow-glow-lg: 0 0 80px rgba(9, 149, 84, 0.16);
+  }
+
+  :root:not([data-theme]) body {
+    background-color: var(--slate-50);
+  }
+}
+
 /* ─────────────── Reset ─────────────── */
 *,
 *::before,

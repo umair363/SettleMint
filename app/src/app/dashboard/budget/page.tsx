@@ -5,32 +5,12 @@ import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Skeleton from "@/components/Skeleton";
 import BottomSheet from "@/components/BottomSheet";
+import CategoryPicker from "@/components/CategoryPicker";
 import { getCurrencySymbol } from "@/utils/currency";
+import { CATEGORIES, WALLETS, getCategoryMeta, getApiUrl } from "@settlemint/shared";
 import styles from "./budget.module.css";
 
-const CATEGORIES = [
-  { id: "food",          label: "Food & Drink",    emoji: "🍽️", color: "#FF6B6B" },
-  { id: "transport",     label: "Transport",        emoji: "🚕", color: "#FFA94D" },
-  { id: "accommodation", label: "Accommodation",    emoji: "🏨", color: "#74C0FC" },
-  { id: "entertainment", label: "Entertainment",    emoji: "🎬", color: "#B197FC" },
-  { id: "shopping",      label: "Shopping",         emoji: "🛍️", color: "#F783AC" },
-  { id: "bills",         label: "Bills & Utilities",emoji: "💡", color: "#63E6BE" },
-  { id: "groceries",     label: "Groceries",        emoji: "🛒", color: "#A9E34B" },
-  { id: "health",        label: "Health",           emoji: "💊", color: "#74C0FC" },
-  { id: "other",         label: "Other",            emoji: "📌", color: "#adb5bd" },
-];
-
-const WALLETS = [
-  { id: "card",  label: "Card",  emoji: "💳" },
-  { id: "cash",  label: "Cash",  emoji: "💵" },
-  { id: "bank",  label: "Bank",  emoji: "🏦" },
-];
-
-const API = process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com";
-
-function getCategoryMeta(id: string) {
-  return CATEGORIES.find(c => c.id === id) ?? CATEGORIES[CATEGORIES.length - 1];
-}
+const API = getApiUrl();
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -158,6 +138,13 @@ export default function BudgetPage() {
     spendMap[b.category] = parseFloat(b.total) || 0;
   });
 
+  // Recap: top category + single biggest expense — surfaced in-line rather
+  // than as a new card, reusing data already loaded for the summary grid.
+  const topCategory = [...byCategory].sort((a: any, b: any) => parseFloat(b.total) - parseFloat(a.total))[0];
+  const biggestExpense = transactions
+    .filter((t: any) => t.type === "expense")
+    .sort((a: any, b: any) => parseFloat(b.amount) - parseFloat(a.amount))[0];
+
   // Month nav helpers
   const monthLabel = new Date(viewYear, viewMonth - 1, 1).toLocaleString("en-US", { month: "long", year: "numeric" });
   const prevMonth = () => {
@@ -275,6 +262,26 @@ export default function BudgetPage() {
         </div>
       </div>
 
+      {/* ── Recap strip ── */}
+      {(topCategory || biggestExpense) && (
+        <p className={styles.recapStrip}>
+          {topCategory && (
+            <>
+              {getCategoryMeta(topCategory.category).emoji} Most spent on{" "}
+              <strong>{getCategoryMeta(topCategory.category).label}</strong> this month
+              ({sym}{parseFloat(topCategory.total).toFixed(2)}).
+            </>
+          )}
+          {topCategory && biggestExpense && "  "}
+          {biggestExpense && (
+            <>
+              Biggest single expense: <strong>{biggestExpense.description}</strong> for{" "}
+              {sym}{parseFloat(biggestExpense.amount).toFixed(2)}.
+            </>
+          )}
+        </p>
+      )}
+
       {/* ── Main grid: Category progress + Transactions ── */}
       <div className={styles.mainGrid}>
 
@@ -301,6 +308,20 @@ export default function BudgetPage() {
                   const pct     = limit > 0 ? Math.min((spent / limit) * 100, 100) : 0;
                   const over    = limit > 0 && spent > limit;
 
+                  // Pace forecast: only meaningful for the month actually in
+                  // progress — projecting a closed or future month is noise.
+                  let paceWarning: string | null = null;
+                  if (limit > 0 && !over && isCurrentMonth) {
+                    const dayOfMonth  = now.getDate();
+                    const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
+                    const dailyRate   = spent / dayOfMonth;
+                    const projected   = dailyRate * daysInMonth;
+                    if (projected > limit) {
+                      const overspendDay = Math.min(daysInMonth, Math.ceil(limit / (dailyRate || 1)));
+                      paceWarning = `On pace to exceed by day ${overspendDay}`;
+                    }
+                  }
+
                   return (
                     <div key={cat.category} className={styles.categoryRow}>
                       <div className={styles.categoryRowTop}>
@@ -319,6 +340,9 @@ export default function BudgetPage() {
                             style={{ width: `${pct}%`, background: over ? "#ff6b6b" : meta.color }}
                           />
                         </div>
+                      )}
+                      {paceWarning && (
+                        <p className={styles.paceWarning}>⚠️ {paceWarning}</p>
                       )}
                     </div>
                   );
@@ -385,7 +409,7 @@ export default function BudgetPage() {
       </div>
 
       {/* ── Quick-Add Bottom Sheet ── */}
-      <BottomSheet isOpen={showModal} onClose={() => setShowModal(false)}>
+      <BottomSheet isOpen={showModal} onClose={() => setShowModal(false)} ariaLabel="Add Transaction">
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>Add Transaction</h2>
           <p className={styles.modalSubtitle}>Log a personal expense or income.</p>
@@ -472,23 +496,13 @@ export default function BudgetPage() {
           </div>
 
           {/* Category */}
-          <div className={styles.field}>
-            <label className={styles.fieldLabel}>Category</label>
-            <div className={styles.categoryGrid}>
-              {CATEGORIES.map(c => (
-                <button
-                  key={c.id}
-                  type="button"
-                  className={`${styles.catBtn} ${form.category === c.id ? styles.catBtnSelected : ""}`}
-                  style={{ "--cat-color": c.color } as React.CSSProperties}
-                  onClick={() => setForm(f => ({ ...f, category: c.id }))}
-                >
-                  <span>{c.emoji}</span>
-                  <span className={styles.catBtnLabel}>{c.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+          <CategoryPicker
+            categories={CATEGORIES}
+            value={form.category}
+            onChange={(id) => setForm(f => ({ ...f, category: id }))}
+            label="Category"
+            colorized
+          />
 
           {/* Wallet */}
           <div className={styles.field}>

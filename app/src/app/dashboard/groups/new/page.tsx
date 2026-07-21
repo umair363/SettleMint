@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { getApiUrl } from "@settlemint/shared";
 import styles from "./new-group.module.css";
 
 const modes = [
@@ -44,7 +45,7 @@ export default function NewGroupPage() {
       
       const modeData = modes.find(m => m.id === selectedMode);
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/groups`, {
+      const res = await fetch(`${getApiUrl()}/api/groups`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

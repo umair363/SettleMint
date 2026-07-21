@@ -98,6 +98,19 @@
   margin-top: 2px;
 }
 
+.settleNudge {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ff6b6b;
+  transition: opacity 150ms var(--ease-out);
+}
+
+.settleNudge:hover {
+  opacity: 0.8;
+}
+
 .balanceNet { border-color: rgba(61,214,140,0.2); background: rgba(61,214,140,0.04); }
 .netNegative { border-color: rgba(255,107,107,0.2); background: rgba(255,107,107,0.04); }
 

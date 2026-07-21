@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import Skeleton from "@/components/Skeleton";
+import { getApiUrl } from "@settlemint/shared";
 import styles from "./groups.module.css";
 
 export default function GroupsPage() {
@@ -35,7 +36,7 @@ export default function GroupsPage() {
   const { data: groupsData, isLoading } = useQuery({
     queryKey: ["groups"],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/groups`, {
+      const res = await fetch(`${getApiUrl()}/api/groups`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch groups");

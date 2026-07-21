@@ -8,6 +8,7 @@ import { offlineSync } from "../../utils/offlineSync";
 import GlobalSearch from "../../components/GlobalSearch";
 import BottomSheet from "../../components/BottomSheet";
 import AddExpenseForm from "../../components/AddExpenseForm";
+import { getApiUrl } from "@settlemint/shared";
 
 interface User {
   id: string;
@@ -48,7 +49,7 @@ export default function DashboardLayout({
         }
 
         // Verify token with backend
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/auth/me`, {
+        const res = await fetch(`${getApiUrl()}/api/auth/me`, {
           headers: {
             "Authorization": `Bearer ${parsed.token}`
           }
@@ -440,9 +441,10 @@ export default function DashboardLayout({
       </nav>
 
       {/* ── Global Bottom Sheets ── */}
-      <BottomSheet 
-        isOpen={isAddExpenseOpen} 
+      <BottomSheet
+        isOpen={isAddExpenseOpen}
         onClose={() => setIsAddExpenseOpen(false)}
+        ariaLabel="Add Expense"
       >
         <AddExpenseForm onSuccess={() => setIsAddExpenseOpen(false)} />
       </BottomSheet>

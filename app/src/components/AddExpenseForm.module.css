@@ -257,58 +257,6 @@
   font-style: italic;
 }
 
-/* Category Grid */
-.categoryGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-sm);
-}
-
-.categoryBtn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  padding: 0.85rem var(--space-sm);
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--border-subtle);
-  cursor: pointer;
-  transition: all 150ms ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.categoryBtn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: var(--border-default);
-  transform: translateY(-1px);
-}
-
-.categoryBtnSelected {
-  border-color: var(--mint-400);
-  background: rgba(61, 214, 140, 0.07);
-  box-shadow: 0 0 0 1px rgba(61, 214, 140, 0.2) inset;
-}
-
-.categoryEmoji {
-  font-size: 1.375rem;
-  line-height: 1;
-}
-
-.categoryLabel {
-  font-size: 0.6rem;
-  font-weight: 600;
-  color: var(--text-tertiary);
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.categoryBtnSelected .categoryLabel {
-  color: var(--mint-400);
-}
-
 /* ===== Split Section ===== */
 
 /* Tab bar */
@@ -651,10 +599,6 @@
 
   .twoCol {
     grid-template-columns: 1fr;
-  }
-
-  .categoryGrid {
-    grid-template-columns: repeat(3, 1fr);
   }
 
   .amountInput {

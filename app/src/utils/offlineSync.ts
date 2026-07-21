@@ -1,3 +1,5 @@
+import { getApiUrl } from "@settlemint/shared";
+
 const QUEUE_KEY = "settlemint_offline_queue";
 
 export interface QueuedExpense {
@@ -57,7 +59,7 @@ export const offlineSync = {
       
       for (const item of queue) {
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/expenses`, {
+          const res = await fetch(`${getApiUrl()}/api/expenses`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

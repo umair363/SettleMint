@@ -1,0 +1,17 @@
+{
+  "name": "settlemint",
+  "private": true,
+  "workspaces": [
+    "app",
+    "api",
+    "mobile",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:app": "npm run dev -w app",
+    "dev:api": "npm run dev -w api",
+    "dev:mobile": "npm run start -w mobile",
+    "build:shared": "npm run build -w @settlemint/shared",
+    "test:api": "npm test -w api"
+  }
+}

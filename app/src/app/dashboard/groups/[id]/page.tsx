@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { getApiUrl } from "@settlemint/shared";
 import styles from "./group-detail.module.css";
 
 
@@ -29,7 +30,7 @@ export default function GroupDetailPage() {
   const { data: groupData, isLoading: groupLoading, error: groupError } = useQuery({
     queryKey: ["group", groupId],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/groups/${groupId}`, {
+      const res = await fetch(`${getApiUrl()}/api/groups/${groupId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.status === 403 || res.status === 404) {
@@ -45,7 +46,7 @@ export default function GroupDetailPage() {
   const { data: expensesData, isLoading: expensesLoading } = useQuery({
     queryKey: ["expenses", groupId],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/expenses/group/${groupId}`, {
+      const res = await fetch(`${getApiUrl()}/api/expenses/group/${groupId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch expenses");
@@ -104,7 +105,7 @@ export default function GroupDetailPage() {
             className={`btn btn-secondary ${styles.actionBtn}`}
             onClick={async () => {
               try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/groups/${groupId}/invite`, {
+                const res = await fetch(`${getApiUrl()}/api/groups/${groupId}/invite`, {
                   method: "POST",
                   headers: { Authorization: `Bearer ${token}` },
                 });

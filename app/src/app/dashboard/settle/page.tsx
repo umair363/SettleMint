@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import styles from "./settle.module.css";
 import { getCurrencySymbol } from "@/utils/currency";
+import { getApiUrl } from "@settlemint/shared";
 
 export default function SettleUpPage() {
   const router = useRouter();
@@ -40,7 +41,7 @@ export default function SettleUpPage() {
   const { data: groupsData } = useQuery({
     queryKey: ["groups"],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/groups`, {
+      const res = await fetch(`${getApiUrl()}/api/groups`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch groups");
@@ -53,7 +54,7 @@ export default function SettleUpPage() {
   const { data: friendsData } = useQuery({
     queryKey: ["friends"],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/friends`, {
+      const res = await fetch(`${getApiUrl()}/api/friends`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch friends");
@@ -66,7 +67,7 @@ export default function SettleUpPage() {
   const { data: groupDetailsData } = useQuery({
     queryKey: ["group", selectedGroup],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/groups/${selectedGroup}`, {
+      const res = await fetch(`${getApiUrl()}/api/groups/${selectedGroup}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch group details");
@@ -103,7 +104,7 @@ export default function SettleUpPage() {
         // Actually, let's keep the API call as we structured it: user is recording it.
       }
       
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/settlements`, {
+      const res = await fetch(`${getApiUrl()}/api/settlements`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

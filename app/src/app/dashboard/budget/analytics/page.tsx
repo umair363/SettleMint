@@ -4,28 +4,13 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { getCurrencySymbol } from "@/utils/currency";
+import { CATEGORIES, getCategoryMeta, getApiUrl } from "@settlemint/shared";
 import styles from "./analytics.module.css";
 
-const CATEGORIES = [
-  { id: "food",          label: "Food & Drink",     emoji: "🍽️", color: "#FF6B6B" },
-  { id: "transport",     label: "Transport",         emoji: "🚕", color: "#FFA94D" },
-  { id: "accommodation", label: "Accommodation",     emoji: "🏨", color: "#74C0FC" },
-  { id: "entertainment", label: "Entertainment",     emoji: "🎬", color: "#B197FC" },
-  { id: "shopping",      label: "Shopping",          emoji: "🛍️", color: "#F783AC" },
-  { id: "bills",         label: "Bills & Utilities", emoji: "💡", color: "#63E6BE" },
-  { id: "groceries",     label: "Groceries",         emoji: "🛒", color: "#A9E34B" },
-  { id: "health",        label: "Health",            emoji: "💊", color: "#74C0FC" },
-  { id: "other",         label: "Other",             emoji: "📌", color: "#adb5bd" },
-];
-
-const API = process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com";
-
-function getCategoryMeta(id: string) {
-  return CATEGORIES.find(c => c.id === id) ?? CATEGORIES[CATEGORIES.length - 1];
-}
+const API = getApiUrl();
 
 // ─── Donut Chart ─────────────────────────────────────────────────────────────
-function DonutChart({ data }: { data: { label: string; value: number; color: string }[] }) {
+function DonutChart({ data, currencySymbol }: { data: { label: string; value: number; color: string }[]; currencySymbol: string }) {
   const total = data.reduce((s, d) => s + d.value, 0);
   if (total === 0) return null;
 
@@ -43,9 +28,24 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
     return slice;
   });
 
+  // Screen-reader summary — the SVG itself conveys the same breakdown that's
+  // already rendered as text in the legend, so this mirrors that rather than
+  // relying on color/position alone.
+  const summary = slices
+    .sort((a, b) => b.value - a.value)
+    .map(s => `${s.label}: ${currencySymbol}${s.value.toFixed(2)} (${(s.pct * 100).toFixed(0)}%)`)
+    .join(", ");
+
   return (
     <div className={styles.donutWrap}>
-      <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} className={styles.donutSvg}>
+      <svg
+        width={SIZE}
+        height={SIZE}
+        viewBox={`0 0 ${SIZE} ${SIZE}`}
+        className={styles.donutSvg}
+        role="img"
+        aria-label={`Spending by category: ${summary}`}
+      >
         {slices.map((s, i) => (
           <circle
             key={i}
@@ -64,7 +64,7 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
         {/* Center hole */}
         <circle cx={SIZE / 2} cy={SIZE / 2} r={R - STROKE / 2 - 2} fill="var(--surface-card)" />
       </svg>
-      <div className={styles.donutCenter}>
+      <div className={styles.donutCenter} aria-hidden="true">
         <span className={styles.donutCenterLabel}>Spent</span>
         <span className={styles.donutCenterValue}>{slices.length}</span>
         <span className={styles.donutCenterSub}>categories</span>
@@ -74,15 +74,22 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
 }
 
 // ─── Bar Chart ───────────────────────────────────────────────────────────────
-function BarChart({ data }: { data: { month: string; expense: number; income: number }[] }) {
+function BarChart({ data, currencySymbol }: { data: { month: string; expense: number; income: number }[]; currencySymbol: string }) {
   const maxVal = Math.max(...data.flatMap(d => [d.expense, d.income]), 1);
 
+  const summary = data
+    .map(d => {
+      const monthLabel = new Date(d.month + "-01").toLocaleString("en-US", { month: "short", year: "numeric" });
+      return `${monthLabel}: ${currencySymbol}${d.expense.toFixed(2)} expense, ${currencySymbol}${d.income.toFixed(2)} income`;
+    })
+    .join("; ");
+
   return (
-    <div className={styles.barChart}>
+    <div className={styles.barChart} role="img" aria-label={`Monthly expense and income trend: ${summary}`}>
       {data.map((d, i) => {
         const monthLabel = new Date(d.month + "-01").toLocaleString("en-US", { month: "short" });
         return (
-          <div key={i} className={styles.barGroup}>
+          <div key={i} className={styles.barGroup} aria-hidden="true">
             <div className={styles.bars}>
               <div className={styles.barTrack}>
                 <div
@@ -138,22 +145,37 @@ export default function AnalyticsPage() {
     enabled: !!token,
   });
 
-  const byCategory: any[]   = analyticsData?.byCategory  || [];
-  const monthlyTotals: any[] = analyticsData?.monthlyTotals || [];
-  const summary             = analyticsData?.summary || { totalExpense: "0", totalIncome: "0", txnCount: 0 };
+  const byCategory: any[]         = analyticsData?.byCategory  || [];
+  const byCategoryPrevMonth: any[] = analyticsData?.byCategoryPrevMonth || [];
+  const monthlyTotals: any[]      = analyticsData?.monthlyTotals || [];
+  const summary                   = analyticsData?.summary || { totalExpense: "0", totalIncome: "0", txnCount: 0 };
 
   const totalExpense = parseFloat(summary.totalExpense) || 0;
   const totalIncome  = parseFloat(summary.totalIncome)  || 0;
   const savings      = totalIncome - totalExpense;
 
+  // Previous month's spend per category, for the "vs last month" trend badges below
+  const prevMonthByCategory = new Map<string, number>(
+    byCategoryPrevMonth.map((c: any) => [c.category, parseFloat(c.total) || 0])
+  );
+
   // Donut data
   const donutData = byCategory
     .filter((c: any) => parseFloat(c.total) > 0)
-    .map((c: any) => ({
-      label: getCategoryMeta(c.category).label,
-      value: parseFloat(c.total),
-      color: getCategoryMeta(c.category).color,
-    }));
+    .map((c: any) => {
+      const value = parseFloat(c.total);
+      const prevValue = prevMonthByCategory.get(c.category) ?? 0;
+      // null = no prior-month baseline to compare against (new category, or
+      // the previous month had zero spend) rather than a misleading 0%/∞%.
+      const trendPct = prevValue > 0 ? ((value - prevValue) / prevValue) * 100 : null;
+      return {
+        category: c.category,
+        label: getCategoryMeta(c.category).label,
+        value,
+        color: getCategoryMeta(c.category).color,
+        trendPct,
+      };
+    });
 
   // Bar chart data
   const barData = monthlyTotals.map((m: any) => ({
@@ -239,7 +261,7 @@ export default function AnalyticsPage() {
               </div>
             ) : (
               <div className={styles.donutSection}>
-                <DonutChart data={donutData} />
+                <DonutChart data={donutData} currencySymbol={sym} />
                 <div className={styles.legend}>
                   {donutData
                     .sort((a, b) => b.value - a.value)
@@ -249,6 +271,14 @@ export default function AnalyticsPage() {
                         <div key={i} className={styles.legendRow}>
                           <span className={styles.legendDot} style={{ background: d.color }} />
                           <span className={styles.legendLabel}>{d.label}</span>
+                          {d.trendPct !== null && Math.abs(d.trendPct) >= 1 && (
+                            <span
+                              className={`${styles.legendTrend} ${d.trendPct > 0 ? styles.legendTrendUp : styles.legendTrendDown}`}
+                              title={`${d.trendPct > 0 ? "Up" : "Down"} ${Math.abs(d.trendPct).toFixed(0)}% vs last month`}
+                            >
+                              {d.trendPct > 0 ? "↑" : "↓"}{Math.abs(d.trendPct).toFixed(0)}%
+                            </span>
+                          )}
                           <span className={styles.legendPct}>{pct}%</span>
                           <span className={styles.legendAmt}>{sym}{d.value.toFixed(2)}</span>
                         </div>
@@ -282,7 +312,7 @@ export default function AnalyticsPage() {
                 <p>Not enough data yet</p>
               </div>
             ) : (
-              <BarChart data={barData} />
+              <BarChart data={barData} currencySymbol={sym} />
             )}
           </div>
         </div>
