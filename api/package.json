@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "drizzle-kit push && tsc",
+    "build": "npm run build -w @settlemint/shared && drizzle-kit push && tsc",
     "start": "node dist/server.js",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
