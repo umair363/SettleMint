@@ -203,9 +203,9 @@
   justify-content: space-between;
   gap: var(--space-md);
   padding: var(--space-md) var(--space-xl);
-  background: rgba(15, 18, 25, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(15, 18, 25, 0.94);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
   border-bottom: 1px solid var(--border-subtle);
   height: 60px;
 }

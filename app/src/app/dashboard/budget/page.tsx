@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Skeleton from "@/components/Skeleton";
 import BottomSheet from "@/components/BottomSheet";
 import CategoryPicker from "@/components/CategoryPicker";
+import PageHeader from "@/components/PageHeader";
 import { getCurrencySymbol } from "@/utils/currency";
 import { CATEGORIES, WALLETS, getCategoryMeta, getApiUrl } from "@settlemint/shared";
 import styles from "./budget.module.css";
@@ -158,37 +159,36 @@ export default function BudgetPage() {
   const isCurrentMonth = viewMonth === now.getMonth() + 1 && viewYear === now.getFullYear();
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} pageShell`}>
 
-      {/* ── Header ── */}
-      <div className={styles.pageHeader}>
-        <div>
-          <p className={styles.label}>PERSONAL FINANCE</p>
-          <h1 className={styles.title}>My Budget</h1>
-        </div>
-        <div className={styles.headerActions}>
-          <Link href="/dashboard/budget/analytics" className={styles.secondaryBtn} id="budget-analytics-link">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-              <path d="M3 3v18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              <path d="M7 16l4-4 4 4 4-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Analytics
-          </Link>
-          <Link href="/dashboard/budget/budgets" className={styles.secondaryBtn} id="budget-goals-link">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/>
-              <path d="M12 8v4l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-            Goals
-          </Link>
-          <button className={styles.primaryBtn} onClick={() => setShowModal(true)} id="budget-add-txn">
-            <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-              <path d="M8 3V13M3 8H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-            Add Transaction
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Personal Finance"
+        title="My Budget"
+        action={
+          <div className={styles.headerActions}>
+            <Link href="/dashboard/budget/analytics" className={styles.secondaryBtn} id="budget-analytics-link">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                <path d="M3 3v18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M7 16l4-4 4 4 4-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Analytics
+            </Link>
+            <Link href="/dashboard/budget/budgets" className={styles.secondaryBtn} id="budget-goals-link">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/>
+                <path d="M12 8v4l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              Goals
+            </Link>
+            <button className={styles.primaryBtn} onClick={() => setShowModal(true)} id="budget-add-txn">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                <path d="M8 3V13M3 8H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              Add Transaction
+            </button>
+          </div>
+        }
+      />
 
       {/* ── Month Picker ── */}
       <div className={styles.monthNav}>

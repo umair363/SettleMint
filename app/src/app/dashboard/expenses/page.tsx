@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Skeleton from "@/components/Skeleton";
+import PageHeader from "@/components/PageHeader";
 import styles from "./expenses.module.css";
 import { getCurrencySymbol, convertCurrency } from "@/utils/currency";
 import { getApiUrl } from "@settlemint/shared";
@@ -92,15 +93,13 @@ export default function ExpensesPage() {
   }, 0);
 
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>Expenses</h1>
-          <p className={styles.subtitle}>
-            {filtered.length} expenses &middot; {sym}{totalSpent.toFixed(2)} total (converted to {defaultCurrency})
-          </p>
-        </div>
-      </div>
+    <div className={`${styles.page} pageShell`}>
+      <PageHeader
+        title="Expenses"
+        subtitle={
+          <>{filtered.length} expenses &middot; {sym}{totalSpent.toFixed(2)} total (converted to {defaultCurrency})</>
+        }
+      />
 
       {/* Filters */}
       <div className={styles.filters}>

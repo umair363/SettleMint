@@ -1,22 +1,5 @@
 .page {
-  padding: 2rem;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.header {
-  margin-bottom: 2rem;
-}
-
-.title {
-  font-size: 2rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-}
-
-.subtitle {
-  color: var(--text-secondary);
+  max-width: 640px;
 }
 
 .card {

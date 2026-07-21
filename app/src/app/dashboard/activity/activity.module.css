@@ -1,24 +1,6 @@
 /* Activity Page */
 .page {
-  padding: var(--space-xl) 0;
   max-width: 680px;
-}
-
-.header {
-  margin-bottom: var(--space-2xl);
-}
-
-.title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: -0.03em;
-}
-
-.subtitle {
-  font-size: 0.9375rem;
-  color: var(--text-secondary);
-  margin-top: 4px;
 }
 
 /* Feed */

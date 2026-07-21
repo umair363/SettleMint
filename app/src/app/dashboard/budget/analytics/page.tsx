@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { getCurrencySymbol } from "@/utils/currency";
 import { CATEGORIES, getCategoryMeta, getApiUrl } from "@settlemint/shared";
+import PageHeader from "@/components/PageHeader";
 import styles from "./analytics.module.css";
 
 const API = getApiUrl();
@@ -191,33 +192,28 @@ export default function AnalyticsPage() {
   const isCurrent  = viewMonth === now.getMonth() + 1 && viewYear === now.getFullYear();
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} pageShell`}>
 
-      {/* Header */}
-      <div className={styles.pageHeader}>
-        <div>
-          <Link href="/dashboard/budget" className={styles.backLink}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Budget Hub
-          </Link>
-          <h1 className={styles.title}>Analytics</h1>
-        </div>
-        <div className={styles.monthNav}>
-          <button className={styles.monthBtn} onClick={prevMonth} aria-label="Previous month">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          <span className={styles.monthLabel}>{monthLabel}</span>
-          <button className={styles.monthBtn} onClick={nextMonth} disabled={isCurrent} aria-label="Next month">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        backHref="/dashboard/budget"
+        backLabel="Budget Hub"
+        title="Analytics"
+        action={
+          <div className={styles.monthNav}>
+            <button className={styles.monthBtn} onClick={prevMonth} aria-label="Previous month">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <span className={styles.monthLabel}>{monthLabel}</span>
+            <button className={styles.monthBtn} onClick={nextMonth} disabled={isCurrent} aria-label="Next month">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        }
+      />
 
       {/* ── KPI Row ── */}
       <div className={styles.kpiRow}>

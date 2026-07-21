@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Skeleton from "@/components/Skeleton";
+import PageHeader from "@/components/PageHeader";
 import { getApiUrl } from "@settlemint/shared";
 import styles from "./activity.module.css";
 
@@ -67,13 +68,8 @@ export default function ActivityPage() {
   });
 
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>Activity</h1>
-          <p className={styles.subtitle}>Everything happening across your groups and friends.</p>
-        </div>
-      </div>
+    <div className={`${styles.page} pageShell`}>
+      <PageHeader title="Activity" subtitle="Everything happening across your groups and friends." />
 
       <div className={styles.feed}>
         {isLoading ? (

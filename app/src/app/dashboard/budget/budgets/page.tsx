@@ -7,6 +7,7 @@ import { getCurrencySymbol } from "@/utils/currency";
 import Skeleton from "@/components/Skeleton";
 import { CATEGORIES, getCategoryMeta, getApiUrl } from "@settlemint/shared";
 import CategoryPicker from "@/components/CategoryPicker";
+import PageHeader from "@/components/PageHeader";
 import styles from "./budgets.module.css";
 
 const API = getApiUrl();
@@ -119,44 +120,39 @@ export default function BudgetsPage() {
   }
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} pageShell`}>
 
-      {/* Header */}
-      <div className={styles.pageHeader}>
-        <div>
-          <Link href="/dashboard/budget" className={styles.backLink}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Budget Hub
-          </Link>
-          <h1 className={styles.title}>Budget Goals</h1>
-          <p className={styles.subtitle}>Set monthly spending limits per category</p>
-        </div>
-        <div className={styles.headerRight}>
-          <div className={styles.monthNav}>
-            <button className={styles.monthBtn} onClick={prevMonth} aria-label="Prev">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-                <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-            <span className={styles.monthLabel}>{monthLabel}</span>
-            <button className={styles.monthBtn} onClick={nextMonth} disabled={isCurrent} aria-label="Next">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-                <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
+      <PageHeader
+        backHref="/dashboard/budget"
+        backLabel="Budget Hub"
+        title="Budget Goals"
+        subtitle="Set monthly spending limits per category"
+        action={
+          <div className={styles.headerRight}>
+            <div className={styles.monthNav}>
+              <button className={styles.monthBtn} onClick={prevMonth} aria-label="Prev">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                  <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              <span className={styles.monthLabel}>{monthLabel}</span>
+              <button className={styles.monthBtn} onClick={nextMonth} disabled={isCurrent} aria-label="Next">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                  <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+            {setBudgetCategories.length > 0 && (
+              <button className={styles.primaryBtn} onClick={() => { setEditId(null); setForm(f => ({ ...f, category: setBudgetCategories[0].id, limitAmount: "" })); setShowForm(true); }} id="budget-add-goal">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 3V13M3 8H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                Add Goal
+              </button>
+            )}
           </div>
-          {setBudgetCategories.length > 0 && (
-            <button className={styles.primaryBtn} onClick={() => { setEditId(null); setForm(f => ({ ...f, category: setBudgetCategories[0].id, limitAmount: "" })); setShowForm(true); }} id="budget-add-goal">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path d="M8 3V13M3 8H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              Add Goal
-            </button>
-          )}
-        </div>
-      </div>
+        }
+      />
 
       {/* Goals Grid */}
       {isLoading ? (

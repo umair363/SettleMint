@@ -292,6 +292,15 @@ h1, h2, h3, h4, h5, h6 {
   padding-inline: var(--space-lg);
 }
 
+/* Dashboard page shell — one shared max-width/padding rhythm so every
+   /dashboard/* route feels like the same app instead of reinventing its
+   own layout container (previously ranged from 680px to 1200px to none). */
+.pageShell {
+  max-width: 1100px;
+  width: 100%;
+  margin-inline: auto;
+}
+
 .section {
   padding-block: var(--space-5xl);
 }
