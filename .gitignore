@@ -27,3 +27,10 @@ app/next-env.d.ts
 
 # Env files
 .env*
+
+# next-pwa generated service worker (rebuilt on every build)
+app/public/sw.js
+app/public/sw.js.map
+app/public/workbox-*.js
+app/public/workbox-*.js.map
+app/public/fallback-*.js
