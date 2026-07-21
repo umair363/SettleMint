@@ -74,7 +74,7 @@ Return ONLY valid JSON. Do not include markdown code block formatting.`;
       throw new Error("Failed to process receipt image with AI");
     }
 
-    const data = await response.json();
+    const data = await response.json() as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     
     if (!rawText) throw new Error("Empty response from AI Vision");
