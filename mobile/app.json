@@ -11,9 +11,11 @@
       "typedRoutes": true
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "online.settlemint.app"
     },
     "android": {
+      "package": "online.settlemint.app",
       "adaptiveIcon": {
         "backgroundColor": "#3DD68C",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -37,6 +39,19 @@
         }
       ],
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "30e9f013-cb15-420b-86aa-957d03b8a6fa"
+      }
+    },
+    "owner": "comrades-world",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/30e9f013-cb15-420b-86aa-957d03b8a6fa"
+    }
   }
 }

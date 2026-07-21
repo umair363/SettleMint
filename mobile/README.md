@@ -3,6 +3,24 @@
 React Native + Expo (SDK 57) app, sharing the backend API and data contracts
 (`@settlemint/shared`) with the Next.js web app in `../app`.
 
+## Expo Go does not work with this project (yet)
+
+This app targets **SDK 57**. The Expo Go app currently on the App/Play
+Store supports **SDK 54** — Expo Go only ever supports one SDK at a time,
+and it lags new SDK releases by a few weeks. You'll see *"not compatible
+with this version of Expo Go"* and no amount of `--tunnel`, EAS Update, or
+reinstalling Expo Go will change that; the SDK gap is the whole problem.
+
+Until Expo Go ships SDK 57 support, use one of:
+
+- **EAS Build** (`npx eas-cli build --platform android --profile preview`)
+  — produces a real installable APK, no Expo Go involved. This is what's
+  known to work.
+- **A development build** — a custom Expo Go replacement compiled against
+  this SDK. Needed for iOS testing on a physical device; free-tier builds
+  are tied to a device UDID and expire weekly.
+- **TestFlight** via an Apple Developer account, for real iOS distribution.
+
 ## Getting started
 
 ```bash
@@ -42,6 +60,27 @@ the web app).
   `mobile/node_modules/react` copy, and a real Metro bundle export
   (`npx expo export --platform android`) built cleanly against it. Revisit
   if an EAS/native build ever behaves differently from the Metro bundle.
+
+## Builds and updates (EAS)
+
+The project is linked to `@comrades-world/settlemint` on Expo's servers.
+Build profiles live in `eas.json`.
+
+```bash
+# Installable Android APK — internal distribution, no store needed.
+# Takes ~20 min in Expo's cloud queue; produces a shareable download link
+# that stays live for 13 days.
+npx eas-cli build --platform android --profile preview
+
+# Push a JS-only update to already-installed builds, no rebuild required.
+# --environment is mandatory in non-interactive shells.
+npx eas-cli update --branch preview --message "what changed" --environment preview
+```
+
+Note that `eas update` set `runtimeVersion` to `{"policy": "appVersion"}`
+in `app.json`, which ties published updates to a native build's app
+version. That's correct for standalone builds and another reason Expo Go
+can't consume these updates.
 
 ## App icons
 
