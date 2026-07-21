@@ -62,7 +62,7 @@ import budgetRoutes from "./routes/budget.routes";
 // ─── Global Error Handler ───────────────────────────────────────────────────
 // Catches any unhandled error thrown in a route handler.
 // Reports to Sentry with full context, then returns a clean 500 to the client.
-server.setErrorHandler((error, request, reply) => {
+server.setErrorHandler((error: Error & { statusCode?: number }, request, reply) => {
   Sentry.withScope((scope) => {
     scope.setTag("route", request.routeOptions?.url || request.url);
     scope.setTag("method", request.method);
