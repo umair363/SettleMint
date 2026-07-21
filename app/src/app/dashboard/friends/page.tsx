@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Skeleton from "@/components/Skeleton";
+import PageHeader from "@/components/PageHeader";
 import styles from "./friends.module.css";
 import { getCurrencySymbol } from "@/utils/currency";
 import { getApiUrl } from "@settlemint/shared";
@@ -63,39 +64,37 @@ export default function FriendsPage() {
   const sym = getCurrencySymbol(defaultCurrency);
 
   return (
-    <div className={styles.page}>
-      {/* Header */}
-      <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>Friends</h1>
-          <p className={styles.subtitle}>Split expenses 1-on-1, no group needed.</p>
-        </div>
-
-        <form
-          className={styles.addForm}
-          onSubmit={(e) => {
-            e.preventDefault();
-            setAddError("");
-            if (email) addFriendMutation.mutate(email);
-          }}
-        >
-          <input
-            type="email"
-            placeholder="Add by email address…"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className={styles.emailInput}
-            required
-          />
-          <button
-            type="submit"
-            className={`btn btn-primary ${styles.addBtn}`}
-            disabled={addFriendMutation.isPending || !email}
+    <div className={`${styles.page} pageShell`}>
+      <PageHeader
+        title="Friends"
+        subtitle="Split expenses 1-on-1, no group needed."
+        action={
+          <form
+            className={styles.addForm}
+            onSubmit={(e) => {
+              e.preventDefault();
+              setAddError("");
+              if (email) addFriendMutation.mutate(email);
+            }}
           >
-            {addFriendMutation.isPending ? "Adding…" : "Add Friend"}
-          </button>
-        </form>
-      </div>
+            <input
+              type="email"
+              placeholder="Add by email address…"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={styles.emailInput}
+              required
+            />
+            <button
+              type="submit"
+              className={`btn btn-primary ${styles.addBtn}`}
+              disabled={addFriendMutation.isPending || !email}
+            >
+              {addFriendMutation.isPending ? "Adding…" : "Add Friend"}
+            </button>
+          </form>
+        }
+      />
 
       {addError && (
         <div className={styles.errorBanner}>{addError}</div>

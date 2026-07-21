@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { getApiUrl } from "@settlemint/shared";
 import { getStoredTheme, setTheme as persistTheme, type Theme } from "@/utils/theme";
+import PageHeader from "@/components/PageHeader";
 import styles from "./settings.module.css";
 
 const THEME_OPTIONS: { value: Theme; label: string; icon: string }[] = [
@@ -84,11 +85,8 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>Settings</h1>
-        <p className={styles.subtitle}>Manage your profile and preferences.</p>
-      </header>
+    <div className={`${styles.page} pageShell`}>
+      <PageHeader title="Settings" subtitle="Manage your profile and preferences." />
 
       <div className={styles.card}>
         <div className={styles.field}>
