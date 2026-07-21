@@ -1,5 +1,16 @@
-import { pgTable, uuid, text, timestamp, numeric, varchar, boolean, index, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, timestamp, numeric, varchar, boolean, integer, index, uniqueIndex, pgEnum } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+
+// ─── Enums ──────────────────────────────────────────────────────────────────
+// Previously free-text varchar columns with only a comment documenting the
+// allowed values — invalid values (typos, casing drift) could be persisted
+// silently. Postgres now rejects anything outside these sets at write time.
+export const groupModeEnum = pgEnum("group_mode", ["Trip", "Roommate", "Couple", "Other"]);
+export const groupRoleEnum = pgEnum("group_role", ["admin", "member"]);
+export const settlementMethodEnum = pgEnum("settlement_method", ["cash", "transfer", "app"]);
+export const transactionTypeEnum = pgEnum("transaction_type", ["expense", "income"]);
+export const walletEnum = pgEnum("wallet", ["cash", "bank", "card"]);
+export const recurringFrequencyEnum = pgEnum("recurring_frequency", ["daily", "weekly", "monthly", "yearly"]);
 
 // --- Users ---
 export const users = pgTable("users", {
@@ -23,7 +34,7 @@ export const groups = pgTable("groups", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 255 }).notNull(),
   baseCurrency: varchar("base_currency", { length: 3 }).default("USD").notNull(),
-  mode: varchar("mode", { length: 50 }).notNull(), // 'Trip', 'Roommate', 'Couple'
+  mode: groupModeEnum("mode").notNull(),
   emoji: varchar("emoji", { length: 10 }),
   color: varchar("color", { length: 7 }),
   createdBy: uuid("created_by").references(() => users.id).notNull(),
@@ -42,7 +53,7 @@ export const groupMembers = pgTable("group_members", {
   groupId: uuid("group_id").references(() => groups.id, { onDelete: "cascade" }).notNull(),
   userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   joinedAt: timestamp("joined_at").defaultNow().notNull(),
-  role: varchar("role", { length: 50 }).default("member").notNull(), // 'admin', 'member'
+  role: groupRoleEnum("role").default("member").notNull(),
 }, (t) => [
   index("group_members_group_id_idx").on(t.groupId),
   index("group_members_user_id_idx").on(t.userId),
@@ -89,7 +100,7 @@ export const settlements = pgTable("settlements", {
   paidTo: uuid("paid_to").references(() => users.id).notNull(),
   amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
   currency: varchar("currency", { length: 3 }).default("USD").notNull(),
-  method: varchar("method", { length: 50 }).notNull(), // 'cash', 'transfer', 'app'
+  method: settlementMethodEnum("method").notNull(),
   notes: text("notes"),
   date: timestamp("date").defaultNow().notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -180,20 +191,27 @@ export const personalTransactions = pgTable("personal_transactions", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
-  type: varchar("type", { length: 10 }).default("expense").notNull(), // 'expense' | 'income'
+  type: transactionTypeEnum("type").default("expense").notNull(),
   category: varchar("category", { length: 100 }).notNull(),
   description: text("description").notNull(),
-  wallet: varchar("wallet", { length: 50 }).default("card").notNull(), // 'cash' | 'bank' | 'card'
+  wallet: walletEnum("wallet").default("card").notNull(),
   currency: varchar("currency", { length: 3 }).default("USD").notNull(),
   date: timestamp("date").defaultNow().notNull(),
   notes: text("notes"),
   isRecurring: boolean("is_recurring").default(false).notNull(),
-  recurringFrequency: varchar("recurring_frequency", { length: 20 }), // 'daily'|'weekly'|'monthly'
+  recurringFrequency: recurringFrequencyEnum("recurring_frequency"),
+  // Recurrence bookkeeping — when isRecurring is true, nextRunDate marks the
+  // next occurrence the scheduler should materialize; lastGeneratedAt records
+  // when it last did so (both null for non-recurring rows).
+  nextRunDate: timestamp("next_run_date"),
+  lastGeneratedAt: timestamp("last_generated_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (t) => [
   index("personal_txn_user_id_idx").on(t.userId),
   index("personal_txn_date_idx").on(t.date),
   index("personal_txn_type_idx").on(t.type),
+  index("personal_txn_next_run_date_idx").on(t.nextRunDate),
 ]);
 
 // --- Budget Goals ---
@@ -203,12 +221,17 @@ export const budgets = pgTable("budgets", {
   category: varchar("category", { length: 100 }).notNull(),
   limitAmount: numeric("limit_amount", { precision: 12, scale: 2 }).notNull(),
   currency: varchar("currency", { length: 3 }).default("USD").notNull(),
-  month: numeric("month", { precision: 2, scale: 0 }).notNull(), // 1-12
-  year: numeric("year", { precision: 4, scale: 0 }).notNull(),
+  month: integer("month").notNull(), // 1-12
+  year: integer("year").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (t) => [
   index("budgets_user_id_idx").on(t.userId),
   index("budgets_month_year_idx").on(t.month, t.year),
+  // Closes the check-then-insert race in upsertBudget: concurrent requests
+  // for the same (user, category, month, year) now conflict at the DB level
+  // instead of creating duplicate budget rows.
+  uniqueIndex("budgets_user_category_month_year_idx").on(t.userId, t.category, t.month, t.year),
 ]);
 
 // --- Budget Tracker Relations ---

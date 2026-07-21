@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { getApiUrl } from "@settlemint/shared";
 import styles from "./GlobalSearch.module.css";
 
 interface ExpenseSplit {
@@ -24,7 +25,7 @@ interface SearchResult {
 }
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com";
+  getApiUrl();
 
 function formatCurrency(amount: string, currency: string) {
   const num = parseFloat(amount);

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getApiUrl } from "@settlemint/shared";
 import styles from "./login.module.css";
 
 export default function LoginPage() {
@@ -25,7 +26,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com";
+      const baseUrl = getApiUrl();
       const response = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: {

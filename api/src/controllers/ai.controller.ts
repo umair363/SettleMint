@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { scanReceipt } from "../utils/receiptScanner";
 import { parseNaturalLanguageExpense } from "../utils/mintBotParser";
+import { receiptScanSchema, mintBotParseSchema } from "@settlemint/shared";
 
 interface AuthenticatedRequest extends FastifyRequest {
   user?: {
@@ -16,14 +17,13 @@ export const scanReceiptImage = async (request: AuthenticatedRequest, reply: Fas
     const userId = request.user?.id;
     if (!userId) return reply.code(401).send({ error: "Unauthorized" });
 
-    const { base64Image } = request.body as { base64Image: string };
-
-    if (!base64Image) {
-      return reply.code(400).send({ error: "Missing base64Image in request body" });
+    const parsed = receiptScanSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send({ error: "Validation failed", details: parsed.error.issues });
     }
 
-    // Pass the image buffer/string to our Claude Vision pipeline
-    const scanResult = await scanReceipt(base64Image);
+    // Gemini Vision pipeline — extracts merchant/total/items from the image.
+    const scanResult = await scanReceipt(parsed.data.imageBase64, parsed.data.mimeType);
 
     return reply.code(200).send({ result: scanResult });
   } catch (error) {
@@ -38,14 +38,13 @@ export const parseNaturalLanguage = async (request: AuthenticatedRequest, reply:
     const userId = request.user?.id;
     if (!userId) return reply.code(401).send({ error: "Unauthorized" });
 
-    const { text } = request.body as { text: string };
-
-    if (!text) {
-      return reply.code(400).send({ error: "Missing text in request body" });
+    const parsed = mintBotParseSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send({ error: "Validation failed", details: parsed.error.issues });
     }
 
-    // Pass the text to our MintBot NLP pipeline
-    const parseResult = await parseNaturalLanguageExpense(text);
+    // MintBot NLP pipeline — extracts a structured expense intent from free text.
+    const parseResult = await parseNaturalLanguageExpense(parsed.data.text);
 
     return reply.code(200).send({ result: parseResult });
   } catch (error) {

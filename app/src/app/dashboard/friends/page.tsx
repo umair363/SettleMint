@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Skeleton from "@/components/Skeleton";
 import styles from "./friends.module.css";
 import { getCurrencySymbol } from "@/utils/currency";
+import { getApiUrl } from "@settlemint/shared";
 
 export default function FriendsPage() {
   const [token, setToken] = useState("");
@@ -28,7 +29,7 @@ export default function FriendsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["friends"],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/friends`, {
+      const res = await fetch(`${getApiUrl()}/api/friends`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch friends");
@@ -39,7 +40,7 @@ export default function FriendsPage() {
 
   const addFriendMutation = useMutation({
     mutationFn: async (friendEmail: string) => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/friends`, {
+      const res = await fetch(`${getApiUrl()}/api/friends`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ email: friendEmail }),

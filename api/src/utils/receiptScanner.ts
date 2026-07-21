@@ -18,7 +18,10 @@ export interface ReceiptScanResult {
  * AI Receipt Scanner Service
  * Uses Gemini Vision API to extract receipt data strictly as JSON.
  */
-export async function scanReceipt(base64Image: string): Promise<ReceiptScanResult> {
+export async function scanReceipt(
+  base64Image: string,
+  mimeType: string = "image/jpeg"
+): Promise<ReceiptScanResult> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY is not set in environment variables. Please add it to enable Receipt Scanning.");
@@ -40,9 +43,9 @@ Analyze the provided receipt image and extract the data strictly as JSON matchin
 Return ONLY valid JSON. Do not include markdown code block formatting.`;
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
       body: JSON.stringify({
         system_instruction: { parts: [{ text: systemInstruction }] },
         contents: [
@@ -51,7 +54,7 @@ Return ONLY valid JSON. Do not include markdown code block formatting.`;
               { text: "Extract the receipt details." },
               {
                 inline_data: {
-                  mime_type: "image/jpeg",
+                  mime_type: mimeType,
                   data: base64Data
                 }
               }

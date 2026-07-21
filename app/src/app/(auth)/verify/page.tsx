@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { getApiUrl } from "@settlemint/shared";
 import styles from "../login/login.module.css";
 
 function VerifyContent() {
@@ -35,7 +36,7 @@ function VerifyContent() {
     setLoading(true);
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com";
+      const baseUrl = getApiUrl();
       const response = await fetch(`${baseUrl}/api/auth/verify-otp`, {
         method: "POST",
         headers: {
@@ -77,7 +78,7 @@ function VerifyContent() {
     setResendLoading(true);
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com";
+      const baseUrl = getApiUrl();
       const response = await fetch(`${baseUrl}/api/auth/resend-otp`, {
         method: "POST",
         headers: {

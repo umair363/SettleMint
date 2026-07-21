@@ -20,11 +20,15 @@
 }
 
 .card {
-  background: var(--bg-card);
+  background: var(--surface-card);
   border: 1px solid var(--border-default);
   border-radius: 16px;
   padding: 2rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-md);
+}
+
+.card + .card {
+  margin-top: 1.5rem;
 }
 
 .form {
@@ -67,11 +71,39 @@
   width: 100%;
 }
 
+.themeToggle {
+  display: flex;
+  gap: 0.375rem;
+  background: rgba(127, 127, 127, 0.08);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  padding: 0.25rem;
+}
+
+.themeOption {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: background-color 200ms var(--ease-out), color 200ms var(--ease-out);
+}
+
+.themeOptionActive {
+  background: var(--mint-400);
+  color: var(--slate-950);
+}
+
 .toast {
   position: fixed;
   bottom: 2rem;
   right: 2rem;
-  background: #141721;
+  background: var(--surface-elevated);
   border: 1px solid var(--mint-500);
   padding: 1rem 1.5rem;
   border-radius: 12px;

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Skeleton from "@/components/Skeleton";
+import { getApiUrl } from "@settlemint/shared";
 import styles from "./activity.module.css";
 
 const ACTION_META: Record<string, { icon: string; color: string }> = {
@@ -36,7 +37,7 @@ export default function ActivityPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["activity"],
     queryFn: async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com"}/api/activity`, {
+      const res = await fetch(`${getApiUrl()}/api/activity`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch activity");

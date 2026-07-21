@@ -1,0 +1,67 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
+}
+
+.btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 0.85rem var(--space-sm);
+  border-radius: var(--radius-md);
+  background: rgba(127, 127, 127, 0.04);
+  border: 1px solid var(--border-subtle);
+  transition: background-color 200ms var(--ease-out),
+              border-color 200ms var(--ease-out),
+              transform 200ms var(--ease-out);
+}
+
+.btn:hover {
+  background: rgba(127, 127, 127, 0.08);
+  border-color: var(--border-default);
+  transform: translateY(-1px);
+}
+
+.btnSelected {
+  border-color: var(--cat-color, var(--mint-400));
+  background: color-mix(in srgb, var(--cat-color, var(--mint-400)) 10%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--cat-color, var(--mint-400)) 25%, transparent) inset;
+}
+
+.emoji {
+  font-size: 1.375rem;
+  line-height: 1;
+}
+
+.label2 {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.btnSelected .label2 {
+  color: var(--mint-400);
+}
+
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

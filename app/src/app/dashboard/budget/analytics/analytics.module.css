@@ -227,6 +227,22 @@
   text-align: right;
 }
 
+.legendTrend {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.legendTrendUp {
+  color: #ff6b6b;
+}
+
+.legendTrendDown {
+  color: var(--mint-400);
+}
+
 /* ── Bar Chart ── */
 .barLegend {
   display: flex;

@@ -5,25 +5,11 @@ import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrencySymbol } from "@/utils/currency";
 import Skeleton from "@/components/Skeleton";
+import { CATEGORIES, getCategoryMeta, getApiUrl } from "@settlemint/shared";
+import CategoryPicker from "@/components/CategoryPicker";
 import styles from "./budgets.module.css";
 
-const CATEGORIES = [
-  { id: "food",          label: "Food & Drink",     emoji: "🍽️", color: "#FF6B6B" },
-  { id: "transport",     label: "Transport",         emoji: "🚕", color: "#FFA94D" },
-  { id: "accommodation", label: "Accommodation",     emoji: "🏨", color: "#74C0FC" },
-  { id: "entertainment", label: "Entertainment",     emoji: "🎬", color: "#B197FC" },
-  { id: "shopping",      label: "Shopping",          emoji: "🛍️", color: "#F783AC" },
-  { id: "bills",         label: "Bills & Utilities", emoji: "💡", color: "#63E6BE" },
-  { id: "groceries",     label: "Groceries",         emoji: "🛒", color: "#A9E34B" },
-  { id: "health",        label: "Health",            emoji: "💊", color: "#74C0FC" },
-  { id: "other",         label: "Other",             emoji: "📌", color: "#adb5bd" },
-];
-
-const API = process.env.NEXT_PUBLIC_API_URL || "https://settlemint.onrender.com";
-
-function getCategoryMeta(id: string) {
-  return CATEGORIES.find(c => c.id === id) ?? CATEGORIES[CATEGORIES.length - 1];
-}
+const API = getApiUrl();
 
 export default function BudgetsPage() {
   const queryClient = useQueryClient();
@@ -279,23 +265,13 @@ export default function BudgetsPage() {
             <form onSubmit={e => { e.preventDefault(); upsertMutation.mutate(); }}>
 
               {/* Category */}
-              <div className={styles.field}>
-                <label className={styles.fieldLabel}>Category</label>
-                <div className={styles.catGrid}>
-                  {CATEGORIES.map(c => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      className={`${styles.catBtn} ${form.category === c.id ? styles.catBtnSelected : ""}`}
-                      style={{ "--cat-color": c.color } as React.CSSProperties}
-                      onClick={() => setForm(f => ({ ...f, category: c.id }))}
-                    >
-                      <span>{c.emoji}</span>
-                      <span className={styles.catBtnLabel}>{c.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <CategoryPicker
+                categories={CATEGORIES}
+                value={form.category}
+                onChange={(id) => setForm(f => ({ ...f, category: id }))}
+                label="Category"
+                colorized
+              />
 
               {/* Monthly limit */}
               <div className={styles.field}>
