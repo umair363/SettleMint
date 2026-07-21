@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 // @ts-ignore
 import withPWAInit from "next-pwa";
 
+// NOTE: `next build` must run with `--webpack` (see package.json). next-pwa
+// is a Webpack plugin, and under Turbopack — the Next 16 default — it is
+// silently inert: no sw.js is emitted, no offline support, no caching, and
+// no warning that any of it is missing.
+
 const withPWA = withPWAInit({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
@@ -13,32 +18,25 @@ const withPWA = withPWAInit({
     document: "/offline",
   },
   runtimeCaching: [
-    // Cache API responses for budget/expense data
+    // Read-only API data. Matched on path rather than a hardcoded origin so
+    // this keeps working if the API host changes.
+    //
+    // NetworkFirst with a long maxAge: fresh data whenever there's a
+    // connection, but the last good response stays available for a week so
+    // the app is genuinely usable offline rather than going blank after a
+    // few minutes. Mutations are never cached — they go through the
+    // offlineSync queue in src/utils/offlineSync.ts instead.
     {
-      urlPattern: /^https:\/\/settlemint\.onrender\.com\/api\/budget/,
+      urlPattern: ({ url, request }: { url: URL; request: Request }) =>
+        /\/api\/(budget|expenses|groups|settlements|friends|activity|notifications)/.test(
+          url.pathname
+        ) && request.method === "GET",
       handler: "NetworkFirst",
       options: {
-        cacheName: "budget-api",
-        expiration: { maxEntries: 50, maxAgeSeconds: 60 * 5 },
-        networkTimeoutSeconds: 10,
-      },
-    },
-    {
-      urlPattern: /^https:\/\/settlemint\.onrender\.com\/api\/expenses/,
-      handler: "NetworkFirst",
-      options: {
-        cacheName: "expenses-api",
-        expiration: { maxEntries: 100, maxAgeSeconds: 60 * 5 },
-        networkTimeoutSeconds: 10,
-      },
-    },
-    {
-      urlPattern: /^https:\/\/settlemint\.onrender\.com\/api\/groups/,
-      handler: "NetworkFirst",
-      options: {
-        cacheName: "groups-api",
-        expiration: { maxEntries: 50, maxAgeSeconds: 60 * 5 },
-        networkTimeoutSeconds: 10,
+        cacheName: "settlemint-api",
+        expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 7 },
+        networkTimeoutSeconds: 8,
+        cacheableResponse: { statuses: [200] },
       },
     },
     // Cache Google Fonts
@@ -67,8 +65,6 @@ const withPWA = withPWAInit({
   ],
 });
 
-const nextConfig: NextConfig = {
-  turbopack: {},
-};
+const nextConfig: NextConfig = {};
 
 export default withPWA(nextConfig);

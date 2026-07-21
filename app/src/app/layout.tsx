@@ -1,7 +1,21 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { themeInitScript } from "@/utils/theme";
 import "./globals.css";
+
+export const viewport: Viewport = {
+  // Matches the surface color of each theme so the browser chrome and iOS
+  // status bar blend into the app instead of banding against it.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f9fafb" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1219" },
+  ],
+  width: "device-width",
+  initialScale: 1,
+  // Let the app fill the notch/home-indicator area — the safe-area insets
+  // in globals.css already account for it.
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   title: "SettleMint - Split Expenses, Not Friendships",
