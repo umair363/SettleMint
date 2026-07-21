@@ -1,122 +1,148 @@
-# SettleMint
+<div align="center">
 
-Split shared expenses with friends, roommates, or travel groups — track who
-paid, who owes what, and settle up. Includes a personal budget tracker,
-AI-assisted expense entry, and native apps for web and mobile.
+<img src="app/public/icon-192.png" width="88" alt="SettleMint" />
 
-**Live:** [settlemint.online](https://settlemint.online)
+### SettleMint
 
-## Monorepo layout
+Split expenses, not friendships.
 
-This is an npm workspaces monorepo with three deployables and one shared package:
+[**settlemint.online**](https://settlemint.online) &nbsp;·&nbsp; [Features](#features) &nbsp;·&nbsp; [Architecture](#architecture) &nbsp;·&nbsp; [Local setup](#local-setup)
+
+</div>
+
+<br />
+
+Shared expenses are a social problem disguised as a math problem. SettleMint
+handles the math — who paid, who owes what, and the fewest payments needed to
+square up — so the social part stays easy.
+
+It runs as an installable web app, a native Android/iOS app, and a personal
+budget tracker, all sharing one backend.
+
+<br />
+
+## Features
+
+**Split anything, fairly.** Equal, exact amounts, percentages, or shares.
+All money math runs in integer cents and distributes leftover pennies
+round-robin, so a $10 bill split three ways lands on $3.34 / $3.33 / $3.33 —
+never $9.99.
+
+**Settle up in the fewest payments.** Rather than everyone paying everyone,
+the settlement engine nets debts across the group and computes the minimum
+set of transactions to clear the ledger.
+
+**Track personal spending too.** Budget goals per category, recurring
+transactions, and analytics that tell you something useful — *"Food is up
+20% vs last month"*, *"you're on pace to exceed Groceries by the 24th"* —
+instead of just another pie chart.
+
+**Log expenses by talking.** MintBot parses plain English (*"dinner 40 split
+3 ways"*) into a structured expense. Or photograph a receipt and let the
+scanner pull out the merchant, total, and line items.
+
+**Works offline.** Cached data stays readable without a connection, and
+expenses logged offline queue up and sync when you're back.
+
+<br />
+
+## Screenshots
+
+> _Drop screenshots here — dashboard, budget analytics, and the add-expense
+> sheet, in both light and dark, would carry this section._
+
+<br />
+
+## Architecture
+
+An npm workspaces monorepo — three deployables, one shared contract package.
 
 ```
-app/       Next.js 16 web app (Vercel)
-api/       Fastify API + Postgres/Drizzle (Render)
-mobile/    React Native + Expo app (iOS/Android)
+app/         Next.js 16 · CSS Modules · React Query        → Vercel
+api/         Fastify 5 · Drizzle · Postgres                → Render
+mobile/      React Native · Expo SDK 57 · expo-router      → EAS
 packages/
-  shared/  Zod schemas, categories, currency table, split-type logic —
-           the single source of truth all three clients import from
+  shared/    Zod schemas · categories · currency · splits
 ```
 
-Run `npm install` once at the repo root — it installs and links all four
-workspaces together. Don't run `npm install` inside an individual workspace
-folder; it'll fight the root lockfile.
+`packages/shared` is the load-bearing piece. Every validation schema,
+category definition, and currency rule lives there and is imported by all
+three clients — so the web app, the mobile app, and the API physically
+cannot disagree about what a valid expense looks like.
 
-## Running it locally
+**Design system.** Mint green (`#3DD68C`) against warm slate, carrying
+30–40% of surface area. Fully themed for light and dark. Type is Outfit for
+UI, JetBrains Mono for figures. No Tailwind, no component library —
+CSS Modules and hand-built primitives throughout.
+
+**Mobile-feel on the web.** Bottom sheets with real drag physics, pull-to-
+refresh with resistance curves, spring-eased page transitions, and haptics
+where the platform allows. Gesture math, not media queries.
+
+<br />
+
+## Local setup
 
 ```bash
-npm install                # from the repo root, once
+npm install          # once, from the repo root — links all workspaces
 
-npm run dev:app            # Next.js web app     → localhost:3000
-npm run dev:api            # Fastify API         → localhost:8000
-npm run dev:mobile         # Expo dev server      → scan QR with Expo Go
+npm run dev:app      # web        → localhost:3000
+npm run dev:api      # api        → localhost:8000
+npm run dev:mobile   # expo dev server
 ```
 
-The web and mobile apps both default to the production API
-(`settlemint.onrender.com`) unless you point them at something else:
+Both clients point at the production API by default. To target a local one:
 
 ```bash
 # app/.env.local
 NEXT_PUBLIC_API_URL=http://localhost:8000
 
-# mobile/.env
-EXPO_PUBLIC_API_URL=http://YOUR_LAN_IP:8000   # not localhost — the phone is a separate device
+# mobile/.env  — a phone can't reach your laptop's "localhost"
+EXPO_PUBLIC_API_URL=http://192.168.x.x:8000
 ```
 
-The API needs its own `api/.env` — see the environment variable table below
-for what it expects, at minimum a Postgres connection string.
+The API needs `api/.env`:
 
-## What's actually in each piece
-
-**`api/`** — Fastify, Drizzle ORM, Postgres (Neon). JWT auth with email OTP
-verification. Every mutable route runs through Zod validation
-(`src/middleware/validate.middleware.ts`) before touching the database.
-Split-calculation and settlement-netting logic lives in
-`src/utils/splitCalculator.ts` / `settlementEngine.ts` — both have unit
-tests (`npm test`, via Vitest) since they're the part of this app that
-handles money math and is least forgiving of bugs.
-
-Recurring personal-budget transactions are generated **on read**, not by a
-background cron — Render's free tier sleeps when idle, so a scheduled job
-can't be relied on to fire. `src/utils/recurrence.ts` backfills any missed
-occurrences the next time a user's transactions are fetched.
-
-Rate limiting is two-tier: 100 req/min globally, 10 req/min on the AI
-endpoints specifically, since those proxy to the Gemini API and are the
-most expensive/abusable routes in the app.
-
-**`app/`** — Next.js App Router, CSS Modules (no Tailwind, no component
-library — everything here is hand-built). Dark and light themes via a
-`[data-theme]` attribute on `<html>`, toggled in Settings → Appearance and
-persisted to `localStorage`. The mobile-web layer (bottom sheets, pull-to-
-refresh, page transitions) uses real touch-gesture math, not just CSS
-media queries — see `src/components/BottomSheet.tsx` and
-`PullToRefresh.tsx` if you're curious how.
-
-**`mobile/`** — Expo (managed workflow), file-based routing via
-expo-router. Shares design tokens with the web app (`src/theme/tokens.ts`
-is a hand-port of `app/src/app/globals.css`'s CSS variables) and shares all
-data contracts via `@settlemint/shared`, so the two clients can't drift out
-of sync on what a valid split, category, or currency looks like. JWT is
-stored in the platform keychain (`expo-secure-store`), not plain
-AsyncStorage. See `mobile/README.md` for Expo-specific setup notes.
-
-**`packages/shared/`** — Zod schemas for every API payload, the canonical
-category/wallet/currency lists, and the split-type enum. If you're adding a
-new expense category or changing what a valid transaction looks like, this
-is the only place that needs to change — both frontends and the backend
-import from here.
-
-## Environment variables (`api/`)
-
-| Variable | Required | Notes |
-|---|---|---|
-| `DATABASE_URL` | yes | Postgres connection string |
-| `JWT_SECRET` | yes | `openssl rand -hex 32` — never commit a placeholder |
-| `RESEND_API_KEY` | yes | transactional email (OTP, welcome, alerts) |
-| `EMAIL_FROM` | yes | e.g. `"SettleMint <noreply@yourdomain.com>"` |
-| `GEMINI_API_KEY` | for AI features | powers MintBot (NLP expense entry) and the receipt scanner — both silently no-op without it |
-| `REDIS_URL` | optional | caching layer; app runs without it |
-| `FRONTEND_URL` | production | locks CORS to your actual frontend origin — without it, CORS reflects *any* origin |
-
-## Database migrations
-
-The dev workflow is `drizzle-kit push` (schema-diff apply, no tracked
-migration history) — that's why `api/src/db/migrations/` has gaps in its
-sequence. When a migration needs hand-review (enum conversions, column
-type changes on a live table), it's written by hand rather than trusting
-`drizzle-kit generate`, which will happily try to regenerate your entire
-schema as fresh `CREATE TABLE`s if it can't find prior migration history.
-Read the SQL file before running it against a database with real data.
-
-## Testing
+| | |
+|---|---|
+| `DATABASE_URL` | Postgres connection string |
+| `JWT_SECRET` | `openssl rand -hex 32` |
+| `RESEND_API_KEY` | transactional email |
+| `EMAIL_FROM` | `"SettleMint <noreply@…>"` |
+| `GEMINI_API_KEY` | MintBot + receipt scanning |
+| `FRONTEND_URL` | required in production — pins CORS |
+| `REDIS_URL` | optional cache |
 
 ```bash
-npm run test:api     # Vitest — split math, settlement netting, recurrence dates
+npm run test:api     # split math, settlement netting, recurrence dates
 ```
 
-The frontend has no test suite yet. If you're adding logic to the web or
-mobile apps that isn't purely presentational, consider whether it belongs
-in `packages/shared` instead, where it can be tested once and used
-everywhere.
+<br />
+
+## Notes for contributors
+
+A few decisions that look odd until you know why:
+
+**The web build runs `next build --webpack`.** `next-pwa` is a Webpack
+plugin. Next 16 defaults to Turbopack, under which it emits nothing and
+warns about nothing — the service worker silently vanishes. Don't drop the
+flag.
+
+**Recurring transactions generate on read, not on a schedule.** Render's
+free tier sleeps, so a cron job can't be trusted to fire. Missed
+occurrences are backfilled the next time a user fetches their transactions.
+
+**Migrations that touch live data are written by hand.** The workflow is
+`drizzle-kit push`, so there's no continuous migration history — and
+`drizzle-kit generate` will happily emit a full `CREATE TABLE` schema if it
+can't find one. Read the SQL before running it.
+
+**Expo Go can't open the mobile app.** It targets SDK 57; Expo Go currently
+ships SDK 54, and only ever supports one at a time. Use an EAS build —
+see [`mobile/README.md`](mobile/README.md).
+
+<br />
+
+<div align="center">
+<sub>Built by <a href="https://github.com/umair363">Umair</a></sub>
+</div>
