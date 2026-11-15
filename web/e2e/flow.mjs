@@ -86,7 +86,12 @@ try {
     await page.getByLabel("Email").fill(`ana-${Date.now()}@example.com`);
     await page.getByLabel("Password").fill("correct-horse-battery");
     await page.getByRole("button", { name: "Create account" }).click();
+    // New accounts go through a short onboarding (name + currency) first.
+  await page.waitForURL(/\/(welcome|home)(\?|$)/, { timeout: 20000 });
+  if (new URL(page.url()).pathname === "/welcome") {
+    await page.getByRole("button", { name: "Continue" }).click();
     await page.waitForURL("**/home", { timeout: 20000 });
+  }
     await shot("home-empty");
   });
 
@@ -148,6 +153,35 @@ try {
     await shot("home");
     await page.goto("http://localhost:4555/account", { waitUntil: "networkidle" });
     await shot("account");
+  });
+
+  await step("payment method", async () => {
+    await page.getByRole("button", { name: "Add a method" }).click();
+    await page.getByLabel("PayPal details").fill("https://paypal.me/AnaSouza");
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await page.getByText("Payment methods saved").waitFor();
+    await shot("payment-method-saved");
+  });
+
+  await step("search", async () => {
+    await page.goto("http://localhost:4555/home", { waitUntil: "networkidle" });
+    await page.keyboard.press("Control+k");
+    await page.getByLabel("Search expenses and groups").fill("dinner");
+    await page.getByRole("link", { name: /Dinner at the market/ }).waitFor();
+    await shot("search");
+    await page.keyboard.press("Escape");
+  });
+
+  await step("split with one friend", async () => {
+    await page.goto("http://localhost:4555/groups", { waitUntil: "networkidle" });
+    await page.getByRole("button", { name: "New group" }).click();
+    await page.getByRole("radio", { name: "Friend" }).click();
+    await page.getByLabel("Their name").fill("Sam");
+    await page.getByRole("button", { name: "Start splitting" }).click();
+    await page.waitForURL("**/group?id=*", { timeout: 20000 });
+    await page.keyboard.press("Escape");
+    await page.getByRole("heading", { name: "Sam" }).waitFor();
+    await shot("friend");
   });
 } catch {
   // reported below

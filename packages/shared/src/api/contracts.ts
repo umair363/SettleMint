@@ -2,6 +2,7 @@ import { z } from "zod";
 import { isValidMinor } from "../money/amount";
 import { isCurrencyCode } from "../money/currencies";
 import { isValidRate } from "../money/fx";
+import { normalizePaymentHandle, PAYMENT_KIND_VALUES } from "../payments/handles";
 
 // Request bodies for the v1 API. The API validates with these and the web and
 // mobile clients build requests from the inferred types, so they cannot drift.
@@ -14,7 +15,8 @@ export const zRate = z.string().refine(isValidRate, { message: "Invalid exchange
 export const zDate = z.iso.date();
 const zName = (max: number) => z.string().trim().min(1).max(max);
 
-export const GROUP_TYPE_VALUES = ["trip", "home", "couple", "event", "other"] as const;
+/** "direct" is a two-person group: splitting with one friend. */
+export const GROUP_TYPE_VALUES = ["trip", "home", "couple", "event", "other", "direct"] as const;
 export const SETTLEMENT_METHOD_VALUES = ["cash", "bank", "app", "other"] as const;
 
 // ─── Splits ────────────────────────────────────────────────────────────────
@@ -139,6 +141,25 @@ export const updateMeBody = z.object({
   locale: z.string().trim().min(2).max(35).nullable().optional(),
 });
 
+export const zPaymentHandle = z
+  .object({
+    kind: z.enum(PAYMENT_KIND_VALUES),
+    value: z.string().trim().min(1).max(120),
+    label: z.string().trim().max(40).nullable().optional(),
+  })
+  .refine((h) => normalizePaymentHandle(h.kind, h.value) !== null, {
+    message: "That doesn't look right for this payment method",
+    path: ["value"],
+  });
+
+/** Replace the whole list (order = preference). */
+export const putPaymentHandlesBody = z.object({ handles: z.array(zPaymentHandle).max(10) });
+
+/** Typed confirmation, so an account can't be deleted by accident. */
+export const deleteAccountBody = z.object({ confirm: z.literal("DELETE") });
+
+export const searchQuery = z.object({ q: z.string().trim().min(1).max(100) });
+
 export const pageQuery = z.object({
   cursor: z.string().max(200).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(30),
@@ -153,3 +174,4 @@ export type UpdateExpenseBody = z.input<typeof updateExpenseBody>;
 export type CreateSettlementBody = z.input<typeof createSettlementBody>;
 export type UpdateSettlementBody = z.input<typeof updateSettlementBody>;
 export type UpdateMeBody = z.input<typeof updateMeBody>;
+export type PaymentHandleInput = z.input<typeof zPaymentHandle>;

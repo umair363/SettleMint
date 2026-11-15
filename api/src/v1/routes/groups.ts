@@ -25,9 +25,11 @@ export async function groupDetail(db: DbOrTx, group: GroupRow, me: MemberRow, us
     groupLedger(db, group.id, group.simplifyDebts),
     db.select({ at: max(activityEvents.createdAt) }).from(activityEvents).where(eq(activityEvents.groupId, group.id)),
   ]);
+  // A one-to-one group is shown as the other person, from each side.
+  const counterpart = group.type === "direct" ? memberList.find((m) => m.id !== me.id && !m.left) : undefined;
   return {
     id: group.id,
-    name: group.name,
+    name: counterpart?.displayName ?? group.name,
     currency: group.currency,
     type: group.type,
     emoji: group.emoji,
@@ -73,12 +75,23 @@ export const groupRoutes: FastifyPluginAsyncZod = async (app) => {
       ),
     ]);
     const countBy = new Map(counts.map((c) => [c.groupId, c.n]));
+
+    // One-to-one groups are listed under the other person's name.
+    const directIds = rows.filter((r) => r.group.type === "direct").map((r) => r.group.id);
+    const myMemberIds = new Set(rows.map((r) => r.memberId));
+    const others = directIds.length
+      ? await app.db
+          .select({ groupId: members.groupId, id: members.id, name: members.displayName })
+          .from(members)
+          .where(and(inArray(members.groupId, directIds), isNull(members.leftAt)))
+      : [];
+    const counterpartBy = new Map(others.filter((o) => !myMemberIds.has(o.id)).map((o) => [o.groupId, o.name]));
     const lastBy = new Map(lastActivity.map((a) => [a.groupId, a.at]));
 
     return rows
       .map(({ group, memberId }) => ({
         id: group.id,
-        name: group.name,
+        name: counterpartBy.get(group.id) ?? group.name,
         currency: group.currency,
         type: group.type,
         emoji: group.emoji,

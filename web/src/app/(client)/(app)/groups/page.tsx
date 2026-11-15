@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { GroupRow } from "@/features/groups/group-row";
 import { NewGroupSheet } from "@/features/groups/new-group-sheet";
+import { SearchButton } from "@/features/search/search-palette";
 import { PageBody, PageHeader } from "@/features/shell/page-header";
 import { useGroups } from "@/lib/queries";
 import { Button, IconButton } from "@/ui/button";
@@ -32,9 +33,12 @@ function Groups() {
       <PageHeader
         title="Groups"
         actions={
+          <>
+          <SearchButton />
           <IconButton label="New group" variant="solid" onClick={() => setOpen(true)}>
             <Plus className="size-5" />
           </IconButton>
+          </>
         }
       />
       <PageBody>

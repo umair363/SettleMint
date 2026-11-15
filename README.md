@@ -28,6 +28,15 @@ on a shared money engine the mobile app will reuse.
 - **150+ currencies.** The exchange rate is locked when you add the expense.
 - **Fewest payments.** Debt simplification that is provably minimal for
   groups of up to 16 people, or exact who-owes-whom if you prefer.
+- **Get paid, not just reminded.** Add how you like to be paid (UPI, PayPal,
+  Venmo, Cash App, Revolut, Monzo, Wise, IBAN, Raast, JazzCash, Easypaisa…).
+  Whoever settles with you gets a one-tap link with the amount filled in;
+  "Remind" shares a friendly nudge with those links. SettleMint never
+  touches the money.
+- **Friends and groups.** Split with one person or a whole trip; search
+  everything with ⌘K.
+- **Your data is yours.** Export everything as JSON, or delete your account
+  (your friends' balances stay correct).
 - **Trust.** Full history on every expense, undo on deletes, restore, and
   edit conflicts caught instead of silently overwritten.
 - **Offline-first.** Opens instantly from saved data; anything you add

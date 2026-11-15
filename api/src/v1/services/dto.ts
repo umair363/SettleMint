@@ -1,13 +1,14 @@
-import { eq, inArray } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 import type {
   ActivityDto,
   ExpenseDto,
   MemberDto,
+  PaymentHandleDto,
   SettlementDto,
   SplitSpec,
 } from "@settlemint/shared";
 import type { DbOrTx } from "../db/client";
-import { activityEvents, expenseLines, expenses, members, settlements, user } from "../db/schema";
+import { activityEvents, expenseLines, expenses, members, paymentHandles, settlements, user } from "../db/schema";
 
 type ExpenseRow = typeof expenses.$inferSelect;
 type SettlementRow = typeof settlements.$inferSelect;
@@ -20,7 +21,25 @@ export async function loadMembers(db: DbOrTx, groupId: string, myUserId: string)
     .leftJoin(user, eq(user.id, members.userId))
     .where(eq(members.groupId, groupId))
     .orderBy(members.createdAt);
+
+  // How each person who joined likes to be paid (visible only to their groups).
+  const userIds = rows.map((r) => r.m.userId).filter((id): id is string => id !== null);
+  const handles = userIds.length
+    ? await db
+        .select()
+        .from(paymentHandles)
+        .where(inArray(paymentHandles.userId, userIds))
+        .orderBy(asc(paymentHandles.position))
+    : [];
+  const handlesBy = new Map<string, PaymentHandleDto[]>();
+  for (const h of handles) {
+    const list = handlesBy.get(h.userId) ?? [];
+    list.push({ id: h.id, kind: h.kind, value: h.value, label: h.label });
+    handlesBy.set(h.userId, list);
+  }
+
   return rows.map(({ m, image }) => ({
+    paymentHandles: m.userId ? (handlesBy.get(m.userId) ?? []) : [],
     id: m.id,
     displayName: m.displayName,
     role: m.role,

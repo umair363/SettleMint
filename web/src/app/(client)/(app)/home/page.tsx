@@ -8,6 +8,7 @@ import { ActivityRow } from "@/features/activity/activity-row";
 import { useAddExpense } from "@/features/expenses/add-expense-context";
 import { GroupRow } from "@/features/groups/group-row";
 import { NewGroupSheet } from "@/features/groups/new-group-sheet";
+import { SearchButton } from "@/features/search/search-palette";
 import { PageBody, PageHeader } from "@/features/shell/page-header";
 import { totalsByCurrency, useActivity, useGroups, useMe } from "@/lib/queries";
 import { Button } from "@/ui/button";
@@ -80,7 +81,7 @@ export default function HomePage() {
 
   return (
     <>
-      <PageHeader title={`${greeting()}${firstName ? `, ${firstName}` : ""}`} />
+      <PageHeader title={`${greeting()}${firstName ? `, ${firstName}` : ""}`} actions={<SearchButton />} />
       <PageBody>
         {isNew ? (
           <Card>

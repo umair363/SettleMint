@@ -31,8 +31,11 @@ export default function SignInPage() {
   // session endpoint answers "no session" with a 200, so a signed-out visit logs no error.
   const session = authClient.useSession();
   const signedIn = Boolean(session.data?.user);
+  // Only for a session that existed when the page opened; a session created by
+  // signing in or up here is routed by that action (e.g. new accounts go to onboarding).
+  const acted = useRef(false);
   useEffect(() => {
-    if (signedIn) router.replace(nextPath());
+    if (signedIn && !acted.current) router.replace(nextPath());
   }, [signedIn, router]);
 
   const [step, setStep] = useState<Step>("email");
@@ -52,15 +55,16 @@ export default function SignInPage() {
     return () => clearTimeout(t);
   }, [resendIn]);
 
-  const finish = async () => {
+  const finish = async (isNewAccount = false) => {
     // Never show a previous account's saved data to whoever signs in next.
     await persister.removeClient();
-    router.replace(nextPath());
+    router.replace(isNewAccount ? `/welcome?next=${encodeURIComponent(nextPath())}` : nextPath());
   };
 
   const sendCode = async (e?: FormEvent) => {
     e?.preventDefault();
     setError(null);
+    acted.current = true;
     setBusy(true);
     const { error } = await authClient.emailOtp.sendVerificationOtp({ email: email.trim(), type: "sign-in" });
     setBusy(false);
@@ -73,6 +77,7 @@ export default function SignInPage() {
   const verify = async (value: string) => {
     if (value.length !== 6) return;
     setError(null);
+    acted.current = true;
     setBusy(true);
     const { error } = await authClient.signIn.emailOtp({ email: email.trim(), otp: value });
     setBusy(false);
@@ -86,16 +91,18 @@ export default function SignInPage() {
   const withPassword = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    acted.current = true;
     setBusy(true);
     const { error } = creating
       ? await authClient.signUp.email({ email: email.trim(), password, name: name.trim() })
       : await authClient.signIn.email({ email: email.trim(), password });
     setBusy(false);
     if (error) return setError(errorText(error, creating ? "Couldn't create the account" : "Wrong email or password"));
-    await finish();
+    await finish(creating);
   };
 
   const asGuest = async () => {
+    acted.current = true;
     setBusy(true);
     const { error } = await authClient.signIn.anonymous();
     setBusy(false);

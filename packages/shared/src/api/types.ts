@@ -43,6 +43,27 @@ export interface Me {
   locale: string | null;
 }
 
+export interface PaymentHandleDto {
+  id: string;
+  kind: import("../payments/handles").PaymentKind;
+  value: string;
+  label: string | null;
+}
+
+export interface SearchResultDto {
+  groups: { id: string; name: string; emoji: string | null; type: string }[];
+  expenses: {
+    id: string;
+    groupId: string;
+    groupName: string;
+    description: string;
+    amount: number;
+    currency: string;
+    category: string;
+    date: string;
+  }[];
+}
+
 export interface MemberDto {
   id: string;
   displayName: string;
@@ -53,6 +74,8 @@ export interface MemberDto {
   /** Joined the app, as opposed to added by name. */
   claimed: boolean;
   left: boolean;
+  /** How this person likes to be paid (only for people who joined). */
+  paymentHandles: PaymentHandleDto[];
 }
 
 export interface TransferDto {

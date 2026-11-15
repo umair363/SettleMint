@@ -17,6 +17,7 @@ import { Sheet } from "@/ui/sheet";
 import { GROUP_TYPE_STYLE } from "./group-row";
 
 const TYPES = [
+  { value: "direct", label: "Friend" },
   { value: "trip", label: "Trip" },
   { value: "home", label: "Home" },
   { value: "couple", label: "Couple" },
@@ -66,13 +67,17 @@ function NewGroupForm({ onDone }: { onDone: () => void }) {
   const submit = (e: FormEvent) => {
     e.preventDefault();
     const pending = person.trim();
+    const direct = type === "direct";
     create.mutate(
       {
+        // Splitting with one friend: a two-person group named after them.
         name: name.trim(),
         type,
         currency: currencyValue,
         emoji: GROUP_TYPE_STYLE[type].emoji,
-        people: [...people, ...(pending ? [pending] : [])].map((displayName) => ({ displayName })),
+        people: direct
+          ? [{ displayName: name.trim() }]
+          : [...people, ...(pending ? [pending] : [])].map((displayName) => ({ displayName })),
       },
       {
         onSuccess: (group) => {
@@ -109,13 +114,13 @@ function NewGroupForm({ onDone }: { onDone: () => void }) {
       </div>
 
       <TextField
-        label="Name"
+        label={type === "direct" ? "Their name" : "Name"}
         required
         autoFocus
         maxLength={100}
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder={type === "trip" ? "Lisbon 2026" : type === "home" ? "Flat 4B" : type === "couple" ? "Us" : "Saturday BBQ"}
+        placeholder={type === "direct" ? "e.g. Sam" : type === "trip" ? "Lisbon 2026" : type === "home" ? "Flat 4B" : type === "couple" ? "Us" : "Saturday BBQ"}
       />
 
       <div className="space-y-1.5">
@@ -130,6 +135,7 @@ function NewGroupForm({ onDone }: { onDone: () => void }) {
         </button>
       </div>
 
+      {type !== "direct" && (
       <div className="space-y-1.5">
         <label htmlFor="add-person" className="text-[13px] font-medium text-fg-muted">
           Who&apos;s in? <span className="text-fg-subtle">(optional)</span>
@@ -172,10 +178,11 @@ function NewGroupForm({ onDone }: { onDone: () => void }) {
         </div>
         <p className="text-[13px] text-fg-subtle">They don&apos;t need the app. You&apos;ll get a link to share next.</p>
       </div>
+      )}
 
       <div className="mt-auto pb-2">
         <Button type="submit" block size="lg" loading={create.isPending} disabled={!name.trim()}>
-          Create group
+          {type === "direct" ? "Start splitting" : "Create group"}
         </Button>
       </div>
       <CurrencyPicker open={pickerOpen} onOpenChange={setPickerOpen} value={currencyValue} onChange={setCurrency} />

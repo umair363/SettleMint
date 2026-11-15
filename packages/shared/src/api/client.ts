@@ -4,6 +4,7 @@ import type {
   CreateGroupBody,
   CreateSettlementBody,
   JoinInviteBody,
+  PaymentHandleInput,
   UpdateExpenseBody,
   UpdateGroupBody,
   UpdateMeBody,
@@ -20,6 +21,8 @@ import type {
   Me,
   MemberDto,
   Page,
+  PaymentHandleDto,
+  SearchResultDto,
   SettlementDto,
 } from "./types";
 
@@ -102,7 +105,15 @@ export function createApiClient(opts: ApiClientOptions) {
     me: {
       get: () => get<Me>("/me"),
       update: (body: UpdateMeBody) => patch<Me>("/me", body),
+      paymentHandles: () => get<PaymentHandleDto[]>("/me/payment-handles"),
+      setPaymentHandles: (handles: PaymentHandleInput[]) =>
+        request<PaymentHandleDto[]>("PUT", "/me/payment-handles", { handles }),
+      /** Everything involving me, as a JSON document. */
+      export: () => get<unknown>("/me/export"),
+      /** Permanently delete my account (my past expenses stay as a named placeholder). */
+      delete: () => request<void>("DELETE", "/me", { confirm: "DELETE" }),
     },
+    search: (q: string) => get<SearchResultDto>("/search", { q }),
     groups: {
       list: () => get<GroupSummaryDto[]>("/groups"),
       get: (id: string) => get<GroupDetailDto>(`/groups/${id}`),

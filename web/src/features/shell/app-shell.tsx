@@ -9,6 +9,7 @@ import { useEffect, type ReactNode } from "react";
 import { Logo } from "./logo";
 import { AddExpenseProvider, useAddExpense } from "@/features/expenses/add-expense-context";
 import { AddExpenseSheet } from "@/features/expenses/add-expense-sheet";
+import { SearchPalette } from "@/features/search/search-palette";
 import { useMe } from "@/lib/queries";
 import { Avatar } from "@/ui/avatar";
 import { Button } from "@/ui/button";
@@ -152,14 +153,18 @@ function Gate({ children }: { children: ReactNode }) {
     }
   }, [signedIn, openAddExpense]);
   const unauthorized = me.error instanceof ApiError && me.error.status === 401;
-  const needsName = me.data && !me.data.name.trim() && pathname !== "/welcome";
+  // Onboarding until we know their name and home currency (password sign-ups skip it otherwise).
+  // Decided on fresh data only: the copy saved on the device can predate the
+  // onboarding the person just finished.
+  const needsName =
+    me.data && me.isFetchedAfterMount && (!me.data.name.trim() || !me.data.defaultCurrency) && pathname !== "/welcome";
 
   useEffect(() => {
     if (unauthorized) {
       const next = `${window.location.pathname}${window.location.search}`;
       router.replace(`/sign-in?next=${encodeURIComponent(next)}`);
     } else if (needsName) {
-      router.replace("/welcome");
+      router.replace(`/welcome?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
     }
   }, [unauthorized, needsName, router]);
 
@@ -170,6 +175,7 @@ function Gate({ children }: { children: ReactNode }) {
         <div className="min-h-dvh pb-28 lg:ps-64 lg:pb-10">{children}</div>
         <BottomNav pathname={pathname} />
         <AddExpenseSheet />
+        <SearchPalette />
       </>
     );
   }
