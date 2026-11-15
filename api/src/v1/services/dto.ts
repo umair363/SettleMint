@@ -89,13 +89,21 @@ export function settlementToDto(r: SettlementRow): SettlementDto {
   };
 }
 
-export function activityToDto(r: ActivityRow): ActivityDto {
+export function activityToDto(
+  r: ActivityRow,
+  names: { actorName: string | null; groupName: string; groupEmoji: string | null; viewerMemberId: string | null },
+): ActivityDto {
   return {
     id: r.id,
     groupId: r.groupId,
+    groupName: names.groupName,
+    groupEmoji: names.groupEmoji,
+    viewerMemberId: names.viewerMemberId,
     type: r.type,
     entityId: r.entityId,
     actorMemberId: r.actorMemberId,
+    actorUserId: r.actorUserId,
+    actorName: names.actorName,
     data: (r.data ?? {}) as Record<string, unknown>,
     createdAt: r.createdAt.toISOString(),
   };

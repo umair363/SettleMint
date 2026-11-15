@@ -27,7 +27,7 @@ async function groupByToken(db: DbOrTx, token: string) {
 }
 
 export const inviteRoutes: FastifyPluginAsyncZod = async (app) => {
-  const linkFor = (token: string) => ({ token, url: `${app.config.webUrl}/join/${token}` });
+  const linkFor = (token: string) => ({ token, url: `${app.config.webUrl}/join?t=${token}` });
 
   /** Any member can share the link. `rotate` (admins only) invalidates the old one. */
   app.post(

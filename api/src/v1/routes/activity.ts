@@ -10,7 +10,9 @@ import { activityToDto, decodeCursor, encodeCursor } from "../services/dto";
 const groupParams = z.object({ id: z.uuid() });
 
 export const activityRoutes: FastifyPluginAsyncZod = async (app) => {
-  async function page(groupIds: string[], cursorText: string | undefined, limit: number, entityId?: string) {
+  /** `viewer` maps group id to the caller's member id there, so clients can say "you". */
+  async function page(viewer: Map<string, string>, cursorText: string | undefined, limit: number, entityId?: string) {
+    const groupIds = [...viewer.keys()];
     if (groupIds.length === 0) return { items: [], nextCursor: null };
     const cursor = decodeCursor(cursorText);
     const conditions = [inArray(activityEvents.groupId, groupIds)];
@@ -20,15 +22,17 @@ export const activityRoutes: FastifyPluginAsyncZod = async (app) => {
       conditions.push(sql`(${activityEvents.createdAt}, ${activityEvents.id}) < (${c}::timestamptz, ${id}::uuid)`);
     }
     const rows = await app.db
-      .select()
+      .select({ event: activityEvents, actorName: members.displayName, groupName: groups.name, groupEmoji: groups.emoji })
       .from(activityEvents)
+      .innerJoin(groups, eq(groups.id, activityEvents.groupId))
+      .leftJoin(members, eq(members.id, activityEvents.actorMemberId))
       .where(and(...conditions))
       .orderBy(desc(activityEvents.createdAt), desc(activityEvents.id))
       .limit(limit + 1);
     const items = rows.slice(0, limit);
-    const last = items[items.length - 1];
+    const last = items[items.length - 1]?.event;
     return {
-      items: items.map(activityToDto),
+      items: items.map((r) => activityToDto(r.event, { ...r, viewerMemberId: viewer.get(r.event.groupId) ?? null })),
       nextCursor: rows.length > limit && last ? encodeCursor([last.createdAt.toISOString(), last.id]) : null,
     };
   }
@@ -37,12 +41,12 @@ export const activityRoutes: FastifyPluginAsyncZod = async (app) => {
   app.get("/activity", { schema: { querystring: pageQuery } }, async (req): Promise<Page<ActivityDto>> => {
     const user = requireUser(req);
     const mine = await app.db
-      .select({ groupId: members.groupId })
+      .select({ groupId: members.groupId, memberId: members.id })
       .from(members)
       .innerJoin(groups, eq(groups.id, members.groupId))
       .where(and(eq(members.userId, user.id), isNull(members.leftAt), isNull(groups.deletedAt)));
     return page(
-      mine.map((m) => m.groupId),
+      new Map(mine.map((m) => [m.groupId, m.memberId])),
       req.query.cursor,
       req.query.limit,
     );
@@ -54,8 +58,8 @@ export const activityRoutes: FastifyPluginAsyncZod = async (app) => {
     { schema: { params: groupParams, querystring: pageQuery.extend({ entityId: z.uuid().optional() }) } },
     async (req): Promise<Page<ActivityDto>> => {
       const user = requireUser(req);
-      const { group } = await requireMembership(app.db, req.params.id, user.id);
-      return page([group.id], req.query.cursor, req.query.limit, req.query.entityId);
+      const { group, me } = await requireMembership(app.db, req.params.id, user.id);
+      return page(new Map([[group.id, me.id]]), req.query.cursor, req.query.limit, req.query.entityId);
     },
   );
 };

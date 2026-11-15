@@ -134,9 +134,16 @@ export interface SettlementDto {
 export interface ActivityDto {
   id: string;
   groupId: string;
+  groupName: string;
+  groupEmoji: string | null;
+  /** The viewer's own member id in this group, so clients can say "you". */
+  viewerMemberId: string | null;
   type: string;
   entityId: string | null;
   actorMemberId: string | null;
+  actorUserId: string | null;
+  actorName: string | null;
+  /** Event details, e.g. { description, amount, currency } or { fromName, toName, ... }. */
   data: Record<string, unknown>;
   createdAt: string;
 }

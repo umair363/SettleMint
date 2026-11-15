@@ -1,11 +1,11 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { uuidv7 } from "uuidv7";
 import { convertMinor, createSettlementBody, updateSettlementBody } from "@settlemint/shared";
 import { requireUser } from "../app";
 import type { DbOrTx } from "../db/client";
-import { settlements } from "../db/schema";
+import { members, settlements } from "../db/schema";
 import { AppError, notFound, versionConflict } from "../errors";
 import { recordActivity } from "../services/activity";
 import { assertActiveMembers, requireMembership } from "../services/access";
@@ -15,12 +15,25 @@ import { resolveRate } from "../services/fx";
 const groupParams = z.object({ id: z.uuid() });
 const idParams = z.object({ id: z.uuid() });
 
-const summary = (s: { fromMemberId: string; toMemberId: string; amount: number; currency: string }) => ({
-  fromMemberId: s.fromMemberId,
-  toMemberId: s.toMemberId,
-  amount: s.amount,
-  currency: s.currency,
-});
+/** Activity details for a payment, with names so the feed reads naturally. */
+async function summary(
+  db: DbOrTx,
+  s: { fromMemberId: string; toMemberId: string; amount: number; currency: string },
+) {
+  const rows = await db
+    .select({ id: members.id, name: members.displayName })
+    .from(members)
+    .where(inArray(members.id, [s.fromMemberId, s.toMemberId]));
+  const name = (id: string) => rows.find((r) => r.id === id)?.name ?? null;
+  return {
+    fromMemberId: s.fromMemberId,
+    toMemberId: s.toMemberId,
+    fromName: name(s.fromMemberId),
+    toName: name(s.toMemberId),
+    amount: s.amount,
+    currency: s.currency,
+  };
+}
 
 export const settlementRoutes: FastifyPluginAsyncZod = async (app) => {
   async function loadSettlement(db: DbOrTx, id: string, userId: string) {
@@ -87,7 +100,7 @@ export const settlementRoutes: FastifyPluginAsyncZod = async (app) => {
           actorUserId: user.id,
           actorMemberId: me.id,
           entityId: id,
-          data: summary(body),
+          data: await summary(tx, body),
         });
         return { status: 201, dto: settlementToDto(row) };
       });
@@ -133,7 +146,7 @@ export const settlementRoutes: FastifyPluginAsyncZod = async (app) => {
         actorUserId: user.id,
         actorMemberId: me.id,
         entityId: row.id,
-        data: { before: summary(row), after: summary(body) },
+        data: { before: await summary(tx, row), after: await summary(tx, body) },
       });
       return settlementToDto(updated);
     });
@@ -163,7 +176,7 @@ export const settlementRoutes: FastifyPluginAsyncZod = async (app) => {
             actorUserId: user.id,
             actorMemberId: me.id,
             entityId: row.id,
-            data: summary(row),
+            data: await summary(tx, row),
           });
           return settlementToDto(updated);
         });
