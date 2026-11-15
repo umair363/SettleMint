@@ -131,10 +131,28 @@ export interface ExpenseDto {
   split: SplitSpec;
   lines: ExpenseLineDto[];
   createdByUserId: string | null;
+  /** Set when a recurring bill created this expense. */
+  recurringRuleId: string | null;
   version: number;
   deleted: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface RecurringRuleDto {
+  id: string;
+  groupId: string;
+  description: string;
+  amount: number;
+  currency: string;
+  category: string;
+  frequency: "weekly" | "monthly" | "yearly";
+  interval: number;
+  startDate: string;
+  endDate: string | null;
+  nextDate: string;
+  active: boolean;
+  pausedReason: string | null;
 }
 
 export interface SettlementDto {

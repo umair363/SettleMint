@@ -1,7 +1,8 @@
 import http from "node:http";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { uuidv7 } from "uuidv7";
-import type { ExpenseDto, GroupDetailDto, GroupSummaryDto } from "@settlemint/shared";
+import { dueOccurrences, todayIn, type ExpenseDto, type GroupDetailDto, type GroupSummaryDto } from "@settlemint/shared";
+import { materializeRecurring } from "../services/recurring";
 import { createTestApp, TestClient } from "./harness";
 
 let t: Awaited<ReturnType<typeof createTestApp>>;
@@ -512,6 +513,161 @@ describe("getting paid, search, export and account deletion", () => {
     expect(anaSpot).toMatchObject({ displayName: "Ana", claimed: false, role: "member" });
     expect(seenByBen.members.find((m) => m.id === benId)?.role).toBe("owner");
     expect(seenByBen.balances[benId]).toBe(-5000);
+  });
+});
+
+describe("recurring expenses", () => {
+  const isoDaysAgo = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
+  const todayUtc = () => new Date().toISOString().slice(0, 10);
+
+  it("catches up on due occurrences once, at the right dates, with no duplicates", async () => {
+    const { ana, group, anaId, benId } = await tripWithFriends();
+    const startDate = isoDaysAgo(70);
+    const res = await ana.post(`/v1/groups/${group.id}/recurring`, {
+      template: {
+        description: "Rent",
+        amount: 120000,
+        currency: "USD",
+        category: "bills",
+        payers: [{ memberId: anaId, amount: 120000 }],
+        split: { method: "equal", memberIds: [anaId, benId] },
+      },
+      frequency: "monthly",
+      startDate,
+    });
+    expect(res.status).toBe(201);
+    const expected = dueOccurrences(startDate, "monthly", 1, 0, todayUtc()).map((o) => o.date);
+    expect(expected.length).toBeGreaterThanOrEqual(3);
+
+    const list = async () =>
+      ((await ana.get(`/v1/groups/${group.id}/expenses?limit=100`)).body.items as ExpenseDto[])
+        .filter((e) => e.description === "Rent")
+        .map((e) => e.date)
+        .sort();
+    expect(await list()).toEqual(expected);
+    expect(res.body.nextDate > todayUtc()).toBe(true);
+
+    // Reading the group again, and generating concurrently, adds nothing.
+    await ana.get(`/v1/groups/${group.id}`);
+    await Promise.all([materializeRecurring(t.db), materializeRecurring(t.db), materializeRecurring(t.db)]);
+    expect(await list()).toEqual(expected);
+
+    const detail = (await ana.get<GroupDetailDto>(`/v1/groups/${group.id}`)).body;
+    expect(detail.balances[benId]).toBe(-60000 * expected.length);
+
+    const created = ((await ana.get(`/v1/groups/${group.id}/expenses?limit=100`)).body.items as ExpenseDto[])[0];
+    expect(created.recurringRuleId).toBe(res.body.id);
+  });
+
+  it("uses the creator's time zone to decide that a bill is due today", async () => {
+    const { ana, group, anaId } = await tripWithFriends();
+    // Kiritimati is UTC+14: its "today" is usually tomorrow in UTC.
+    const kiriToday = todayIn("Pacific/Kiritimati");
+    const res = await ana.post(`/v1/groups/${group.id}/recurring`, {
+      template: {
+        description: "Island rent",
+        amount: 5000,
+        currency: "USD",
+        payers: [{ memberId: anaId, amount: 5000 }],
+        split: { method: "equal", memberIds: [anaId] },
+      },
+      frequency: "monthly",
+      startDate: kiriToday,
+      timezone: "Pacific/Kiritimati",
+    });
+    expect(res.status).toBe(201);
+    const dates = ((await ana.get(`/v1/groups/${group.id}/expenses`)).body.items as ExpenseDto[])
+      .filter((e) => e.description === "Island rent")
+      .map((e) => e.date);
+    expect(dates).toEqual([kiriToday]);
+
+    const bad = await ana.post(`/v1/groups/${group.id}/recurring`, {
+      template: { description: "x", amount: 1, currency: "USD", payers: [{ memberId: anaId, amount: 1 }], split: { method: "equal", memberIds: [anaId] } },
+      frequency: "monthly",
+      startDate: kiriToday,
+      timezone: "Mars/Olympus",
+    });
+    expect(bad.status).toBe(400);
+  });
+
+  it("stops creating once stopped", async () => {
+    const { ana, group, anaId } = await tripWithFriends();
+    const rule = (
+      await ana.post(`/v1/groups/${group.id}/recurring`, {
+        template: {
+          description: "Gym",
+          amount: 3000,
+          currency: "USD",
+          payers: [{ memberId: anaId, amount: 3000 }],
+          split: { method: "equal", memberIds: [anaId] },
+        },
+        frequency: "weekly",
+        startDate: todayUtc(),
+      })
+    ).body;
+    const stopped = await ana.del(`/v1/recurring/${rule.id}`);
+    expect(stopped.body.active).toBe(false);
+    const far = new Date(Date.now() + 120 * 86_400_000).toISOString().slice(0, 10);
+    await materializeRecurring(t.db, { groupId: group.id, today: far });
+    const gyms = (await ana.get(`/v1/groups/${group.id}/expenses?limit=100`)).body.items.filter(
+      (e: ExpenseDto) => e.description === "Gym",
+    );
+    expect(gyms).toHaveLength(1);
+  });
+
+  it("pauses with a reason when someone on the bill has left", async () => {
+    const { ana, group, anaId, cyId } = await tripWithFriends();
+    const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+    const rule = (
+      await ana.post(`/v1/groups/${group.id}/recurring`, {
+        template: {
+          description: "Netflix",
+          amount: 1500,
+          currency: "USD",
+          payers: [{ memberId: anaId, amount: 1500 }],
+          split: { method: "equal", memberIds: [anaId, cyId] },
+        },
+        frequency: "monthly",
+        startDate: tomorrow,
+      })
+    ).body;
+    await ana.del(`/v1/groups/${group.id}/members/${cyId}`);
+    const later = new Date(Date.now() + 40 * 86_400_000).toISOString().slice(0, 10);
+    await materializeRecurring(t.db, { groupId: group.id, today: later });
+    const rules = (await ana.get(`/v1/groups/${group.id}/recurring`)).body;
+    const r = rules.find((x: { id: string }) => x.id === rule.id);
+    expect(r.active).toBe(false);
+    expect(r.pausedReason).toMatch(/isn't in the group/);
+  });
+
+  it("is invisible to outsiders", async () => {
+    const { ana, group, anaId } = await tripWithFriends();
+    const rule = (
+      await ana.post(`/v1/groups/${group.id}/recurring`, {
+        template: {
+          description: "Water",
+          amount: 900,
+          currency: "USD",
+          payers: [{ memberId: anaId, amount: 900 }],
+          split: { method: "equal", memberIds: [anaId] },
+        },
+        frequency: "monthly",
+        startDate: todayUtc(),
+      })
+    ).body;
+    const mallory = client();
+    await mallory.signUp("Mallory");
+    expect((await mallory.get(`/v1/groups/${group.id}/recurring`)).status).toBe(404);
+    expect((await mallory.del(`/v1/recurring/${rule.id}`)).status).toBe(404);
+    expect(
+      (
+        await mallory.post(`/v1/groups/${group.id}/recurring`, {
+          template: { description: "x", amount: 1, currency: "USD", payers: [{ memberId: anaId, amount: 1 }], split: { method: "equal", memberIds: [anaId] } },
+          frequency: "monthly",
+          startDate: todayUtc(),
+        })
+      ).status,
+    ).toBe(404);
   });
 });
 

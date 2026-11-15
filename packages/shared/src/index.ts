@@ -10,3 +10,4 @@ export * from "./api/contracts";
 export type * from "./api/types";
 export * from "./api/client";
 export * from "./payments/handles";
+export * from "./recurrence/recurrence";

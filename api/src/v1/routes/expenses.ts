@@ -20,61 +20,12 @@ import { AppError, notFound, versionConflict } from "../errors";
 import { recordActivity } from "../services/activity";
 import { assertActiveMembers, requireMembership, type GroupRow } from "../services/access";
 import { decodeCursor, encodeCursor, expensesToDto } from "../services/dto";
-import { resolveRate } from "../services/fx";
+import { computeLines, expenseSummary } from "../services/expense-lines";
 
 const groupParams = z.object({ id: z.uuid() });
 const idParams = z.object({ id: z.uuid() });
 
-type ExpenseInput = z.output<typeof createExpenseBody>;
-
-function splitMemberIds(split: SplitSpec): string[] {
-  switch (split.method) {
-    case "equal":
-      return split.memberIds;
-    case "itemized":
-      return split.items.flatMap((i) => i.memberIds);
-    default:
-      return split.entries.map((e) => e.memberId);
-  }
-}
-
-/**
- * Validate an expense and work out every person's line, in the expense
- * currency and in the group currency. All money maths is the shared engine.
- */
-async function computeLines(tx: DbOrTx, group: GroupRow, body: ExpenseInput, alreadyInvolved: string[] = []) {
-  const involved = [...new Set([...body.payers.map((p) => p.memberId), ...splitMemberIds(body.split)])];
-  // People who already were on this expense may stay on it even if they have
-  // since left the group; anyone new must be a current member.
-  const allowed = new Set(alreadyInvolved);
-  await assertActiveMembers(
-    tx,
-    group.id,
-    involved.filter((id) => !allowed.has(id)),
-  );
-
-  const lines = resolveExpense(body.amount, body.payers, body.split);
-  const fxRate = await resolveRate(tx, body.currency, group.currency, body.date, body.fxRate);
-  const groupLines = convertExpenseLines(lines, body.currency, group.currency, fxRate);
-  const groupAmount = convertMinor(body.amount, body.currency, group.currency, fxRate);
-  return {
-    fxRate,
-    groupAmount,
-    rows: lines.map((l, i) => ({
-      memberId: l.memberId,
-      paid: l.paid,
-      owed: l.owed,
-      paidGroup: groupLines[i].paid,
-      owedGroup: groupLines[i].owed,
-    })),
-  };
-}
-
-const summary = (e: { description: string; amount: number; currency: string }) => ({
-  description: e.description,
-  amount: e.amount,
-  currency: e.currency,
-});
+const summary = expenseSummary;
 
 export const expenseRoutes: FastifyPluginAsyncZod = async (app) => {
   async function loadExpense(db: DbOrTx, id: string, userId: string) {

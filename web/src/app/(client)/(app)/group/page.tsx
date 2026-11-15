@@ -7,7 +7,7 @@ import {
   type GroupDetailDto,
   type SettlementDto,
 } from "@settlemint/shared";
-import { ArrowRightLeft, Inbox, Plus, Send, Settings, UserPlus } from "lucide-react";
+import { ArrowRightLeft, Inbox, Plus, Repeat, Send, Settings, UserPlus } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -19,6 +19,7 @@ import { GroupSettingsSheet } from "@/features/groups/group-settings-sheet";
 import { GroupIcon } from "@/features/groups/group-row";
 import { InviteSheet } from "@/features/groups/invite-sheet";
 import { remindToPay } from "@/features/groups/remind";
+import { RepeatingSection } from "@/features/groups/repeating-section";
 import { SettleSheet, type SettleTarget } from "@/features/groups/settle-sheet";
 import { PageBody, PageHeader } from "@/features/shell/page-header";
 import { dayLabel } from "@/lib/dates";
@@ -75,6 +76,7 @@ function ExpenseRow({ group, expense, onOpen }: { group: GroupDetailDto; expense
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[15px] font-medium">{expense.description}</span>
         <span className="block truncate text-[13px] text-fg-muted">
+          {expense.recurringRuleId && <Repeat className="me-1 inline size-3.5 align-[-2px]" aria-label="Repeating" />}
           {payerText} <Money minor={expense.amount} currency={expense.currency} />
         </span>
       </span>
@@ -432,7 +434,10 @@ function GroupScreen() {
         />
 
         {tab === "expenses" ? (
-          <ExpensesTab group={g} onOpen={setOpenExpense} />
+          <>
+            <RepeatingSection group={g} />
+            <ExpensesTab group={g} onOpen={setOpenExpense} />
+          </>
         ) : (
           <BalancesTab group={g} onSettle={setSettle} />
         )}

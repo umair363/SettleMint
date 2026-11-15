@@ -2,6 +2,7 @@ import type {
   AddMemberBody,
   CreateExpenseBody,
   CreateGroupBody,
+  CreateRecurringBody,
   CreateSettlementBody,
   JoinInviteBody,
   PaymentHandleInput,
@@ -22,6 +23,7 @@ import type {
   MemberDto,
   Page,
   PaymentHandleDto,
+  RecurringRuleDto,
   SearchResultDto,
   SettlementDto,
 } from "./types";
@@ -151,6 +153,11 @@ export function createApiClient(opts: ApiClientOptions) {
       update: (id: string, body: UpdateSettlementBody) => patch<SettlementDto>(`/settlements/${id}`, body),
       remove: (id: string) => del<SettlementDto>(`/settlements/${id}`),
       restore: (id: string) => post<SettlementDto>(`/settlements/${id}/restore`),
+    },
+    recurring: {
+      list: (groupId: string) => get<RecurringRuleDto[]>(`/groups/${groupId}/recurring`),
+      create: (groupId: string, body: CreateRecurringBody) => post<RecurringRuleDto>(`/groups/${groupId}/recurring`, body),
+      stop: (id: string) => del<RecurringRuleDto>(`/recurring/${id}`),
     },
     activity: {
       all: (query: { cursor?: string; limit?: number } = {}) => get<Page<ActivityDto>>("/activity", query),

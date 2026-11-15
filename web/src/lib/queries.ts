@@ -4,6 +4,7 @@ import {
   ApiError,
   type CreateExpenseBody,
   type CreateGroupBody,
+  type CreateRecurringBody,
   type CreateSettlementBody,
   type ExpenseDto,
   type GroupDetailDto,
@@ -33,6 +34,7 @@ export const keys = {
   expenses: (groupId: string) => ["expenses", groupId] as const,
   expense: (id: string) => ["expense", id] as const,
   settlements: (groupId: string) => ["settlements", groupId] as const,
+  recurring: (groupId: string) => ["recurring", groupId] as const,
   activity: ["activity"] as const,
   groupActivity: (groupId: string, entityId?: string) => ["activity", groupId, entityId ?? "all"] as const,
   invite: (token: string) => ["invite", token] as const,
@@ -45,6 +47,7 @@ export function invalidateGroup(qc: QueryClient, groupId: string) {
     qc.invalidateQueries({ queryKey: keys.groups }),
     qc.invalidateQueries({ queryKey: keys.expenses(groupId) }),
     qc.invalidateQueries({ queryKey: keys.settlements(groupId) }),
+    qc.invalidateQueries({ queryKey: keys.recurring(groupId) }),
     qc.invalidateQueries({ queryKey: keys.activity }),
   ]);
 }
@@ -214,6 +217,7 @@ export function useCreateExpense(groupId: string) {
         split: body.split,
         lines: [],
         createdByUserId: null,
+        recurringRuleId: null,
         version: 1,
         deleted: false,
         createdAt: now,
@@ -306,6 +310,30 @@ export function useSetSettlementDeleted(groupId: string) {
   return useMutation({
     mutationFn: ({ id, deleted }: { id: string; deleted: boolean }) =>
       deleted ? api.settlements.remove(id) : api.settlements.restore(id),
+    onSettled: () => invalidateGroup(qc, groupId),
+  });
+}
+
+export function useRecurring(groupId: string | null) {
+  return useQuery({
+    queryKey: keys.recurring(groupId ?? ""),
+    queryFn: () => api.recurring.list(groupId!),
+    enabled: Boolean(groupId),
+  });
+}
+
+export function useCreateRecurring(groupId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CreateRecurringBody) => api.recurring.create(groupId, { id: uuidv7(), ...body }),
+    onSettled: () => invalidateGroup(qc, groupId),
+  });
+}
+
+export function useStopRecurring(groupId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.recurring.stop(id),
     onSettled: () => invalidateGroup(qc, groupId),
   });
 }

@@ -10,8 +10,9 @@ import {
   type ExpenseDto,
   type GroupDetailDto,
   type MemberDto,
+  type RecurrenceFrequency,
 } from "@settlemint/shared";
-import { Calendar, Check, ChevronDown, ChevronLeft, Equal, Percent, Receipt, Scale, SlidersHorizontal, Users } from "lucide-react";
+import { Calendar, Check, ChevronDown, ChevronLeft, Repeat, Equal, Percent, Receipt, Scale, SlidersHorizontal, Users } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
@@ -20,7 +21,7 @@ import { useLocale } from "use-intl";
 import { uuidv7 } from "uuidv7";
 import { guessCategory } from "@/lib/category-guess";
 import { dayLabel, todayIso } from "@/lib/dates";
-import { useCreateExpense, useGroup, useGroups, useUpdateExpense } from "@/lib/queries";
+import { useCreateExpense, useCreateRecurring, useGroup, useGroups, useUpdateExpense } from "@/lib/queries";
 import { amountToExpr, AmountDisplay, AmountPad, evaluateAmount } from "@/ui/amount-pad";
 import { Avatar } from "@/ui/avatar";
 import { Button } from "@/ui/button";
@@ -45,6 +46,7 @@ import {
 } from "./split-model";
 
 const LAST_GROUP_KEY = "sm-last-group";
+const REPEAT_LABEL: Record<RecurrenceFrequency, string> = { weekly: "Weekly", monthly: "Monthly", yearly: "Yearly" };
 
 function readLastGroup(): string | null {
   try {
@@ -168,6 +170,7 @@ function FormBody({
   const [expr, setExpr] = useState(expense ? amountToExpr(expense.amount, expense.currency) : "");
   const [fxRate, setFxRate] = useState(expense && expense.currency !== group.currency ? expense.fxRate : "");
   const [date, setDate] = useState(expense?.date ?? todayIso());
+  const [repeat, setRepeat] = useState<"never" | RecurrenceFrequency>("never");
   // null = not picked yet: guess from the description ("Dinner" -> food).
   const [pickedCategory, setCategory] = useState<string | null>(expense?.category ?? null);
   const category = pickedCategory ?? guessCategory(description) ?? "other";
@@ -204,6 +207,7 @@ function FormBody({
   const canSave = total > 0 && !problem;
 
   const create = useCreateExpense(group.id);
+  const createRecurring = useCreateRecurring(group.id);
   const update = useUpdateExpense(group.id);
   const saving = create.isPending || update.isPending;
 
@@ -244,6 +248,20 @@ function FormBody({
     } else {
       // Optimistic: the row appears at once and the sheet closes. If saving
       // fails, the row is rolled back and the global handler shows the error.
+      if (repeat !== "never") {
+        // A repeating bill: the server adds this one now (if due) and each next one.
+        const { date: startDate, ...template } = body;
+        createRecurring.mutate({
+          template,
+          frequency: repeat,
+          startDate,
+          // "Today" for this bill means today where the person is.
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        });
+        toast.success(`Added ${body.description}`, { description: `Repeats ${repeat} · ${group.name}` });
+        onDone();
+        return;
+      }
       create.mutate({ id: uuidv7(), ...body });
       toast.success(`Added ${body.description}`, { description: group.name });
       onDone();
@@ -345,6 +363,23 @@ function FormBody({
                   className="absolute inset-0 cursor-pointer opacity-0"
                 />
               </label>
+              {!expense && (
+                <label className="relative inline-flex h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3.5 text-sm hover:bg-surface-3">
+                  <Repeat className={cn("size-4", repeat === "never" ? "text-fg-subtle" : "text-positive")} aria-hidden />
+                  <span className="font-medium">{repeat === "never" ? "Once" : REPEAT_LABEL[repeat]}</span>
+                  <select
+                    aria-label="Repeat"
+                    value={repeat}
+                    onChange={(e) => setRepeat(e.target.value as typeof repeat)}
+                    className="absolute inset-0 cursor-pointer opacity-0"
+                  >
+                    <option value="never">Doesn&apos;t repeat</option>
+                    <option value="weekly">Every week</option>
+                    <option value="monthly">Every month</option>
+                    <option value="yearly">Every year</option>
+                  </select>
+                </label>
+              )}
             </div>
             </div>
 

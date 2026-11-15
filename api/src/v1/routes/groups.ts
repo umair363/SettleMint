@@ -16,6 +16,7 @@ import { recordActivity } from "../services/activity";
 import { requireMembership, type GroupRow, type MemberRow } from "../services/access";
 import { loadMembers } from "../services/dto";
 import { groupLedger, memberBalances } from "../services/ledger";
+import { materializeRecurring } from "../services/recurring";
 
 const idParams = z.object({ id: z.uuid() });
 
@@ -158,6 +159,8 @@ export const groupRoutes: FastifyPluginAsyncZod = async (app) => {
   app.get("/groups/:id", { schema: { params: idParams } }, async (req) => {
     const user = requireUser(req);
     const { group, me } = await requireMembership(app.db, req.params.id, user.id);
+    // Catch up on due recurring bills (the server may have been asleep).
+    await materializeRecurring(app.db, { groupId: group.id });
     return groupDetail(app.db, group, me, user.id);
   });
 

@@ -19,6 +19,11 @@ bus.setMaxListeners(0);
 
 const changed = new AsyncLocalStorage<Set<string>>();
 
+/** For background work (no request): tell watchers a group changed. */
+export function announceGroupChanged(groupId: string) {
+  bus.emit("group", { groupId, actorUserId: null });
+}
+
 /** Called by recordActivity: remember that this request changed a group. */
 export function markGroupChanged(groupId: string) {
   changed.getStore()?.add(groupId);

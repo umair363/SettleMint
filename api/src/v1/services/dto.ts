@@ -82,6 +82,7 @@ export async function expensesToDto(db: DbOrTx, rows: ExpenseRow[]): Promise<Exp
     split: r.split as SplitSpec,
     lines: byExpense.get(r.id) ?? [],
     createdByUserId: r.createdByUserId,
+    recurringRuleId: r.recurringRuleId,
     version: r.version,
     deleted: r.deletedAt !== null,
     createdAt: r.createdAt.toISOString(),
