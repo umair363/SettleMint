@@ -20,7 +20,7 @@ export function PageHeader({
   className?: string;
 }) {
   return (
-    <header className={cn("safe-top mx-auto w-full max-w-3xl px-4 pb-2 pt-4 sm:px-6 lg:pt-8", className)}>
+    <header className={cn("safe-top mx-auto w-full max-w-3xl px-4 pb-2 pt-7 sm:px-6 lg:pt-10", className)}>
       {back && (
         <Link
           href={back.href}

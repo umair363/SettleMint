@@ -167,7 +167,7 @@ export default function DesignGallery() {
           <IconButton label="Scan receipt" variant="solid">
             <ScanLine className="size-5" />
           </IconButton>
-          <IconButton label="Add" variant="accent" size="lg" className="shadow-glow">
+          <IconButton label="Add" variant="accent" size="lg" className="shadow-lift">
             <Plus className="size-6" />
           </IconButton>
         </div>

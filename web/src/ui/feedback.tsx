@@ -45,33 +45,62 @@ export function SkeletonRows({ count = 3 }: { count?: number }) {
   );
 }
 
+/**
+ * What a screen says before there's anything in it. No icon tile stacked
+ * above the heading: the icon sits beside the title, and an optional
+ * `preview` shows a faint example of what will appear, which explains the
+ * screen better than an illustration would.
+ */
 export function EmptyState({
   icon,
   title,
   body,
   action,
+  preview,
   className,
 }: {
-  icon: ReactNode;
+  icon?: ReactNode;
   title: ReactNode;
   body?: ReactNode;
   action?: ReactNode;
+  preview?: ReactNode;
   className?: string;
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={springSoft}
-      className={cn("flex flex-col items-center px-6 py-12 text-center", className)}
+      className={cn("px-5 py-8 sm:px-6", className)}
     >
-      <div className="mb-4 flex size-16 items-center justify-center rounded-[var(--radius-lg)] bg-accent-soft text-positive [&_svg]:size-7">
-        {icon}
-      </div>
-      <h3 className="font-display text-lg font-semibold text-fg">{title}</h3>
-      {body && <p className="mt-1.5 max-w-xs text-[15px] text-fg-muted">{body}</p>}
-      {action && <div className="mt-6">{action}</div>}
+      {preview && (
+        <div aria-hidden className="pointer-events-none mb-6 select-none opacity-60 [mask-image:linear-gradient(to_bottom,black_40%,transparent)]">
+          {preview}
+        </div>
+      )}
+      <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-fg">
+        {icon && <span className="text-positive [&_svg]:size-5">{icon}</span>}
+        {title}
+      </h3>
+      {body && <p className="mt-1.5 max-w-sm text-[15px] text-fg-muted">{body}</p>}
+      {action && <div className="mt-5">{action}</div>}
     </motion.div>
+  );
+}
+
+/** A faint example row for empty-state previews. */
+export function PreviewRow({ emoji, title, subtitle, amount, tone }: { emoji: string; title: string; subtitle: string; amount: string; tone?: "positive" | "negative" }) {
+  return (
+    <div className="flex items-center gap-3 rounded-[var(--radius-md)] border border-dashed border-line-strong px-3 py-2.5">
+      <span className="flex size-9 items-center justify-center rounded-[var(--radius-sm)] bg-surface-2 text-lg">{emoji}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-medium">{title}</span>
+        <span className="block truncate text-xs text-fg-muted">{subtitle}</span>
+      </span>
+      <span className={cn("tabular text-sm font-semibold", tone === "positive" && "text-positive", tone === "negative" && "text-negative")}>
+        {amount}
+      </span>
+    </div>
   );
 }
 

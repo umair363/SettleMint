@@ -1,12 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Outfit } from "next/font/google";
+import { Bricolage_Grotesque } from "next/font/google";
 import type { ReactNode } from "react";
 import { themeScript } from "@/ui/theme";
 import { Providers } from "./providers";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin", "latin-ext"], variable: "--font-inter", display: "swap" });
-const outfit = Outfit({ subsets: ["latin", "latin-ext"], variable: "--font-outfit", display: "swap" });
+// One family, chosen by rendering money-heavy samples of 14 typefaces side by
+// side: Bricolage Grotesque has true tabular figures, characterful numerals
+// for big amounts, and an optical-size axis that gives small text its own
+// readable cut. It avoids the overused Inter/Geist/Instrument look.
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-bricolage",
+  display: "swap",
+  axes: ["opsz"],
+});
 
 export const metadata: Metadata = {
   title: { default: "SettleMint", template: "%s · SettleMint" },
@@ -34,7 +42,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" data-theme="dark" className={`${inter.variable} ${outfit.variable}`} suppressHydrationWarning>
+    <html lang="en" data-theme="dark" className={bricolage.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
