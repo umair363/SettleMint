@@ -1,3 +1,4 @@
+import http from "node:http";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { uuidv7 } from "uuidv7";
 import type { ExpenseDto, GroupDetailDto, GroupSummaryDto } from "@settlemint/shared";
@@ -511,6 +512,90 @@ describe("getting paid, search, export and account deletion", () => {
     expect(anaSpot).toMatchObject({ displayName: "Ana", claimed: false, role: "member" });
     expect(seenByBen.members.find((m) => m.id === benId)?.role).toBe("owner");
     expect(seenByBen.balances[benId]).toBe(-5000);
+  });
+});
+
+describe("live updates", () => {
+  /** Open the event stream as this client and collect events. */
+  async function listen(base: string, c: TestClient) {
+    // node:http (not fetch): fetch drops a hand-set Cookie header.
+    const events: { event: string; data: { groupId: string; byMe: boolean } }[] = [];
+    const url = new URL(`${base}/v1/events`);
+    const { req, status, contentType } = await new Promise<{
+      req: http.ClientRequest;
+      status: number;
+      contentType: string;
+    }>((resolve, reject) => {
+      const req = http.get(
+        url,
+        { headers: { cookie: c.cookieHeader(), origin: "http://localhost:3000" } },
+        (res) => {
+          let buffer = "";
+          res.setEncoding("utf8");
+          res.on("data", (chunk: string) => {
+            buffer += chunk;
+            let i;
+            while ((i = buffer.indexOf("\n\n")) !== -1) {
+              const block = buffer.slice(0, i);
+              buffer = buffer.slice(i + 2);
+              const event = /^event: (.+)$/m.exec(block)?.[1];
+              const data = /^data: (.+)$/m.exec(block)?.[1];
+              if (event && data) events.push({ event, data: JSON.parse(data) });
+            }
+          });
+          res.on("error", () => {});
+          resolve({ req, status: res.statusCode ?? 0, contentType: String(res.headers["content-type"] ?? "") });
+        },
+      );
+      req.on("error", (err) => (err.message.includes("aborted") || err.message.includes("socket hang up") ? undefined : reject(err)));
+    });
+    return { status, contentType, events, close: () => req.destroy() };
+  }
+
+  it("tells group members (and only them) when something changes", async () => {
+    const address = await t.app.listen({ port: 0, host: "127.0.0.1" });
+    try {
+      const { ana, group, anaId, benId } = await tripWithFriends();
+      const link = (await ana.post(`/v1/groups/${group.id}/invite`)).body.token;
+      const ben = client();
+      await ben.signUp("Ben");
+      await ben.post(`/v1/invites/${link}/join`, { memberId: benId });
+      const outsider = client();
+      await outsider.signUp("Olly");
+
+      const benStream = await listen(address, ben);
+      const outsiderStream = await listen(address, outsider);
+      expect(benStream.status).toBe(200);
+      expect(benStream.contentType).toContain("text/event-stream");
+
+      await ana.post(`/v1/groups/${group.id}/expenses`, {
+        description: "Snacks",
+        amount: 800,
+        currency: "USD",
+        date: today,
+        payers: [{ memberId: anaId, amount: 800 }],
+        split: { method: "equal", memberIds: [anaId, benId] },
+      });
+      await new Promise((r) => setTimeout(r, 300));
+
+      expect(benStream.events).toEqual([{ event: "group", data: { groupId: group.id, byMe: false } }]);
+      expect(outsiderStream.events).toEqual([]);
+
+      // Failed writes announce nothing.
+      await ana.post(`/v1/groups/${group.id}/expenses`, { description: "bad" });
+      await new Promise((r) => setTimeout(r, 200));
+      expect(benStream.events).toHaveLength(1);
+
+      benStream.close();
+      outsiderStream.close();
+    } finally {
+      // Keep the shared app usable for later tests (inject works without listening).
+      await new Promise((r) => setTimeout(r, 50));
+    }
+  });
+
+  it("requires a session", async () => {
+    expect((await client().get("/v1/events")).status).toBe(401);
   });
 });
 

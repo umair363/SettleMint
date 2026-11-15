@@ -72,7 +72,7 @@ const step = async (name, fn) => {
 
 try {
   await step("landing", async () => {
-    await page.goto("http://localhost:4555/", { waitUntil: "networkidle" });
+    await page.goto("http://localhost:4555/", { waitUntil: "load" });
     await shot("landing");
     await page.getByRole("link", { name: "Get started" }).click();
     await page.waitForURL("**/sign-in");
@@ -147,11 +147,11 @@ try {
   });
 
   await step("activity and home", async () => {
-    await page.goto("http://localhost:4555/activity", { waitUntil: "networkidle" });
+    await page.goto("http://localhost:4555/activity", { waitUntil: "load" });
     await shot("activity");
-    await page.goto("http://localhost:4555/home", { waitUntil: "networkidle" });
+    await page.goto("http://localhost:4555/home", { waitUntil: "load" });
     await shot("home");
-    await page.goto("http://localhost:4555/account", { waitUntil: "networkidle" });
+    await page.goto("http://localhost:4555/account", { waitUntil: "load" });
     await shot("account");
   });
 
@@ -164,7 +164,9 @@ try {
   });
 
   await step("search", async () => {
-    await page.goto("http://localhost:4555/home", { waitUntil: "networkidle" });
+    await page.goto("http://localhost:4555/home", { waitUntil: "load" });
+    // The shortcut is live once the app has started (its search button is shown).
+    await page.getByRole("button", { name: "Search (Ctrl+K)" }).waitFor();
     await page.keyboard.press("Control+k");
     await page.getByLabel("Search expenses and groups").fill("dinner");
     await page.getByRole("link", { name: /Dinner at the market/ }).waitFor();
@@ -173,7 +175,7 @@ try {
   });
 
   await step("split with one friend", async () => {
-    await page.goto("http://localhost:4555/groups", { waitUntil: "networkidle" });
+    await page.goto("http://localhost:4555/groups", { waitUntil: "load" });
     await page.getByRole("button", { name: "New group" }).click();
     await page.getByRole("radio", { name: "Friend" }).click();
     await page.getByLabel("Their name").fill("Sam");
