@@ -266,3 +266,43 @@ export const fxRates = pgTable(
   },
   (t) => [primaryKey({ columns: [t.base, t.quote, t.asOf] })],
 );
+
+// ─── Payment handles ───────────────────────────────────────────────────────
+
+export const PAYMENT_KINDS = [
+  "upi",
+  "paypal",
+  "venmo",
+  "cashapp",
+  "revolut",
+  "monzo",
+  "wise",
+  "iban",
+  "bank",
+  "raast",
+  "jazzcash",
+  "easypaisa",
+  "other",
+] as const;
+export type PaymentKind = (typeof PAYMENT_KINDS)[number];
+
+/**
+ * How someone likes to be paid. Shown only to people who share a group with
+ * them, so a payer can open a pre-filled payment link or copy the details.
+ * SettleMint never moves money itself.
+ */
+export const paymentHandles = pgTable(
+  "payment_handles",
+  {
+    id: uuid("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    kind: varchar("kind", { length: 16 }).$type<PaymentKind>().notNull(),
+    value: varchar("value", { length: 120 }).notNull(),
+    label: varchar("label", { length: 40 }),
+    position: integer("position").notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [index("payment_handles_user_idx").on(t.userId)],
+);

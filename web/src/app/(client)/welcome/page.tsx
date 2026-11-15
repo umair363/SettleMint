@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { useLocale } from "use-intl";
 import { AuthLayout } from "@/features/auth/auth-layout";
+import { safeNext } from "@/features/auth/safe-next";
 import { guessCurrency } from "@/lib/currency-guess";
 import { keys, useMe, useUpdateMe } from "@/lib/queries";
 import { Button } from "@/ui/button";
@@ -46,7 +47,7 @@ export default function WelcomePage() {
       {
         onSuccess: async () => {
           await qc.invalidateQueries({ queryKey: keys.me });
-          router.replace("/home");
+          router.replace(safeNext(new URLSearchParams(window.location.search).get("next")));
         },
       },
     );

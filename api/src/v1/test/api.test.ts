@@ -413,6 +413,132 @@ describe("invites and guests", () => {
   });
 });
 
+describe("getting paid, search, export and account deletion", () => {
+  it("stores payment methods, normalised, and shows them only to people in my groups", async () => {
+    const { ana, group, benId } = await tripWithFriends();
+    const bad = await ana.request("PUT", "/v1/me/payment-handles", { handles: [{ kind: "upi", value: "nope" }] });
+    expect(bad.status).toBe(400);
+
+    const saved = await ana.request("PUT", "/v1/me/payment-handles", {
+      handles: [
+        { kind: "paypal", value: "https://paypal.me/AnaSouza" },
+        { kind: "iban", value: "gb82west12345698765432" },
+      ],
+    });
+    expect(saved.status).toBe(200);
+    expect(saved.body.map((h: { value: string }) => h.value)).toEqual(["AnaSouza", "GB82 WEST 1234 5698 7654 32"]);
+
+    // Ben joins and can see how to pay Ana.
+    const link = (await ana.post(`/v1/groups/${group.id}/invite`)).body.token;
+    const ben = client();
+    await ben.signUp("Ben");
+    const joined = await ben.post<GroupDetailDto>(`/v1/invites/${link}/join`, { memberId: benId });
+    const anaAsSeenByBen = joined.body.members.find((m) => m.displayName === "Ana")!;
+    expect(anaAsSeenByBen.paymentHandles.map((h) => h.kind)).toEqual(["paypal", "iban"]);
+
+    // Someone outside the group can't see them anywhere.
+    const outsider = client();
+    await outsider.signUp("Olly");
+    expect((await outsider.get(`/v1/groups/${group.id}`)).status).toBe(404);
+  });
+
+  it("searches only my own groups, treating % literally", async () => {
+    const { ana, group, anaId } = await tripWithFriends();
+    await ana.post(`/v1/groups/${group.id}/expenses`, {
+      description: "Pastéis de nata 50% off",
+      amount: 600,
+      currency: "USD",
+      date: today,
+      payers: [{ memberId: anaId, amount: 600 }],
+      split: { method: "equal", memberIds: [anaId] },
+    });
+    const other = await tripWithFriends();
+    await other.ana.post(`/v1/groups/${other.group.id}/expenses`, {
+      description: "Pastéis for someone else",
+      amount: 600,
+      currency: "USD",
+      date: today,
+      payers: [{ memberId: other.anaId, amount: 600 }],
+      split: { method: "equal", memberIds: [other.anaId] },
+    });
+
+    const hits = (await ana.get(`/v1/search?q=${encodeURIComponent("pastéis")}`)).body;
+    expect(hits.expenses.map((e: { description: string }) => e.description)).toEqual(["Pastéis de nata 50% off"]);
+    expect((await ana.get(`/v1/search?q=${encodeURIComponent("50%")}`)).body.expenses).toHaveLength(1);
+    expect((await ana.get(`/v1/search?q=${encodeURIComponent("%")}`)).body.expenses).toHaveLength(1);
+    expect((await ana.get("/v1/search?q=lisbon")).body.groups.map((g: { id: string }) => g.id)).toEqual([group.id]);
+  });
+
+  it("exports everything that involves me", async () => {
+    const { ana, group, anaId } = await tripWithFriends();
+    await ana.post(`/v1/groups/${group.id}/expenses`, {
+      description: "Tram",
+      amount: 300,
+      currency: "USD",
+      date: today,
+      payers: [{ memberId: anaId, amount: 300 }],
+      split: { method: "equal", memberIds: [anaId] },
+    });
+    const res = await ana.get("/v1/me/export");
+    expect(res.status).toBe(200);
+    expect(res.body.format).toBe("settlemint-export-v1");
+    const g = res.body.groups.find((x: { id: string }) => x.id === group.id);
+    expect(g.expenses.map((e: { description: string }) => e.description)).toEqual(["Tram"]);
+    expect(g.members).toHaveLength(3);
+  });
+
+  it("deletes an account but keeps the group's history and balances intact", async () => {
+    const { ana, group, anaId, benId } = await tripWithFriends();
+    const link = (await ana.post(`/v1/groups/${group.id}/invite`)).body.token;
+    const ben = client();
+    await ben.signUp("Ben");
+    await ben.post(`/v1/invites/${link}/join`, { memberId: benId });
+    await ana.post(`/v1/groups/${group.id}/expenses`, {
+      description: "Hotel",
+      amount: 10000,
+      currency: "USD",
+      date: today,
+      payers: [{ memberId: anaId, amount: 10000 }],
+      split: { method: "equal", memberIds: [anaId, benId] },
+    });
+
+    expect((await ana.request("DELETE", "/v1/me", {})).status).toBe(400); // needs typed confirmation
+    expect((await ana.request("DELETE", "/v1/me", { confirm: "DELETE" })).status).toBe(204);
+    expect((await ana.get("/v1/me")).status).toBe(401);
+
+    const seenByBen = (await ben.get<GroupDetailDto>(`/v1/groups/${group.id}`)).body;
+    const anaSpot = seenByBen.members.find((m) => m.id === anaId)!;
+    expect(anaSpot).toMatchObject({ displayName: "Ana", claimed: false, role: "member" });
+    expect(seenByBen.members.find((m) => m.id === benId)?.role).toBe("owner");
+    expect(seenByBen.balances[benId]).toBe(-5000);
+  });
+});
+
+describe("one-to-one friends", () => {
+  it("shows a direct group as the other person, from each side", async () => {
+    const ana = client();
+    await ana.signUp("Ana");
+    const created = await ana.post<GroupDetailDto>("/v1/groups", {
+      name: "Sam",
+      currency: "EUR",
+      type: "direct",
+      people: [{ displayName: "Sam" }],
+    });
+    expect(created.status).toBe(201);
+    expect(created.body.name).toBe("Sam");
+
+    const samSpot = created.body.members.find((m) => m.displayName === "Sam")!;
+    const link = (await ana.post(`/v1/groups/${created.body.id}/invite`)).body.token;
+    const sam = client();
+    await sam.signUp("Sam Rivera");
+    const joined = await sam.post<GroupDetailDto>(`/v1/invites/${link}/join`, { memberId: samSpot.id });
+    expect(joined.body.name).toBe("Ana");
+    const list = (await sam.get<GroupSummaryDto[]>("/v1/groups")).body;
+    expect(list.find((g) => g.id === created.body.id)?.name).toBe("Ana");
+    expect((await ana.get<GroupSummaryDto[]>("/v1/groups")).body.find((g) => g.id === created.body.id)?.name).toBe("Sam");
+  });
+});
+
 describe("outsiders can't touch a group", () => {
   it("returns 404 for every group-scoped read and write", async () => {
     const { ana, group, anaId, benId } = await tripWithFriends();

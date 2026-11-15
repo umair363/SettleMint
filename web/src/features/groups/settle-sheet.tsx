@@ -15,6 +15,7 @@ import { Segmented } from "@/ui/controls";
 import { TextField } from "@/ui/field";
 import { Money } from "@/ui/money";
 import { Sheet } from "@/ui/sheet";
+import { PayWith } from "./pay-with";
 
 export interface SettleTarget {
   fromMemberId: string;
@@ -158,6 +159,17 @@ function SettleForm({
         >
           Full amount: <Money minor={owed} currency={group.currency} />
         </button>
+      )}
+
+      {/* You're paying someone who has said how they like to be paid. */}
+      {from === group.myMemberId && toName && amount > 0 && (
+        <PayWith
+          payee={toName}
+          amount={amount}
+          currency={group.currency}
+          note={`SettleMint · ${group.name}`}
+          onUsed={() => setMethod("app")}
+        />
       )}
 
       <Segmented<Method>

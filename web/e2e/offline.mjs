@@ -62,7 +62,12 @@ try {
   await page.getByLabel("Email").fill(`olu-${Date.now()}@example.com`);
   await page.getByLabel("Password").fill("correct-horse-battery");
   await page.getByRole("button", { name: "Create account" }).click();
-  await page.waitForURL("**/home", { timeout: 20000 });
+  // New accounts go through a short onboarding (name + currency) first.
+  await page.waitForURL(/\/(welcome|home)(\?|$)/, { timeout: 20000 });
+  if (new URL(page.url()).pathname === "/welcome") {
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.waitForURL("**/home", { timeout: 20000 });
+  }
   await page.getByRole("button", { name: "Create a group" }).first().click();
   await page.getByLabel("Name").fill("Cabin weekend");
   await page.locator("#add-person").fill("Mia");

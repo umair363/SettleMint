@@ -26,6 +26,11 @@ const results = [];
 
 async function audit(page, label) {
   await page.waitForTimeout(500);
+  // Toasts fade in and out; measuring one mid-fade reports false contrast
+  // failures, so wait for any to finish (they are audited at rest elsewhere).
+  await page
+    .waitForFunction(() => document.querySelectorAll("[data-sonner-toast]").length === 0, null, { timeout: 8000 })
+    .catch(() => {});
   await page.evaluate(axeSource);
   const r = await page.evaluate(async () =>
     axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice"] } }),
@@ -59,7 +64,12 @@ for (const theme of ["dark", "light"]) {
   await page.getByLabel("Email").fill(`ava-${theme}-${Date.now()}@example.com`);
   await page.getByLabel("Password").fill("correct-horse-battery");
   await page.getByRole("button", { name: "Create account" }).click();
-  await page.waitForURL("**/home", { timeout: 20000 });
+  // New accounts go through a short onboarding (name + currency) first.
+  await page.waitForURL(/\/(welcome|home)(\?|$)/, { timeout: 20000 });
+  if (new URL(page.url()).pathname === "/welcome") {
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.waitForURL("**/home", { timeout: 20000 });
+  }
   await audit(page, at("home (new)"));
 
   await page.getByRole("button", { name: "Create a group" }).first().click();

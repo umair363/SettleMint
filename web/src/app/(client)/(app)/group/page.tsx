@@ -7,7 +7,7 @@ import {
   type GroupDetailDto,
   type SettlementDto,
 } from "@settlemint/shared";
-import { ArrowRightLeft, Inbox, Plus, Settings, UserPlus } from "lucide-react";
+import { ArrowRightLeft, Inbox, Plus, Send, Settings, UserPlus } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -18,6 +18,7 @@ import { ExpenseDetailSheet } from "@/features/groups/expense-detail-sheet";
 import { GroupSettingsSheet } from "@/features/groups/group-settings-sheet";
 import { GroupIcon } from "@/features/groups/group-row";
 import { InviteSheet } from "@/features/groups/invite-sheet";
+import { remindToPay } from "@/features/groups/remind";
 import { SettleSheet, type SettleTarget } from "@/features/groups/settle-sheet";
 import { PageBody, PageHeader } from "@/features/shell/page-header";
 import { dayLabel } from "@/lib/dates";
@@ -213,6 +214,7 @@ function ExpensesTab({ group, onOpen }: { group: GroupDetailDto; onOpen: (e: Exp
 }
 
 function BalancesTab({ group, onSettle }: { group: GroupDetailDto; onSettle: (t: SettleTarget) => void }) {
+  const locale = useLocale();
   const people = group.members.filter((m) => !m.left || (group.balances[m.id] ?? 0) !== 0);
   return (
     <div className="space-y-6">
@@ -239,8 +241,13 @@ function BalancesTab({ group, onSettle }: { group: GroupDetailDto; onSettle: (t:
                       <Money minor={t.amount} currency={group.currency} tone={involvesMe ? (t.fromMemberId === group.myMemberId ? "negative" : "positive") : "plain"} className="font-semibold" />
                     </span>
                   </span>
+                  {t.toMemberId === group.myMemberId && (
+                    <Button size="sm" variant="ghost" leading={<Send className="size-4" />} onClick={() => remindToPay(group, t, locale)}>
+                      Remind
+                    </Button>
+                  )}
                   <Button size="sm" variant={involvesMe ? "primary" : "secondary"} onClick={() => onSettle(t)}>
-                    Record
+                    {t.fromMemberId === group.myMemberId ? "Pay" : "Record"}
                   </Button>
                 </div>
               );

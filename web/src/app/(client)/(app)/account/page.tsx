@@ -5,6 +5,8 @@ import { Download, LogOut, Monitor, Moon, Share, ShieldCheck, Sun } from "lucide
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import { PaymentHandlesCard } from "@/features/account/payment-handles-card";
+import { YourDataCard } from "@/features/account/your-data-card";
 import { useInstall } from "@/features/pwa/pwa";
 import { PageBody, PageHeader } from "@/features/shell/page-header";
 import { authClient } from "@/lib/auth-client";
@@ -188,6 +190,8 @@ export default function AccountPage() {
           </Card>
         </section>
 
+        {!me.data.isGuest && <PaymentHandlesCard />}
+
         <InstallCard />
 
         <section>
@@ -205,6 +209,8 @@ export default function AccountPage() {
             />
           </Card>
         </section>
+
+        <YourDataCard />
 
         <Button variant="secondary" block size="lg" loading={signingOut} leading={<LogOut className="size-4" />} onClick={signOut}>
           Sign out
