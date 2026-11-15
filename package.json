@@ -11,7 +11,12 @@
     "dev:app": "npm run dev -w app",
     "dev:api": "npm run dev -w api",
     "dev:mobile": "npm run start -w mobile",
+    "db:up": "docker compose -f api/docker-compose.yml up -d",
     "build:shared": "npm run build -w @settlemint/shared",
-    "test:api": "npm test -w api"
+    "typecheck": "npm run build:shared && npm run typecheck -w api && npm run typecheck -w app",
+    "lint": "npm run lint -w app",
+    "test": "npm run build:shared && npm test -w api",
+    "test:api": "npm test -w api",
+    "ci": "npm run typecheck && npm test"
   }
 }
