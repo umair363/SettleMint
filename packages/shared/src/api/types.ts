@@ -139,6 +139,14 @@ export interface ExpenseDto {
   updatedAt: string;
 }
 
+export interface ImportResultDto {
+  groupId: string;
+  expenses: number;
+  payments: number;
+  /** Rows not imported, with why (1-based line numbers in the file). */
+  skipped: { line: number; reason: string }[];
+}
+
 export interface RecurringRuleDto {
   id: string;
   groupId: string;

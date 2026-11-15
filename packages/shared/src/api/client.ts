@@ -18,6 +18,7 @@ import type {
   ExpenseDto,
   GroupDetailDto,
   GroupSummaryDto,
+  ImportResultDto,
   InvitePreviewDto,
   Me,
   MemberDto,
@@ -116,6 +117,8 @@ export function createApiClient(opts: ApiClientOptions) {
       delete: () => request<void>("DELETE", "/me", { confirm: "DELETE" }),
     },
     search: (q: string) => get<SearchResultDto>("/search", { q }),
+    importSplitwise: (body: { csv: string; groupName: string; meIndex: number }) =>
+      post<ImportResultDto>("/import/splitwise", body),
     groups: {
       list: () => get<GroupSummaryDto[]>("/groups"),
       get: (id: string) => get<GroupDetailDto>(`/groups/${id}`),

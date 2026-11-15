@@ -65,6 +65,8 @@ export function describeActivity(e: ActivityDto, myUserId: string | undefined): 
       return { kind: "member", text: `${actor} removed ${str(d.displayName)}` };
     case "group.created":
       return { kind: "group", text: `${actor} created the group` };
+    case "group.imported":
+      return { kind: "group", text: `${actor} imported this group from Splitwise` };
     case "group.deleted":
       return { kind: "group", text: `${actor} deleted the group` };
     case "group.restored":

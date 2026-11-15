@@ -187,6 +187,24 @@ try {
     await page.keyboard.press("Escape");
   });
 
+  await step("import from Splitwise", async () => {
+    await page.goto("http://localhost:4555/groups", { waitUntil: "load" });
+    await page.getByRole("button", { name: "Import a group from Splitwise" }).click();
+    const csv = [
+      "Date,Description,Category,Cost,Currency,Ana Souza,Bilal Khan",
+      "2024-03-01,Hotel,Hotels,300.00,EUR,150.00,-150.00",
+      "2024-03-02,Bilal K. paid Ana S.,Payment,50.00,EUR,-50.00,50.00",
+      "2024-03-06,Total balance, , ,EUR,100.00,-100.00",
+    ].join("\n");
+    await page.getByLabel("Splitwise export file").setInputFiles({ name: "porto-trip.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
+    await page.getByRole("radio", { name: "Ana Souza" }).click();
+    await shot("import-sheet");
+    await page.getByRole("button", { name: "Import", exact: true }).click();
+    await page.waitForURL("**/group?id=*", { timeout: 20000 });
+    await page.getByText("€100.00").first().waitFor({ timeout: 10000 });
+    await shot("imported-group");
+  });
+
   await step("split with one friend", async () => {
     await page.goto("http://localhost:4555/groups", { waitUntil: "load" });
     await page.getByRole("button", { name: "New group" }).click();

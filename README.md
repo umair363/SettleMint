@@ -34,7 +34,11 @@ on a shared money engine the mobile app will reuse.
   "Remind" shares a friendly nudge with those links. SettleMint never
   touches the money.
 - **Friends and groups.** Split with one person or a whole trip; search
-  everything with ⌘K.
+  everything with ⌘K. Changes from others appear live, no refresh.
+- **Repeating bills.** Rent and subscriptions add themselves weekly, monthly
+  or yearly, on the right day in your time zone.
+- **Switch from Splitwise in a minute.** Import a group export; balances
+  come over to the cent.
 - **Your data is yours.** Export everything as JSON, or delete your account
   (your friends' balances stay correct).
 - **Trust.** Full history on every expense, undo on deletes, restore, and
