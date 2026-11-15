@@ -27,6 +27,7 @@ app/next-env.d.ts
 
 # Env files
 .env*
+!.env.example
 
 # next-pwa generated service worker (rebuilt on every build)
 app/public/sw.js

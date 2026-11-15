@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main, v2]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Typecheck (shared, api, app)
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test -w api
+      - name: Lint (web)
+        # The current web app has ~100 lint errors and is being rebuilt in v2.
+        # Reported but not blocking until the rebuild lands; then remove this line.
+        continue-on-error: true
+        run: npm run lint
