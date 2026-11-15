@@ -10,12 +10,31 @@ const { chromium } = require("playwright");
 const [outDir, shotsDir] = process.argv.slice(2);
 fs.mkdirSync(shotsDir, { recursive: true });
 
+
+// Apply out/_headers (as the static host would), so the tests run under the real CSP.
+function headerRules(dir) {
+  const file = path.join(dir, "_headers");
+  if (!fs.existsSync(file)) return [];
+  const rules = [];
+  for (const line of fs.readFileSync(file, "utf8").split(/\r?\n/)) {
+    if (!line.trim()) continue;
+    if (!/^\s/.test(line)) rules.push({ pattern: line.trim(), headers: {} });
+    else {
+      const i = line.indexOf(":");
+      rules[rules.length - 1].headers[line.slice(0, i).trim()] = line.slice(i + 1).trim();
+    }
+  }
+  return rules;
+}
+const matches = (pattern, url) => (pattern.endsWith('*') ? url.startsWith(pattern.slice(0, -1)) : url === pattern);
+const rules = headerRules(outDir);
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".png": "image/png", ".woff2": "font/woff2", ".txt": "text/plain", ".webmanifest": "application/manifest+json" };
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(new URL(req.url, "http://x").pathname);
   const candidates = [path.join(outDir, url), path.join(outDir, url + ".html"), path.join(outDir, url, "index.html")];
   const file = candidates.find((f) => fs.existsSync(f) && fs.statSync(f).isFile()) ?? path.join(outDir, "404.html");
-  res.writeHead(200, { "content-type": types[path.extname(file)] ?? "application/octet-stream" });
+  const extra = Object.assign({}, ...rules.filter((r) => matches(r.pattern, url)).map((r) => r.headers));
+  res.writeHead(200, { ...extra, "content-type": types[path.extname(file)] ?? "application/octet-stream" });
   fs.createReadStream(file).pipe(res);
 });
 await new Promise((r) => server.listen(4555, r));

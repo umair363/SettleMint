@@ -1,16 +1,17 @@
-"use client";
-
 import { cva, type VariantProps } from "class-variance-authority";
 import { LoaderCircle } from "lucide-react";
-import { motion, type HTMLMotionProps } from "motion/react";
-import { forwardRef, type ReactNode } from "react";
+import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { cn } from "./cn";
-import { springSnappy } from "./motion";
+
+// Press feedback is pure CSS: transitions are interruptible, run on the
+// compositor, and keep the animation library out of pages that don't need it.
+const press = "transition-[transform,background-color,color,box-shadow] duration-150 ease-out active:scale-[0.97]";
 
 const buttonStyles = cva(
   [
     "relative inline-flex select-none items-center justify-center gap-2 whitespace-nowrap font-semibold",
-    "transition-colors duration-150 disabled:pointer-events-none disabled:opacity-45",
+    press,
+    "disabled:pointer-events-none disabled:opacity-45",
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
   ],
   {
@@ -29,24 +30,15 @@ const buttonStyles = cva(
       },
       block: { true: "w-full" },
     },
-    compoundVariants: [
-      {
-        variant: "primary",
-        size: ["md", "lg"],
-        className: "shadow-lift",
-      },
-    ],
+    compoundVariants: [{ variant: "primary", size: ["md", "lg"], className: "shadow-lift" }],
     defaultVariants: { variant: "primary", size: "md" },
   },
 );
 
-export interface ButtonProps
-  extends Omit<HTMLMotionProps<"button">, "children">,
-    VariantProps<typeof buttonStyles> {
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonStyles> {
   loading?: boolean;
   leading?: ReactNode;
   trailing?: ReactNode;
-  children?: ReactNode;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
@@ -54,11 +46,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   ref,
 ) {
   return (
-    <motion.button
+    <button
       ref={ref}
       type={type}
-      whileTap={{ scale: 0.97 }}
-      transition={springSnappy}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={cn(buttonStyles({ variant, size, block }), className)}
@@ -67,12 +57,15 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       {loading ? <LoaderCircle className="size-[1.1em] animate-spin" aria-hidden /> : leading}
       {children}
       {!loading && trailing}
-    </motion.button>
+    </button>
   );
 });
 
 const iconButtonStyles = cva(
-  "inline-flex shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-45 disabled:pointer-events-none",
+  [
+    "inline-flex shrink-0 items-center justify-center rounded-full disabled:opacity-45 disabled:pointer-events-none",
+    "transition-[transform,background-color,color] duration-150 ease-out active:scale-[0.92]",
+  ],
   {
     variants: {
       variant: {
@@ -86,9 +79,7 @@ const iconButtonStyles = cva(
   },
 );
 
-export interface IconButtonProps
-  extends Omit<HTMLMotionProps<"button">, "children">,
-    VariantProps<typeof iconButtonStyles> {
+export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof iconButtonStyles> {
   /** Required: icon-only buttons need a spoken name. */
   label: string;
   children: ReactNode;
@@ -99,17 +90,15 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
   ref,
 ) {
   return (
-    <motion.button
+    <button
       ref={ref}
       type={type}
       aria-label={label}
       title={label}
-      whileTap={{ scale: 0.92 }}
-      transition={springSnappy}
       className={cn(iconButtonStyles({ variant, size }), className)}
       {...props}
     >
       {children}
-    </motion.button>
+    </button>
   );
 });

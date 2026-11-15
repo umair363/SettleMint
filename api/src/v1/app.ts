@@ -52,9 +52,16 @@ export interface BuildAppOptions {
 
 export async function buildApp({ db, config, mailer, logger = true }: BuildAppOptions): Promise<FastifyInstance> {
   const app = Fastify({
-    logger: logger ? { level: config.env === "production" ? "info" : "debug" } : false,
+    logger: logger
+      ? {
+          level: config.env === "production" ? "info" : "debug",
+          // Session cookies and tokens must never reach the logs.
+          redact: ["req.headers.cookie", "req.headers.authorization", 'res.headers["set-cookie"]'],
+        }
+      : false,
     trustProxy: true,
-    bodyLimit: 12 * 1024 * 1024, // receipt photos
+    // JSON only. Receipt photos will go straight to object storage via signed URLs.
+    bodyLimit: 1024 * 1024,
   });
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
@@ -113,6 +120,20 @@ export async function buildApp({ db, config, mailer, logger = true }: BuildAppOp
 
   await app.register(
     async (v1) => {
+      // Defence in depth against cross-site requests: SameSite cookies already
+      // stop most, and this rejects any write that announces a foreign origin.
+      v1.addHook("onRequest", async (req) => {
+        if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") return;
+        const origin = req.headers.origin;
+        if (origin && !config.webOrigins.includes(origin)) {
+          throw new AppError(403, "FORBIDDEN", "Requests from this site aren't allowed");
+        }
+      });
+      // Personal financial data: never stored by browsers, proxies or CDNs.
+      v1.addHook("onSend", async (_req, reply, payload) => {
+        reply.header("cache-control", "no-store");
+        return payload;
+      });
       v1.addHook("onRequest", async (req) => {
         const result = await auth.api.getSession({ headers: fromNodeHeaders(req.headers) });
         if (result) {

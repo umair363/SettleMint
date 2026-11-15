@@ -638,7 +638,7 @@ function SplitPanel({
         onChange={(method) => onDraft({ ...draft, method, included: draft.included.length ? draft.included : members.map((m) => m.id) })}
         options={(Object.keys(METHOD_LABEL) as EditableMethod[]).map((m) => ({
           value: m,
-          label: <span className="hidden min-[400px]:inline">{METHOD_LABEL[m]}</span>,
+          label: <span className="sr-only min-[400px]:not-sr-only">{METHOD_LABEL[m]}</span>,
           icon: METHOD_ICONS[m],
         }))}
       />

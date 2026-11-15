@@ -125,17 +125,15 @@ export function Chip({
   leading?: ReactNode;
 }) {
   return (
-    <motion.button
+    <button
       type="button"
       aria-pressed={selected}
       onClick={() => {
         haptic(6);
         onToggle();
       }}
-      whileTap={{ scale: 0.95 }}
-      transition={springSnappy}
       className={cn(
-        "inline-flex h-10 items-center gap-2 rounded-full border ps-1.5 pe-3.5 text-sm font-medium transition-colors",
+        "inline-flex h-10 items-center gap-2 rounded-full border ps-1.5 pe-3.5 text-sm font-medium transition-[transform,background-color,border-color,color] duration-150 ease-out active:scale-95",
         selected
           ? "border-accent bg-accent-soft text-fg"
           : "border-line bg-surface-2 text-fg-muted hover:text-fg",
@@ -144,6 +142,6 @@ export function Chip({
     >
       {leading}
       {children}
-    </motion.button>
+    </button>
   );
 }

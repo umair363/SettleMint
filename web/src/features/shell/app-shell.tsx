@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
+import { Logo } from "./logo";
 import { AddExpenseProvider, useAddExpense } from "@/features/expenses/add-expense-context";
 import { AddExpenseSheet } from "@/features/expenses/add-expense-sheet";
 import { useMe } from "@/lib/queries";
@@ -22,18 +23,6 @@ const NAV = [
   { href: "/account", label: "Account", icon: UserRound, match: (p: string) => p === "/account" },
 ] as const;
 
-function Logo({ className }: { className?: string }) {
-  return (
-    <span className={cn("inline-flex items-center gap-2 font-display text-lg font-semibold tracking-tight", className)}>
-      <span className="flex size-8 items-center justify-center rounded-[10px] bg-accent text-accent-fg shadow-lift">
-        <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden>
-          <path d="M5 12.5 10 17 19 7.5" />
-        </svg>
-      </span>
-      SettleMint
-    </span>
-  );
-}
 
 /** On a group's page, adding an expense defaults to that group. */
 function currentGroupId(): string | undefined {
@@ -213,4 +202,3 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 }
 
-export { Logo };

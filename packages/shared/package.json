@@ -8,8 +8,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "prepare": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.esm.json && node -e \"require('fs').writeFileSync('dist/esm/package.json',JSON.stringify({type:'module',sideEffects:false}))\"",
+    "prepare": "tsc -p tsconfig.json && tsc -p tsconfig.esm.json && node -e \"require('fs').writeFileSync('dist/esm/package.json',JSON.stringify({type:'module',sideEffects:false}))\""
   },
   "dependencies": {
     "zod": "^4.6.7"
@@ -17,5 +17,16 @@
   "devDependencies": {
     "@types/node": "^20",
     "typescript": "^5"
+  },
+  "sideEffects": false,
+  "module": "./dist/esm/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
   }
 }
