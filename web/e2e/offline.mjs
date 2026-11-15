@@ -128,4 +128,5 @@ try {
   await browser.close();
   server.close();
   console.log(log.join("\n"));
+  if (log.some((l) => l.startsWith("FAIL"))) process.exitCode = 1;
 }

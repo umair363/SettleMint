@@ -1,145 +1,102 @@
 <div align="center">
 
-<img src="app/public/icon-192.png" width="88" alt="SettleMint" />
+<img src="web/public/icon-192.png" width="88" alt="SettleMint" />
 
 ### SettleMint
 
 Split expenses, not friendships.
 
-[**settlemint.online**](https://settlemint.online) &nbsp;·&nbsp; [Features](#features) &nbsp;·&nbsp; [Architecture](#architecture) &nbsp;·&nbsp; [Local setup](#local-setup)
+[Features](#features) · [Architecture](#architecture) · [Run it locally](#run-it-locally) · [Quality checks](#quality-checks) · [Deploy](#deploy-free-tier)
 
 </div>
 
 <br />
 
-Shared expenses are a social problem disguised as a math problem. SettleMint
-handles the math — who paid, who owes what, and the fewest payments needed to
-square up — so the social part stays easy.
-
-It runs as an installable web app, a native Android/iOS app, and a personal
-budget tracker, all sharing one backend.
-
-<br />
+SettleMint keeps track of who paid what and who owes whom, in any currency,
+fair to the cent. It's an installable web app (PWA) that works offline, built
+on a shared money engine the mobile app will reuse.
 
 ## Features
 
-**Split anything, fairly.** Equal, exact amounts, percentages, or shares.
-All money math runs in integer cents and distributes leftover pennies
-round-robin, so a $10 bill split three ways lands on $3.34 / $3.33 / $3.33 —
-never $9.99.
-
-**Settle up in the fewest payments.** Rather than everyone paying everyone,
-the settlement engine nets debts across the group and computes the minimum
-set of transactions to clear the ledger.
-
-**Track personal spending too.** Budget goals per category, recurring
-transactions, and analytics that tell you something useful — *"Food is up
-20% vs last month"*, *"you're on pace to exceed Groceries by the 24th"* —
-instead of just another pie chart.
-
-**Log expenses by talking.** MintBot parses plain English (*"dinner 40 split
-3 ways"*) into a structured expense. Or photograph a receipt and let the
-scanner pull out the merchant, total, and line items.
-
-**Works offline.** Cached data stays readable without a connection, and
-expenses logged offline queue up and sync when you're back.
-
-<br />
-
-## Screenshots
-
-> _Drop screenshots here — dashboard, budget analytics, and the add-expense
-> sheet, in both light and dark, would carry this section._
-
-<br />
+- **Free, no limits.** No daily caps, ads or cooldowns.
+- **Join from a link, no account needed.** Pick your name from the list and
+  you're in; create an account later and keep your history.
+- **Three-second add.** Amount-first keypad with quick sums ("12+8.50"),
+  smart defaults, and a category guessed from what you type.
+- **Every split.** Equally, exact amounts, percentages, shares, adjustments,
+  item by item with tax and tip spread fairly, and several payers.
+- **150+ currencies.** The exchange rate is locked when you add the expense.
+- **Fewest payments.** Debt simplification that is provably minimal for
+  groups of up to 16 people, or exact who-owes-whom if you prefer.
+- **Trust.** Full history on every expense, undo on deletes, restore, and
+  edit conflicts caught instead of silently overwritten.
+- **Offline-first.** Opens instantly from saved data; anything you add
+  offline syncs when you're back.
 
 ## Architecture
 
-An npm workspaces monorepo — three deployables, one shared contract package.
-
 ```
-app/         Next.js 16 · CSS Modules · React Query        → Vercel
-api/         Fastify 5 · Drizzle · Postgres                → Render
-mobile/      React Native · Expo SDK 57 · expo-router      → EAS
+web/         Next.js 16 static PWA · Tailwind v4 · Radix · Motion   → Cloudflare Pages
+api/         Fastify 5 · Drizzle · Postgres · Better Auth           → Render (src/v1)
 packages/
-  shared/    Zod schemas · categories · currency · splits
+  shared/    money engine · API contracts (Zod) · typed API client
+mobile/      Expo SDK 57 (to be rebuilt on the shared core)
+app/         legacy web app, replaced by web/ at cut-over
 ```
 
-`packages/shared` is the load-bearing piece. Every validation schema,
-category definition, and currency rule lives there and is imported by all
-three clients — so the web app, the mobile app, and the API physically
-cannot disagree about what a valid expense looks like.
+- **Money** is always integer minor units with an ISO currency code. All
+  splitting, conversion and balancing lives in `packages/shared` and runs
+  identically on the server, the web app and (later) mobile, so a preview is
+  exactly what gets saved. Property tests run thousands of random cases.
+- **The API** (`api/src/v1`) has one membership gate on every group route
+  (outsiders get 404), client-generated ids so offline retries never
+  duplicate, version checks on edits, and structured activity history.
+- **The web app** is built with `output: "export"`: plain static files, so it
+  can be hosted free anywhere. A hand-written service worker precaches the
+  build; the data cache lives in IndexedDB.
+- **Design system**: "Liquid Mint" in `web/src/ui`, browsable at `/design`.
+  One typeface (Bricolage Grotesque), WCAG AA colour in both themes, motion
+  kept under ~300 ms and off for people who prefer reduced motion.
 
-**Design system.** Mint green (`#3DD68C`) against warm slate, carrying
-30–40% of surface area. Fully themed for light and dark. Type is Outfit for
-UI, JetBrains Mono for figures. No Tailwind, no component library —
-CSS Modules and hand-built primitives throughout.
-
-**Mobile-feel on the web.** Bottom sheets with real drag physics, pull-to-
-refresh with resistance curves, spring-eased page transitions, and haptics
-where the platform allows. Gesture math, not media queries.
-
-<br />
-
-## Local setup
+## Run it locally
 
 ```bash
-npm install          # once, from the repo root — links all workspaces
-
-npm run dev:app      # web        → localhost:3000
-npm run dev:api      # api        → localhost:8000
-npm run dev:mobile   # expo dev server
+npm install
+npm run dev:v1    # API on :8001 (uses a local PGlite database, no Postgres needed)
+npm run dev:web   # app on http://localhost:3001
 ```
 
-Both clients point at the production API by default. To target a local one:
+Copy `api/.env.example` to `api/.env` and `web/.env.example` to
+`web/.env.local` to change settings. Without `RESEND_API_KEY`, sign-in codes
+are printed in the API's console.
+
+## Quality checks
 
 ```bash
-# app/.env.local
-NEXT_PUBLIC_API_URL=http://localhost:8000
-
-# mobile/.env  — a phone can't reach your laptop's "localhost"
-EXPO_PUBLIC_API_URL=http://192.168.x.x:8000
+npm run typecheck     # shared, api, web
+npm test              # money engine + API integration tests (in-memory Postgres)
+npm run lint -w web
 ```
 
-The API needs `api/.env`:
+Browser tests (Playwright) live in `web/e2e`: the main flow, offline sync,
+and an axe-core accessibility audit of every screen in both themes. See
+`web/e2e/README.md`. CI runs all of the above on every push.
 
-| | |
-|---|---|
-| `DATABASE_URL` | Postgres connection string |
-| `JWT_SECRET` | `openssl rand -hex 32` |
-| `RESEND_API_KEY` | transactional email |
-| `EMAIL_FROM` | `"SettleMint <noreply@…>"` |
-| `GEMINI_API_KEY` | MintBot + receipt scanning |
-| `FRONTEND_URL` | required in production — pins CORS |
-| `REDIS_URL` | optional cache |
+## Deploy (free tier)
 
-```bash
-npm run test:api     # split math, settlement netting, recurrence dates
-```
-
-<br />
-
-## Notes for contributors
-
-A few decisions that look odd until you know why:
-
-**The web build runs `next build --webpack`.** `next-pwa` is a Webpack
-plugin. Next 16 defaults to Turbopack, under which it emits nothing and
-warns about nothing — the service worker silently vanishes. Don't drop the
-flag.
-
-**Recurring transactions generate on read, not on a schedule.** Render's
-free tier sleeps, so a cron job can't be trusted to fire. Missed
-occurrences are backfilled the next time a user fetches their transactions.
-
-**Migrations that touch live data are written by hand.** The workflow is
-`drizzle-kit push`, so there's no continuous migration history — and
-`drizzle-kit generate` will happily emit a full `CREATE TABLE` schema if it
-can't find one. Read the SQL before running it.
-
-**Expo Go can't open the mobile app.** It targets SDK 57; Expo Go currently
-ships SDK 54, and only ever supports one at a time. Use an EAS build —
-see [`mobile/README.md`](mobile/README.md).
+1. **Database:** create a Neon project; copy the pooled connection string.
+2. **API:** in Render, *New > Blueprint* and pick this repo (`render.yaml`).
+   Fill in the variables it asks for. Migrations run on start-up.
+3. **Web:** in Cloudflare Pages, connect the repo with
+   build command `npm ci && npm run build -w web`, output directory
+   `web/out`, and `NEXT_PUBLIC_API_URL` set to the API's URL. The build
+   writes `_headers` (strict CSP and security headers) for you.
+4. **Domain (required for sign-in):** put both on one domain, e.g.
+   `app.settlemint.online` (Pages) and `api.settlemint.online` (Render), and
+   set `COOKIE_DOMAIN=.settlemint.online`. Browsers block cookies between
+   unrelated sites, so `*.pages.dev` + `*.onrender.com` can't keep you signed in.
+5. Set `KEEP_ALIVE_URL` to the API's `/health` URL so the free instance
+   doesn't sleep.
 
 <br />
 
