@@ -5,7 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
 
-const require = createRequire("B:/Settle-Mint/package.json");
+const require = createRequire(import.meta.url);
 const { chromium } = require("playwright");
 const [outDir, shotsDir, device = "phone", theme = "dark"] = process.argv.slice(2);
 fs.mkdirSync(shotsDir, { recursive: true });
