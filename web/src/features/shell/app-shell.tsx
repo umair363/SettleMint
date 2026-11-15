@@ -35,6 +35,12 @@ function Logo({ className }: { className?: string }) {
   );
 }
 
+/** On a group's page, adding an expense defaults to that group. */
+function currentGroupId(): string | undefined {
+  if (window.location.pathname !== "/group") return undefined;
+  return new URLSearchParams(window.location.search).get("id") ?? undefined;
+}
+
 function AddButton({ className }: { className?: string }) {
   const { openAddExpense } = useAddExpense();
   return (
@@ -43,7 +49,7 @@ function AddButton({ className }: { className?: string }) {
       aria-label="Add expense"
       onClick={() => {
         haptic(10);
-        openAddExpense();
+        openAddExpense({ groupId: currentGroupId() });
       }}
       whileTap={{ scale: 0.9 }}
       whileHover={{ scale: 1.04 }}
@@ -105,7 +111,7 @@ function Sidebar({ pathname, name, userId, image }: { pathname: string; name: st
       <Link href="/home" className="px-2">
         <Logo />
       </Link>
-      <Button className="mt-8" leading={<Plus className="size-4" />} onClick={() => openAddExpense()}>
+      <Button className="mt-8" leading={<Plus className="size-4" />} onClick={() => openAddExpense({ groupId: currentGroupId() })}>
         Add expense
       </Button>
       <nav aria-label="Main" className="mt-6 flex flex-col gap-1">
@@ -143,6 +149,19 @@ function Gate({ children }: { children: ReactNode }) {
   const me = useMe();
   const router = useRouter();
   const pathname = usePathname();
+  const { openAddExpense } = useAddExpense();
+
+  // Home-screen shortcut "Add expense" opens /home?add=1.
+  const signedIn = Boolean(me.data);
+  useEffect(() => {
+    if (!signedIn) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("add") === "1") {
+      url.searchParams.delete("add");
+      window.history.replaceState(null, "", url.pathname + url.search);
+      openAddExpense();
+    }
+  }, [signedIn, openAddExpense]);
   const unauthorized = me.error instanceof ApiError && me.error.status === 401;
   const needsName = me.data && !me.data.name.trim() && pathname !== "/welcome";
 
