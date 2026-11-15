@@ -102,6 +102,7 @@ server.register(aiRoutes, { prefix: "/api/ai" });
 server.register(budgetRoutes, { prefix: "/api/budget" });
 
 import { initTypesense } from "./utils/typesense";
+import { startKeepAliveFromEnv } from "./utils/keepAlive";
 
 // Main async start function
 const start = async () => {
@@ -109,6 +110,11 @@ const start = async () => {
     const port = parseInt(process.env.PORT || "8000", 10);
     await server.listen({ port, host: "0.0.0.0" });
     server.log.info(`Server listening on port ${port}`);
+    // Stops Render's free plan from sleeping; enabled by KEEP_ALIVE_URL.
+    startKeepAliveFromEnv(process.env, {
+      warn: (m) => server.log.warn(m),
+      info: (m) => server.log.info(m),
+    });
     
     // Initialize Typesense
     await initTypesense();
