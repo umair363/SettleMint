@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { Logo } from "./logo";
+import { useLiveUpdates } from "@/features/pwa/live-updates";
 import { AddExpenseProvider, useAddExpense } from "@/features/expenses/add-expense-context";
 import { AddExpenseSheet } from "@/features/expenses/add-expense-sheet";
 import { SearchPalette } from "@/features/search/search-palette";
@@ -143,6 +144,7 @@ function Gate({ children }: { children: ReactNode }) {
 
   // Home-screen shortcut "Add expense" opens /home?add=1.
   const signedIn = Boolean(me.data);
+  useLiveUpdates(signedIn);
   useEffect(() => {
     if (!signedIn) return;
     const url = new URL(window.location.href);

@@ -67,6 +67,9 @@ jobs:
       - name: Offline sync
         working-directory: web
         run: node e2e/offline.mjs out ../e2e-shots/offline
+      - name: Live updates (two browsers)
+        working-directory: web
+        run: node e2e/live.mjs out
       - name: Accessibility (axe, WCAG 2.2 AA)
         working-directory: web
         run: node e2e/a11y.mjs out

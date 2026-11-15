@@ -1,6 +1,7 @@
 import { uuidv7 } from "uuidv7";
 import type { DbOrTx } from "../db/client";
 import { activityEvents } from "../db/schema";
+import { markGroupChanged } from "../live";
 
 export type ActivityType =
   | "group.created"
@@ -32,6 +33,7 @@ export async function recordActivity(
     data?: Record<string, unknown>;
   },
 ) {
+  markGroupChanged(e.groupId);
   await db.insert(activityEvents).values({
     id: uuidv7(),
     groupId: e.groupId,

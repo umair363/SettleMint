@@ -12,6 +12,8 @@ cd web && NEXT_PUBLIC_API_URL=http://localhost:8001 npm run build
 # 3. Run (serves web/out on :4555; screenshots go to the given folder)
 node e2e/flow.mjs out ../.e2e-shots phone dark     # sign up → group → expense → settle → activity
 node e2e/offline.mjs out ../.e2e-shots/offline     # open offline, add offline, reload, sync
+node e2e/live.mjs out                              # two browsers: changes appear without reloading
+node e2e/a11y.mjs out                              # axe-core WCAG 2.2 AA on every screen, both themes
 ```
 
 `flow.mjs` takes `phone|desktop` and `dark|light`. Both print PASS/FAIL lines or problems found.

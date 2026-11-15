@@ -55,7 +55,7 @@ const shot = async (name) => {
 };
 
 try {
-  await page.goto("http://localhost:4555/sign-in", { waitUntil: "networkidle" });
+  await page.goto("http://localhost:4555/sign-in", { waitUntil: "load" });
   await page.getByRole("button", { name: "Use a password" }).click();
   await page.getByRole("button", { name: "Create account" }).click();
   await page.getByLabel("Your name").fill("Olu Offline");
@@ -85,7 +85,7 @@ try {
     return `${await Promise.race([ready, timeout])} (registrations: ${regs.length})`;
   });
   log.push(`INFO service worker: ${swState}`);
-  await page.goto(groupUrl, { waitUntil: "networkidle" });
+  await page.goto(groupUrl, { waitUntil: "load" });
   const controlled = await page.evaluate(() => Boolean(navigator.serviceWorker.controller));
   controlled ? ok("service worker controls the page") : fail("service worker not controlling");
   await page.waitForTimeout(1500);
@@ -117,7 +117,7 @@ try {
   // 4. Back online: it syncs.
   await ctx.setOffline(false);
   await page.waitForTimeout(6000);
-  await page.goto(groupUrl, { waitUntil: "networkidle" });
+  await page.goto(groupUrl, { waitUntil: "load" });
   await page.waitForTimeout(2000);
   const synced = await page.evaluate(async (id) => {
     const res = await fetch(`http://localhost:8001/v1/groups/${id}/expenses`, { credentials: "include" });

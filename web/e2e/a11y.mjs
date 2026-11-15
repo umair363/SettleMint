@@ -53,9 +53,9 @@ for (const theme of ["dark", "light"]) {
   page.setDefaultTimeout(15000);
   const at = (name) => `${theme} · ${name}`;
 
-  await page.goto("http://localhost:4555/", { waitUntil: "networkidle" });
+  await page.goto("http://localhost:4555/", { waitUntil: "load" });
   await audit(page, at("landing"));
-  await page.goto("http://localhost:4555/sign-in", { waitUntil: "networkidle" });
+  await page.goto("http://localhost:4555/sign-in", { waitUntil: "load" });
   await audit(page, at("sign-in"));
 
   await page.getByRole("button", { name: "Use a password" }).click();
@@ -102,7 +102,7 @@ for (const theme of ["dark", "light"]) {
   await page.keyboard.press("Escape");
 
   for (const p of ["home", "groups", "activity", "account"]) {
-    await page.goto(`http://localhost:4555/${p}`, { waitUntil: "networkidle" });
+    await page.goto(`http://localhost:4555/${p}`, { waitUntil: "load" });
     await audit(page, at(p));
   }
   await ctx.close();

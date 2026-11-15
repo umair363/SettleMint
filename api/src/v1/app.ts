@@ -6,6 +6,7 @@ import swagger from "@fastify/swagger";
 import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from "fastify-type-provider-zod";
 import { fromNodeHeaders } from "better-auth/node";
 import { createAuth, type Auth } from "./auth";
+import { liveRoutes, registerLiveUpdates } from "./live";
 import type { AppConfig } from "./config";
 import type { Db } from "./db/client";
 import { AppError, registerErrorHandler } from "./errors";
@@ -93,6 +94,8 @@ export async function buildApp({ db, config, mailer, logger = true }: BuildAppOp
 
   app.get("/health", async () => ({ ok: true }));
 
+  registerLiveUpdates(app);
+
   // Better Auth handles everything under /v1/auth (sign-up, sign-in, OTP,
   // OAuth callbacks, guest sessions, sign-out).
   app.route({
@@ -154,6 +157,7 @@ export async function buildApp({ db, config, mailer, logger = true }: BuildAppOp
       await v1.register(expenseRoutes);
       await v1.register(settlementRoutes);
       await v1.register(activityRoutes);
+      await v1.register(liveRoutes);
     },
     { prefix: "/v1" },
   );
