@@ -8,3 +8,4 @@ export * from "./engine";
 // v1 API contracts
 export * from "./api/contracts";
 export type * from "./api/types";
+export * from "./api/client";

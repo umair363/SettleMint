@@ -20,7 +20,8 @@ function required(name: string, value: string | undefined): string {
 
 export function configFromEnv(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const mode = env.NODE_ENV === "production" ? "production" : env.NODE_ENV === "test" ? "test" : "development";
-  const webOrigins = (env.WEB_ORIGINS ?? env.FRONTEND_URL ?? "http://localhost:3000")
+  // Dev default: the new web app (3001) and the old one (3000).
+  const webOrigins = (env.WEB_ORIGINS ?? "http://localhost:3001,http://localhost:3000")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);

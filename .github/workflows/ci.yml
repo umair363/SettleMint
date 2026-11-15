@@ -22,10 +22,14 @@ jobs:
       - run: npm ci
       - name: Typecheck (shared, api, app)
         run: npm run typecheck
-      - name: Unit tests
+      - name: Tests (money engine, API integration)
         run: npm test -w api
-      - name: Lint (web)
-        # The current web app has ~100 lint errors and is being rebuilt in v2.
-        # Reported but not blocking until the rebuild lands; then remove this line.
+      - name: Lint (new web app)
+        run: npm run lint -w web
+      - name: Build new web app as static files
+        run: npm run build -w web
+      - name: Lint (old web app)
+        # The old app has ~100 lint errors and is replaced by web/ in v2.
+        # Reported but not blocking; this step goes away with the old app.
         continue-on-error: true
-        run: npm run lint
+        run: npm run lint -w app
