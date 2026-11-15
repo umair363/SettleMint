@@ -2,7 +2,8 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    include: ["src/**/*.test.ts"],
+    // Shared-package tests run here too, so the repo needs only one Vitest install.
+    include: ["src/**/*.test.ts", "../packages/shared/src/**/*.test.ts"],
     environment: "node",
   },
 });
