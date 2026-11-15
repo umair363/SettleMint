@@ -17,7 +17,9 @@ export const money = z
   .finite()
   .positive()
   .max(100_000_000)
-  .refine((v) => Math.round(v * 100) === v * 100, {
+  // Compare with a tolerance: 19.99 * 100 is 1998.9999999999998 in floating point,
+  // so an exact equality check rejects ordinary amounts.
+  .refine((v) => Math.abs(Math.round(v * 100) - v * 100) < 1e-6, {
     message: "Amount must have at most 2 decimal places",
   });
 
