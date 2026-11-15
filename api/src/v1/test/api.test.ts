@@ -339,7 +339,7 @@ describe("invites and guests", () => {
   it("lets a guest join by link, claim a spot and later keep it after signing up", async () => {
     const { ana, group, benId } = await tripWithFriends();
     const link = (await ana.post(`/v1/groups/${group.id}/invite`)).body;
-    expect(link.url).toContain(`/join/${link.token}`);
+    expect(link.url).toContain(`/join?t=${link.token}`);
 
     const preview = await client().get(`/v1/invites/${link.token}`);
     expect(preview.status).toBe(200);

@@ -38,10 +38,17 @@ function ThemedToaster() {
       position="top-center"
       offset={16}
       toastOptions={{
+        unstyled: true,
         classNames: {
-          toast: "!glass !rounded-[var(--radius-lg)] !shadow-float !text-fg !border-glass-line",
-          description: "!text-fg-muted",
-          actionButton: "!bg-accent !text-accent-fg !font-semibold !rounded-full",
+          toast:
+            "glass flex w-full items-center gap-3 rounded-[var(--radius-lg)] px-4 py-3 text-fg shadow-float",
+          title: "text-[15px] font-semibold",
+          description: "text-[13px] text-fg-muted",
+          icon: "shrink-0 [&_svg]:size-5",
+          success: "[&_[data-icon]]:text-positive",
+          error: "[&_[data-icon]]:text-negative",
+          actionButton: "ms-auto shrink-0 rounded-full bg-accent px-3.5 py-1.5 text-sm font-semibold text-accent-fg",
+          cancelButton: "shrink-0 rounded-full bg-surface-3 px-3 py-1.5 text-sm",
         },
       }}
     />
@@ -60,8 +67,13 @@ function makeQueryClient() {
     }),
     mutationCache: new MutationCache({
       onError: (err, _vars, _ctx, mutation) => {
-        if (mutation.options.onError) return; // the screen handles it
-        toast.error(err instanceof ApiError ? err.message : "Something went wrong");
+        // Screens that stay open and show their own message set meta.handlesErrors.
+        // Everything else (e.g. an expense saved after its sheet closed) is reported here,
+        // so a failed save is never silent.
+        if (mutation.meta?.handlesErrors) return;
+        toast.error(err instanceof ApiError ? err.message : "Something went wrong", {
+          description: err instanceof ApiError && err.isNetwork ? "Check your connection and try again." : undefined,
+        });
       },
     }),
     defaultOptions: {

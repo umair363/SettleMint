@@ -224,7 +224,7 @@ export function AmountPad({
               isOp
                 ? "bg-accent-soft text-positive"
                 : k === "clear"
-                  ? "row-span-2 bg-surface-3 text-base font-semibold text-fg-muted"
+                  ? "row-span-2 border border-line bg-surface-2 text-base font-semibold text-fg-muted"
                   : "bg-surface-2 text-fg active:bg-surface-3",
             )}
           >

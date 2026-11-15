@@ -165,29 +165,28 @@
   }
 }
 
-@layer utilities {
-  /* Money and any figures that should line up in columns. */
-  .tabular {
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1, "ss01" 1;
-  }
-  /* Floating chrome only (nav bars, sheets, the add button): never content cards. */
-  .glass {
-    background: var(--glass);
-    -webkit-backdrop-filter: blur(20px) saturate(170%);
-    backdrop-filter: blur(20px) saturate(170%);
-    border: 1px solid var(--glass-line);
-  }
-  .safe-bottom {
-    padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);
-  }
-  .safe-top {
-    padding-top: env(safe-area-inset-top);
-  }
-  .no-scrollbar {
-    scrollbar-width: none;
-  }
-  .no-scrollbar::-webkit-scrollbar {
+/* Custom utilities (declared with @utility so variants and ! work in Tailwind v4). */
+/* Money and any figures that should line up in columns. */
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "ss01" 1;
+}
+/* Floating chrome only (nav bars, sheets, toasts, the add button): never content cards. */
+@utility glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(20px) saturate(170%);
+  backdrop-filter: blur(20px) saturate(170%);
+  border: 1px solid var(--glass-line);
+}
+@utility safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);
+}
+@utility safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
     display: none;
   }
 }

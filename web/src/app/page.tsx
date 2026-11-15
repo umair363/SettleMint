@@ -1,16 +1,55 @@
-import Link from "next/link";
+"use client";
 
-// Temporary home while the app is being built. The real landing page comes in Phase 7.
+import { ArrowRight, Globe, Receipt, Users } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { Logo } from "@/features/shell/app-shell";
+import { useMe } from "@/lib/queries";
+
+// Signed-in people go straight to the app. The full landing page comes in Phase 7.
 export default function Home() {
+  const me = useMe();
+  const router = useRouter();
+  useEffect(() => {
+    if (me.data) router.replace("/home");
+  }, [me.data, router]);
+
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-6 px-6 text-center">
-      <h1 className="font-display text-4xl font-semibold tracking-tight">SettleMint</h1>
-      <p className="text-fg-muted">Split bills with anyone, in any currency. Fair to the cent.</p>
-      <div className="flex gap-3">
-        <Link href="/design" className="rounded-full bg-accent px-5 py-2.5 font-semibold text-accent-fg">
-          Design system
-        </Link>
+    <main className="relative mx-auto flex min-h-dvh max-w-xl flex-col justify-center gap-8 overflow-hidden px-6 py-16">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-32 start-1/2 h-96 w-[36rem] -translate-x-1/2 rounded-full opacity-70 blur-3xl rtl:translate-x-1/2"
+        style={{ background: "radial-gradient(closest-side, var(--accent-soft), transparent)" }}
+      />
+      <Logo className="relative" />
+      <div className="relative space-y-4">
+        <h1 className="font-display text-5xl font-semibold leading-[1.05] tracking-tight">
+          Split bills.
+          <br />
+          Keep friends.
+        </h1>
+        <p className="max-w-md text-lg text-fg-muted">
+          Shared costs for trips, homes and couples. Any currency, fair to the cent, free with no daily limits.
+        </p>
       </div>
+      <ul className="relative space-y-3 text-[15px]">
+        <li className="flex items-center gap-3">
+          <Users className="size-5 text-positive" /> Friends join from a link, no account needed
+        </li>
+        <li className="flex items-center gap-3">
+          <Globe className="size-5 text-positive" /> 150+ currencies, rate locked when you add it
+        </li>
+        <li className="flex items-center gap-3">
+          <Receipt className="size-5 text-positive" /> Split equally, by amount, percent, shares or item
+        </li>
+      </ul>
+      <Link
+        href="/sign-in"
+        className="relative inline-flex h-14 items-center justify-center gap-2 self-start rounded-[var(--radius-lg)] bg-accent px-7 text-base font-semibold text-accent-fg shadow-glow"
+      >
+        Get started <ArrowRight className="size-4 rtl:rotate-180" />
+      </Link>
     </main>
   );
 }

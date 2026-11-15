@@ -42,9 +42,14 @@ export function Sheet({
         <Drawer.Overlay className="fixed inset-0 z-50 bg-scrim backdrop-blur-[2px]" />
         <Drawer.Content
           className={cn(
-            "glass fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-[var(--radius-xl)] border-b-0 shadow-float outline-none",
+            // Sheets hold forms, so they stay nearly opaque: just enough blur to
+            // feel layered without the page's colours bleeding through.
+            "fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-[var(--radius-xl)] border border-b-0 border-glass-line shadow-float outline-none",
+            "bg-[color-mix(in_oklab,var(--bg-elevated)_95%,transparent)] backdrop-blur-2xl",
             "max-h-[92dvh]",
             tall && "h-[92dvh]",
+            // vaul extends bottom sheets below the screen (for overscroll); not when floating.
+            "sm:after:hidden!",
             "sm:inset-x-auto sm:bottom-auto sm:start-1/2 sm:top-1/2 sm:w-[min(32rem,calc(100vw-2rem))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[var(--radius-xl)] sm:border-b rtl:sm:translate-x-1/2",
             tall && "sm:h-[min(44rem,88dvh)]",
             className,
