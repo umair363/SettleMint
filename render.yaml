@@ -1,0 +1,40 @@
+# Render blueprint for the v1 API (free plan).
+# Dashboard: New > Blueprint > this repo. Fill in the values marked sync: false.
+services:
+  - type: web
+    name: settlemint-api
+    runtime: node
+    plan: free
+    # Dev dependencies (TypeScript) are needed to build.
+    buildCommand: npm ci --include=dev && npm run build -w api
+    startCommand: npm run start:v1 -w api
+    # Cheap liveness check; never touches the database (so Neon can sleep).
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AUTH_SECRET
+        generateValue: true
+      # Neon connection string (use the pooled one). Migrations run on start-up.
+      - key: V1_DATABASE_URL
+        sync: false
+      # e.g. https://api.settlemint.online
+      - key: API_URL
+        sync: false
+      # e.g. https://app.settlemint.online
+      - key: WEB_ORIGINS
+        sync: false
+      # e.g. .settlemint.online (app and API must share this domain for sign-in cookies)
+      - key: COOKIE_DOMAIN
+        sync: false
+      # e.g. https://api.settlemint.online/health (keeps the free instance awake)
+      - key: KEEP_ALIVE_URL
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false

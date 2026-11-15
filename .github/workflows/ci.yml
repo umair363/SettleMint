@@ -11,8 +11,9 @@ concurrency:
 
 jobs:
   check:
+    name: Typecheck, tests, lint, build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,16 +21,59 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Typecheck (shared, api, app)
+      - name: Typecheck (shared, api, old app, web)
         run: npm run typecheck
-      - name: Tests (money engine, API integration)
+      - name: Tests (money engine, API integration on in-memory Postgres)
         run: npm test -w api
-      - name: Lint (new web app)
+      - name: Lint (web)
         run: npm run lint -w web
-      - name: Build new web app as static files
+      - name: Build web as static files
         run: npm run build -w web
       - name: Lint (old web app)
-        # The old app has ~100 lint errors and is replaced by web/ in v2.
-        # Reported but not blocking; this step goes away with the old app.
+        # The old app has ~100 lint errors and is replaced by web/. Reported, not blocking.
         continue-on-error: true
         run: npm run lint -w app
+
+  e2e:
+    name: Browser tests (flow, offline, accessibility)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Build shared package
+        run: npm run build:shared
+      - name: Start API (local PGlite database)
+        working-directory: api
+        env:
+          PORT: "8001"
+          WEB_ORIGINS: http://localhost:4555
+        run: |
+          nohup npx tsx src/v1/main.ts > ../api.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf localhost:8001/health && exit 0; sleep 1; done
+          cat ../api.log; exit 1
+      - name: Build web against it
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8001
+        run: npm run build -w web
+      - name: Main flow
+        working-directory: web
+        run: node e2e/flow.mjs out ../e2e-shots phone dark
+      - name: Offline sync
+        working-directory: web
+        run: node e2e/offline.mjs out ../e2e-shots/offline
+      - name: Accessibility (axe, WCAG 2.2 AA)
+        working-directory: web
+        run: node e2e/a11y.mjs out
+      - name: Keep screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-screenshots
+          path: e2e-shots
+          if-no-files-found: ignore

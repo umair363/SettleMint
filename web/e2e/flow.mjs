@@ -154,5 +154,6 @@ try {
 } finally {
   await browser.close();
   server.close();
-  console.log(problems.length ? "PROBLEMS:\n" + problems.join("\n") : "flow completed with no errors");
+  console.log(problems.length ? `PROBLEMS:\n${problems.join("\n")}` : "flow completed with no errors");
+  if (problems.length) process.exitCode = 1;
 }
