@@ -38,3 +38,6 @@ app/public/fallback-*.js
 
 # Local PGlite database for the v1 API (npm run dev:v1)
 api/.data/
+
+# Local end-to-end screenshots
+.e2e-shots/

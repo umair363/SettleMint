@@ -1,12 +1,14 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { LogOut, Monitor, Moon, ShieldCheck, Sun } from "lucide-react";
+import { Download, LogOut, Monitor, Moon, Share, ShieldCheck, Sun } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import { useInstall } from "@/features/pwa/pwa";
 import { PageBody, PageHeader } from "@/features/shell/page-header";
 import { authClient } from "@/lib/auth-client";
+import { persister } from "@/lib/persist";
 import { useMe, useUpdateMe } from "@/lib/queries";
 import { Avatar } from "@/ui/avatar";
 import { Button } from "@/ui/button";
@@ -84,6 +86,35 @@ function SaveGuestAccount() {
   );
 }
 
+function InstallCard() {
+  const { state, install } = useInstall();
+  if (state === "installed" || state === "unavailable") return null;
+  return (
+    <Card className="flex items-center gap-4 p-5">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-positive">
+        <Download className="size-5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold">Install SettleMint</p>
+        <p className="text-sm text-fg-muted">
+          {state === "ios" ? (
+            <>
+              Tap <Share className="inline size-4 align-text-bottom" aria-label="Share" /> then “Add to Home Screen”.
+            </>
+          ) : (
+            "Open it like an app, even offline."
+          )}
+        </p>
+      </div>
+      {state === "prompt" && (
+        <Button size="sm" onClick={install}>
+          Install
+        </Button>
+      )}
+    </Card>
+  );
+}
+
 export default function AccountPage() {
   const me = useMe();
   const update = useUpdateMe();
@@ -100,7 +131,9 @@ export default function AccountPage() {
   const signOut = async () => {
     setSigningOut(true);
     await authClient.signOut();
+    // Nothing from this account may stay on a shared device.
     qc.clear();
+    await persister.removeClient();
     router.replace("/sign-in");
   };
 
@@ -154,6 +187,8 @@ export default function AccountPage() {
             </div>
           </Card>
         </section>
+
+        <InstallCard />
 
         <section>
           <SectionHeader title="Appearance" />

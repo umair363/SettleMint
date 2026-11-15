@@ -27,7 +27,7 @@ import { Button } from "@/ui/button";
 import { cn } from "@/ui/cn";
 import { Segmented, Switch } from "@/ui/controls";
 import { CurrencyPicker } from "@/ui/currency-picker";
-import { EmptyState, Spinner } from "@/ui/feedback";
+import { EmptyState, ErrorState, Spinner } from "@/ui/feedback";
 import { TextField } from "@/ui/field";
 import { Money } from "@/ui/money";
 import { springSoft } from "@/ui/motion";
@@ -101,6 +101,16 @@ function ExpenseForm({
       <div className="flex h-full items-center justify-center">
         <Spinner />
       </div>
+    );
+  }
+  if ((groupId && !group.data) || (!groupId && groups.error)) {
+    // Couldn't load (offline with nothing saved yet): don't pretend there are no groups.
+    return (
+      <ErrorState
+        offline={!navigator.onLine}
+        body="Open the group once while online, then you can add expenses to it offline."
+        onRetry={() => (groupId ? group.refetch() : groups.refetch())}
+      />
     );
   }
   if (!groupId || !group.data) {

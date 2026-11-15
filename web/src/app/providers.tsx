@@ -1,7 +1,11 @@
 "use client";
 
 import { ApiError } from "@settlemint/shared";
-import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MutationCache, onlineManager, QueryCache, QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { OfflineBanner, ServiceWorker } from "@/features/pwa/pwa";
+import { CACHE_BUSTER, persister } from "@/lib/persist";
+import { registerMutationDefaults } from "@/lib/queries";
 import { useState, useSyncExternalStore, type ReactNode } from "react";
 import { Toaster, toast } from "sonner";
 import { IntlProvider } from "use-intl";
@@ -56,11 +60,16 @@ function ThemedToaster() {
 }
 
 function makeQueryClient() {
-  return new QueryClient({
+  // React Query assumes "online" until an offline event arrives; start from the
+  // real state so an offline launch pauses requests instead of failing them.
+  if (typeof navigator !== "undefined") onlineManager.setOnline(navigator.onLine);
+  const client = new QueryClient({
     queryCache: new QueryCache({
       onError: (err, query) => {
-        // Background refetch failures for data already on screen get a quiet toast.
-        if (query.state.data !== undefined && !(err instanceof ApiError && err.status === 401)) {
+        // Background refetch failures for data already on screen get a quiet toast,
+        // except offline, where the offline pill already says so.
+        const offline = err instanceof ApiError && err.isNetwork && !onlineManager.isOnline();
+        if (query.state.data !== undefined && !offline && !(err instanceof ApiError && err.status === 401)) {
           toast.error("Couldn't refresh", { id: "refresh-failed", description: "Showing saved data." });
         }
       },
@@ -79,15 +88,19 @@ function makeQueryClient() {
     defaultOptions: {
       queries: {
         staleTime: 30_000,
-        gcTime: 24 * 60 * 60 * 1000,
+        // Kept for a week so the app can open from saved data.
+        gcTime: 7 * 24 * 60 * 60 * 1000,
         refetchOnWindowFocus: true,
         retry: (count, err) => {
           if (err instanceof ApiError && err.status >= 400 && err.status < 500) return false;
-          return count < 2;
+          return count < 4;
         },
+        retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 15_000),
       },
     },
   });
+  registerMutationDefaults(client);
+  return client;
 }
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -96,10 +109,27 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider>
       <IntlProvider locale={locale} messages={{}} onError={() => {}}>
-        <QueryClientProvider client={client}>
+        <PersistQueryClientProvider
+          client={client}
+          persistOptions={{
+            persister,
+            buster: CACHE_BUSTER,
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            dehydrateOptions: {
+              // Save loaded data and queued writes; never half-loaded or failed queries.
+              shouldDehydrateQuery: (q) => q.state.status === "success" && q.queryKey[0] !== "invite",
+            },
+          }}
+          onSuccess={() => {
+            // Send anything that was queued while offline, then refresh.
+            void client.resumePausedMutations().then(() => client.invalidateQueries());
+          }}
+        >
           {children}
           <ThemedToaster />
-        </QueryClientProvider>
+          <OfflineBanner />
+          <ServiceWorker />
+        </PersistQueryClientProvider>
       </IntlProvider>
     </ThemeProvider>
   );

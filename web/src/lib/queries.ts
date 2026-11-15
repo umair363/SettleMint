@@ -7,6 +7,7 @@ import {
   type CreateSettlementBody,
   type ExpenseDto,
   type GroupDetailDto,
+  type SettlementDto,
   type GroupSummaryDto,
   type UpdateExpenseBody,
   type UpdateGroupBody,
@@ -122,6 +123,24 @@ export function useCreateGroup() {
     mutationFn: (body: Omit<CreateGroupBody, "id">) => api.groups.create({ id: uuidv7(), ...body }),
     onSuccess: (group) => {
       qc.setQueryData(keys.group(group.id), group);
+      // Put it in the saved list right away, so it's there even if the
+      // network drops before the list is fetched again.
+      qc.setQueryData<GroupSummaryDto[]>(keys.groups, (old) => [
+        {
+          id: group.id,
+          name: group.name,
+          currency: group.currency,
+          type: group.type,
+          emoji: group.emoji,
+          color: group.color,
+          memberCount: group.members.filter((m) => !m.left).length,
+          myBalance: group.myBalance,
+          archived: group.archived,
+          lastActivityAt: group.lastActivityAt,
+          version: group.version,
+        },
+        ...(old ?? []).filter((g) => g.id !== group.id),
+      ]);
       return qc.invalidateQueries({ queryKey: keys.groups });
     },
   });
@@ -140,16 +159,44 @@ export function useUpdateGroup(groupId: string) {
 
 type ExpensePages = InfiniteData<Page<ExpenseDto>, string | undefined>;
 
-/**
- * Create an expense with a client-made id: retries (flaky network, server
- * waking up) can never create a duplicate, and the new row shows instantly.
- */
+// ─── Offline-safe writes ───────────────────────────────────────────────────
+// Creates are registered as mutation defaults so a queued (offline) write
+// can run after a reload, when the screen that started it is long gone. Each
+// carries a client-made id, so a retry can never create a duplicate.
+
+export const mutationKeys = {
+  createExpense: ["expense", "create"] as const,
+  createSettlement: ["settlement", "create"] as const,
+};
+
+/** Keep retrying network failures for about a minute: a free server can take that long to wake. */
+const networkRetry = {
+  retry: (count: number, err: unknown) => err instanceof ApiError && err.isNetwork && count < 6,
+  retryDelay: (attempt: number) => Math.min(1000 * 2 ** attempt, 15_000),
+};
+
+type CreateExpenseVars = { groupId: string; body: CreateExpenseBody & { id: string } };
+type CreateSettlementVars = { groupId: string; body: CreateSettlementBody & { id: string } };
+
+export function registerMutationDefaults(qc: QueryClient) {
+  qc.setMutationDefaults(mutationKeys.createExpense, {
+    mutationFn: ({ groupId, body }: CreateExpenseVars) => api.expenses.create(groupId, body),
+    onSettled: (_d, _e, vars: CreateExpenseVars) => invalidateGroup(qc, vars.groupId),
+    ...networkRetry,
+  });
+  qc.setMutationDefaults(mutationKeys.createSettlement, {
+    mutationFn: ({ groupId, body }: CreateSettlementVars) => api.settlements.create(groupId, body),
+    onSettled: (_d, _e, vars: CreateSettlementVars) => invalidateGroup(qc, vars.groupId),
+    ...networkRetry,
+  });
+}
+
+/** Create an expense; the new row shows instantly and survives going offline. */
 export function useCreateExpense(groupId: string) {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (body: CreateExpenseBody & { id: string }) => api.expenses.create(groupId, body),
-    retry: (count, err) => err instanceof ApiError && err.isNetwork && count < 3,
-    onMutate: async (body) => {
+  const mutation = useMutation<ExpenseDto, Error, CreateExpenseVars, { previous?: ExpensePages }>({
+    mutationKey: mutationKeys.createExpense,
+    onMutate: async ({ body }) => {
       await qc.cancelQueries({ queryKey: keys.expenses(groupId) });
       const previous = qc.getQueryData<ExpensePages>(keys.expenses(groupId));
       const now = new Date().toISOString();
@@ -180,11 +227,14 @@ export function useCreateExpense(groupId: string) {
       }
       return { previous };
     },
-    onError: (_err, _body, ctx) => {
+    onError: (_err, _vars, ctx) => {
       if (ctx?.previous) qc.setQueryData(keys.expenses(groupId), ctx.previous);
     },
-    onSettled: () => invalidateGroup(qc, groupId),
   });
+  return {
+    ...mutation,
+    mutate: (body: CreateExpenseBody & { id: string }) => mutation.mutate({ groupId, body }),
+  };
 }
 
 export function useUpdateExpense(groupId: string) {
@@ -224,10 +274,9 @@ export function useSetExpenseDeleted(groupId: string) {
 
 export function useCreateSettlement(groupId: string) {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (body: CreateSettlementBody & { id: string }) => api.settlements.create(groupId, body),
-    retry: (count, err) => err instanceof ApiError && err.isNetwork && count < 3,
-    onMutate: async (body) => {
+  const mutation = useMutation<SettlementDto, Error, CreateSettlementVars, { previous?: GroupDetailDto }>({
+    mutationKey: mutationKeys.createSettlement,
+    onMutate: async ({ body }) => {
       // Move the balances on screen straight away.
       const previous = qc.getQueryData<GroupDetailDto>(keys.group(groupId));
       if (previous && body.currency === previous.currency) {
@@ -245,8 +294,11 @@ export function useCreateSettlement(groupId: string) {
     onError: (_e, _v, ctx) => {
       if (ctx?.previous) qc.setQueryData(keys.group(groupId), ctx.previous);
     },
-    onSettled: () => invalidateGroup(qc, groupId),
   });
+  return {
+    ...mutation,
+    mutate: (body: CreateSettlementBody & { id: string }) => mutation.mutate({ groupId, body }),
+  };
 }
 
 export function useSetSettlementDeleted(groupId: string) {
