@@ -6,7 +6,9 @@ import { buildApp } from "./app";
 import { configFromEnv } from "./config";
 import { connectPostgres, MIGRATIONS_FOLDER, type Db } from "./db/client";
 import * as schema from "./db/schema";
+import { announceGroupChanged } from "./live";
 import { createMailer } from "./mailer";
+import { materializeRecurring } from "./services/recurring";
 
 dotenv.config();
 
@@ -34,6 +36,16 @@ async function main() {
   const app = await buildApp({ db, config, mailer: createMailer() });
 
   await app.listen({ port: Number(process.env.PORT ?? 8001), host: "0.0.0.0" });
+  // Recurring bills: catch up now, then every hour. Opening a group also
+  // catches up, so nothing is missed while a free instance sleeps.
+  const runRecurring = () =>
+    materializeRecurring(db)
+      .then((changed) => changed.forEach(announceGroupChanged))
+      .catch((err) => app.log.error({ err }, "recurring bills failed"));
+  void runRecurring();
+  const recurringTimer = setInterval(runRecurring, 60 * 60 * 1000);
+  recurringTimer.unref();
+
   const stopKeepAlive = startKeepAliveFromEnv(process.env, {
     warn: (m) => app.log.warn(m),
     info: (m) => app.log.info(m),
@@ -41,6 +53,7 @@ async function main() {
 
   const shutdown = async () => {
     stopKeepAlive();
+    clearInterval(recurringTimer);
     await app.close();
     await close();
     process.exit(0);

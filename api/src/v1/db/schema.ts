@@ -164,6 +164,8 @@ export const expenses = pgTable(
     notes: text("notes"),
     /** The full split as entered, so it can be edited later exactly as it was. */
     split: jsonb("split").notNull(),
+    /** Set when this expense was created by a recurring rule. */
+    recurringRuleId: uuid("recurring_rule_id"),
     createdByUserId: text("created_by_user_id").references(() => user.id, { onDelete: "set null" }),
     updatedByUserId: text("updated_by_user_id").references(() => user.id, { onDelete: "set null" }),
     version: integer("version").notNull().default(1),
@@ -305,4 +307,39 @@ export const paymentHandles = pgTable(
     createdAt: createdAt(),
   },
   (t) => [index("payment_handles_user_idx").on(t.userId)],
+);
+
+// ─── Recurring expenses ────────────────────────────────────────────────────
+
+/**
+ * A bill that repeats (rent, subscriptions). Occurrence dates are always
+ * computed from `startDate` (no drift); `generated` counts occurrences made.
+ * Each occurrence's expense id is derived from (rule, date), so generating
+ * twice can never create a duplicate.
+ */
+export const recurringRules = pgTable(
+  "recurring_rules",
+  {
+    id: uuid("id").primaryKey(),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    /** The expense to create each time (createExpenseBody without id/date). */
+    template: jsonb("template").notNull(),
+    frequency: varchar("frequency", { length: 8 }).$type<"weekly" | "monthly" | "yearly">().notNull(),
+    interval: integer("interval").notNull().default(1),
+    startDate: date("start_date", { mode: "string" }).notNull(),
+    endDate: date("end_date", { mode: "string" }),
+    /** IANA zone used to decide which day it is for this bill (the creator's). */
+    timezone: varchar("timezone", { length: 64 }).notNull().default("UTC"),
+    generated: integer("generated").notNull().default(0),
+    nextDate: date("next_date", { mode: "string" }).notNull(),
+    active: boolean("active").notNull().default(true),
+    /** Why it stopped by itself (e.g. someone on the bill left the group). */
+    pausedReason: varchar("paused_reason", { length: 200 }),
+    createdByUserId: text("created_by_user_id").references(() => user.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("recurring_due_idx").on(t.active, t.nextDate), index("recurring_group_idx").on(t.groupId)],
 );

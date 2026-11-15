@@ -146,6 +146,19 @@ try {
     await shot("after-settle");
   });
 
+  await step("repeating bill", async () => {
+    await page.getByRole("radio", { name: "Expenses" }).click();
+    await page.getByRole("button", { name: "Add expense" }).last().click();
+    await page.getByLabel("Description").fill("Rent");
+    await page.getByLabel("Description").blur();
+    for (const k of ["9", "0", "0"]) await page.getByRole("button", { name: k, exact: true }).click();
+    await page.getByLabel("Repeat").selectOption("monthly");
+    await shot("repeat-option");
+    await page.getByRole("button", { name: /^Add \$900\.00/ }).click();
+    await page.getByText(/Monthly · next/).waitFor({ timeout: 15000 });
+    await shot("repeating-section");
+  });
+
   await step("activity and home", async () => {
     await page.goto("http://localhost:4555/activity", { waitUntil: "load" });
     await shot("activity");

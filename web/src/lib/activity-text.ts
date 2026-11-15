@@ -21,7 +21,12 @@ export function describeActivity(e: ActivityDto, myUserId: string | undefined): 
 
   switch (e.type) {
     case "expense.created":
+      if (d.recurring) return { kind: "expense", text: `Repeating bill added ${quote(str(d.description))}`, amount: money };
       return { kind: "expense", text: `${actor} added ${quote(str(d.description))}`, amount: money };
+    case "recurring.created":
+      return { kind: "expense", text: `${actor} set ${quote(str(d.description))} to repeat ${str(d.frequency)}`, amount: money };
+    case "recurring.stopped":
+      return { kind: "expense", text: `${actor} stopped repeating ${quote(str(d.description))}` };
     case "expense.updated":
       return {
         kind: "expense",

@@ -15,12 +15,14 @@ export function dayLabel(iso: string, locale: string): string {
   const today = parseIsoDate(todayIso());
   const diff = Math.round((today.getTime() - date.getTime()) / 86_400_000);
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
-  if (diff === 0 || diff === 1) {
+  // Today, yesterday and tomorrow in words ("diff" is negative for future dates).
+  if (diff >= -1 && diff <= 1) {
     const s = rtf.format(-diff, "day");
     return s.charAt(0).toLocaleUpperCase(locale) + s.slice(1);
   }
   return new Intl.DateTimeFormat(locale, {
-    weekday: diff < 7 ? "short" : undefined,
+    // The weekday helps only for the past week; future dates show day and month.
+    weekday: diff > 0 && diff < 7 ? "short" : undefined,
     day: "numeric",
     month: "short",
     year: date.getFullYear() === today.getFullYear() ? undefined : "numeric",

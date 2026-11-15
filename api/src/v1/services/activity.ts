@@ -20,7 +20,9 @@ export type ActivityType =
   | "settlement.created"
   | "settlement.updated"
   | "settlement.deleted"
-  | "settlement.restored";
+  | "settlement.restored"
+  | "recurring.created"
+  | "recurring.stopped";
 
 export async function recordActivity(
   db: DbOrTx,

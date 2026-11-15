@@ -17,6 +17,7 @@ import { groupRoutes } from "./routes/groups";
 import { inviteRoutes } from "./routes/invites";
 import { meRoutes } from "./routes/me";
 import { memberRoutes } from "./routes/members";
+import { recurringRoutes } from "./routes/recurring";
 import { settlementRoutes } from "./routes/settlements";
 
 export interface AuthUser {
@@ -158,6 +159,7 @@ export async function buildApp({ db, config, mailer, logger = true }: BuildAppOp
       await v1.register(settlementRoutes);
       await v1.register(activityRoutes);
       await v1.register(liveRoutes);
+      await v1.register(recurringRoutes);
     },
     { prefix: "/v1" },
   );

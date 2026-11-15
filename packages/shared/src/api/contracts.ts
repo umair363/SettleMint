@@ -3,6 +3,7 @@ import { isValidMinor } from "../money/amount";
 import { isCurrencyCode } from "../money/currencies";
 import { isValidRate } from "../money/fx";
 import { normalizePaymentHandle, PAYMENT_KIND_VALUES } from "../payments/handles";
+import { isTimeZone, RECURRENCE_FREQUENCIES } from "../recurrence/recurrence";
 
 // Request bodies for the v1 API. The API validates with these and the web and
 // mobile clients build requests from the inferred types, so they cannot drift.
@@ -113,6 +114,25 @@ const expenseFields = {
 export const createExpenseBody = z.object({ id: zId.optional(), ...expenseFields });
 export const updateExpenseBody = z.object({ version: z.number().int().positive(), ...expenseFields });
 
+// ─── Recurring expenses ────────────────────────────────────────────────────
+
+const { date: _date, ...templateFields } = expenseFields;
+
+export const createRecurringBody = z
+  .object({
+    id: zId.optional(),
+    /** The expense to add each time. */
+    template: z.object(templateFields),
+    frequency: z.enum(RECURRENCE_FREQUENCIES),
+    interval: z.number().int().min(1).max(12).default(1),
+    /** First occurrence (today or in the past creates one straight away). */
+    startDate: zDate,
+    endDate: zDate.nullable().optional(),
+    /** The creator's IANA time zone: decides which day is "today" for this bill. */
+    timezone: z.string().max(64).refine(isTimeZone, { message: "Unknown time zone" }).default("UTC"),
+  })
+  .refine((r) => !r.endDate || r.endDate >= r.startDate, { message: "The end date is before the start", path: ["endDate"] });
+
 // ─── Settlements ───────────────────────────────────────────────────────────
 
 const settlementFields = {
@@ -171,6 +191,7 @@ export type AddMemberBody = z.input<typeof addMemberBody>;
 export type JoinInviteBody = z.input<typeof joinInviteBody>;
 export type CreateExpenseBody = z.input<typeof createExpenseBody>;
 export type UpdateExpenseBody = z.input<typeof updateExpenseBody>;
+export type CreateRecurringBody = z.input<typeof createRecurringBody>;
 export type CreateSettlementBody = z.input<typeof createSettlementBody>;
 export type UpdateSettlementBody = z.input<typeof updateSettlementBody>;
 export type UpdateMeBody = z.input<typeof updateMeBody>;
