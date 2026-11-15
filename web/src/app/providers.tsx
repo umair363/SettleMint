@@ -44,8 +44,10 @@ function ThemedToaster() {
       toastOptions={{
         unstyled: true,
         classNames: {
+          // Solid, not glass: toasts can land over a dimmed sheet backdrop, where
+          // translucency would wash the text out.
           toast:
-            "glass flex w-full items-center gap-3 rounded-[var(--radius-lg)] px-4 py-3 text-fg shadow-float",
+            "flex w-full items-center gap-3 rounded-[var(--radius-lg)] border border-line-strong bg-bg-elevated px-4 py-3 text-fg shadow-float",
           title: "text-[15px] font-semibold",
           description: "text-[13px] text-fg-muted",
           icon: "shrink-0 [&_svg]:size-5",

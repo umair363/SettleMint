@@ -1,20 +1,16 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, KeyRound, Mail, Sparkles } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState, type FormEvent } from "react";
-import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AuthLayout } from "@/features/auth/auth-layout";
 import { safeNext } from "@/features/auth/safe-next";
 import { authClient } from "@/lib/auth-client";
 import { GOOGLE_SIGN_IN } from "@/lib/env";
-import { keys } from "@/lib/queries";
+import { persister } from "@/lib/persist";
 import { Button } from "@/ui/button";
 import { TextField } from "@/ui/field";
-import { springSoft } from "@/ui/motion";
 
 type Step = "email" | "code" | "password";
 
@@ -24,11 +20,20 @@ function errorText(err: { message?: string; status?: number } | null | undefined
   return err.message || fallback;
 }
 
-function SignIn() {
+/** Where to go after signing in. Read when needed (not during render), so the page pre-renders fully. */
+function nextPath() {
+  return safeNext(new URLSearchParams(window.location.search).get("next"));
+}
+
+export default function SignInPage() {
   const router = useRouter();
-  const params = useSearchParams();
-  const next = safeNext(params.get("next"));
-  const qc = useQueryClient();
+  // Already signed in (e.g. tapped "Get started" again): go straight on. Better Auth's
+  // session endpoint answers "no session" with a 200, so a signed-out visit logs no error.
+  const session = authClient.useSession();
+  const signedIn = Boolean(session.data?.user);
+  useEffect(() => {
+    if (signedIn) router.replace(nextPath());
+  }, [signedIn, router]);
 
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
@@ -48,8 +53,9 @@ function SignIn() {
   }, [resendIn]);
 
   const finish = async () => {
-    await qc.invalidateQueries({ queryKey: keys.me });
-    router.replace(next);
+    // Never show a previous account's saved data to whoever signs in next.
+    await persister.removeClient();
+    router.replace(nextPath());
   };
 
   const sendCode = async (e?: FormEvent) => {
@@ -93,14 +99,14 @@ function SignIn() {
     setBusy(true);
     const { error } = await authClient.signIn.anonymous();
     setBusy(false);
-    if (error) return toast.error(errorText(error, "Couldn't start a guest session"));
+    if (error) return setError(errorText(error, "Couldn't start a guest session"));
     await finish();
   };
 
   const google = async () => {
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: `${window.location.origin}${next}`,
+      callbackURL: `${window.location.origin}${nextPath()}`,
       errorCallbackURL: `${window.location.origin}/sign-in`,
     });
   };
@@ -114,16 +120,11 @@ function SignIn() {
         </>
       }
     >
-      <AnimatePresence mode="wait" initial={false}>
         {step === "email" && (
-          <motion.form
+          <form
             key="email"
             onSubmit={sendCode}
-            initial={{ opacity: 0, x: -16 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -16 }}
-            transition={springSoft}
-            className="space-y-5"
+            className="animate-enter space-y-5"
           >
             <div className="space-y-1.5 text-center">
               <h1 className="font-display text-3xl font-semibold tracking-tight">Split anything, with anyone</h1>
@@ -164,17 +165,13 @@ function SignIn() {
                 <Sparkles className="size-4" /> Try without an account
               </button>
             </div>
-          </motion.form>
+          </form>
         )}
 
         {step === "code" && (
-          <motion.div
+          <div
             key="code"
-            initial={{ opacity: 0, x: 16 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 16 }}
-            transition={springSoft}
-            className="space-y-5 text-center"
+            className="animate-enter space-y-5 text-center"
           >
             <div className="space-y-1.5">
               <h1 className="font-display text-3xl font-semibold tracking-tight">Check your email</h1>
@@ -219,18 +216,14 @@ function SignIn() {
                 {resendIn > 0 ? `Resend in ${resendIn}s` : "Resend code"}
               </button>
             </div>
-          </motion.div>
+          </div>
         )}
 
         {step === "password" && (
-          <motion.form
+          <form
             key="password"
             onSubmit={withPassword}
-            initial={{ opacity: 0, x: 16 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 16 }}
-            transition={springSoft}
-            className="space-y-4"
+            className="animate-enter space-y-4"
           >
             <h1 className="text-center font-display text-3xl font-semibold tracking-tight">
               {creating ? "Create your account" : "Welcome back"}
@@ -261,17 +254,8 @@ function SignIn() {
                 {creating ? "I have an account" : "Create account"}
               </button>
             </div>
-          </motion.form>
+          </form>
         )}
-      </AnimatePresence>
     </AuthLayout>
-  );
-}
-
-export default function SignInPage() {
-  return (
-    <Suspense>
-      <SignIn />
-    </Suspense>
   );
 }

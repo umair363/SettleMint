@@ -1,11 +1,9 @@
 "use client";
 
 import { ChevronRight } from "lucide-react";
-import { motion } from "motion/react";
 import Link from "next/link";
 import type { HTMLAttributes, ReactNode } from "react";
 import { cn } from "./cn";
-import { springSnappy } from "./motion";
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
@@ -67,18 +65,16 @@ export function ListRow({ leading, title, subtitle, trailing, href, onClick, che
   );
   if (href) {
     return (
-      <motion.div whileTap={{ scale: 0.985 }} transition={springSnappy}>
-        <Link href={href} className={rowClass}>
-          {body}
-        </Link>
-      </motion.div>
+      <Link href={href} className={cn(rowClass, "transition-[transform,background-color] duration-150 ease-out active:scale-[0.985]")}>
+        {body}
+      </Link>
     );
   }
   if (onClick) {
     return (
-      <motion.button type="button" onClick={onClick} whileTap={{ scale: 0.985 }} transition={springSnappy} className={rowClass}>
+      <button type="button" onClick={onClick} className={cn(rowClass, "transition-[transform,background-color] duration-150 ease-out active:scale-[0.985]")}>
         {body}
-      </motion.button>
+      </button>
     );
   }
   return <div className={rowClass}>{body}</div>;

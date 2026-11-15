@@ -41,6 +41,41 @@ describe("api document", () => {
   });
 });
 
+describe("request hardening", () => {
+  it("rejects writes from a foreign origin even with a valid session", async () => {
+    const c = client();
+    await c.signUp("Olga");
+    // An attacker page that somehow got the browser to send the session cookie.
+    const res = await t.app.inject({
+      method: "POST",
+      url: "/v1/groups",
+      payload: { name: "Evil", currency: "USD" },
+      headers: { origin: "https://evil.example", cookie: c.cookieHeader() },
+    });
+    expect(res.statusCode).toBe(403);
+    expect((await c.get("/v1/groups")).body).toEqual([]);
+  });
+
+  it("marks API responses as not cacheable", async () => {
+    const c = client();
+    await c.signUp("Pia");
+    const res = await t.app.inject({
+      method: "GET",
+      url: "/v1/groups",
+      headers: { origin: "http://localhost:3000", cookie: c.cookieHeader() },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.headers["cache-control"]).toBe("no-store");
+  });
+
+  it("refuses oversized request bodies", async () => {
+    const c = client();
+    await c.signUp("Quinn");
+    const res = await c.post("/v1/groups", { name: "x".repeat(2 * 1024 * 1024), currency: "USD" });
+    expect(res.status).toBe(413);
+  });
+});
+
 describe("auth", () => {
   it("rejects requests without a session", async () => {
     const res = await client().get("/v1/me");

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --port 3001",
-    "build": "next build && node scripts/build-sw.mjs",
+    "build": "next build && node scripts/build-sw.mjs && node scripts/build-headers.mjs",
     "start": "npx serve out -l 3001",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit"
@@ -20,7 +20,7 @@
     "idb-keyval": "^6.3.0",
     "lucide-react": "^1.73.0",
     "motion": "^14.14.0",
-    "next": "16.2.9",
+    "next": "^16.4.6",
     "radix-ui": "^1.8.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -35,9 +35,10 @@
     "@types/node": "^20",
     "@types/react": "~19.2.2",
     "@types/react-dom": "~19.2.2",
+    "axe-core": "^4.14.0",
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^9",
-    "eslint-config-next": "16.2.9",
+    "eslint-config-next": "^16.4.6",
     "tailwindcss": "^4.3.5",
     "typescript": "^5"
   }

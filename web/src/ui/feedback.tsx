@@ -74,14 +74,14 @@ export function EmptyState({
       className={cn("px-5 py-8 sm:px-6", className)}
     >
       {preview && (
-        <div aria-hidden className="pointer-events-none mb-6 select-none opacity-60 [mask-image:linear-gradient(to_bottom,black_40%,transparent)]">
+        <div aria-hidden className="pointer-events-none mb-6 select-none [mask-image:linear-gradient(to_bottom,black_55%,transparent)]">
           {preview}
         </div>
       )}
-      <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-fg">
+      <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-fg">
         {icon && <span className="text-positive [&_svg]:size-5">{icon}</span>}
         {title}
-      </h3>
+      </h2>
       {body && <p className="mt-1.5 max-w-sm text-[15px] text-fg-muted">{body}</p>}
       {action && <div className="mt-5">{action}</div>}
     </motion.div>

@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque } from "next/font/google";
 import type { ReactNode } from "react";
 import { themeScript } from "@/ui/theme";
-import { Providers } from "./providers";
 import "./globals.css";
 
 // One family, chosen by rendering money-heavy samples of 14 typefaces side by
@@ -47,7 +46,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        {children}
       </body>
     </html>
   );

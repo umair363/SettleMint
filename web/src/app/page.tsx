@@ -1,20 +1,10 @@
-"use client";
-
 import { ArrowRight, Globe, Receipt, Users } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { Logo } from "@/features/shell/app-shell";
-import { useMe } from "@/lib/queries";
+import { Logo } from "@/features/shell/logo";
 
-// Signed-in people go straight to the app. The full landing page comes in Phase 7.
+// Static public page: no app JavaScript. Signed-in people who tap
+// "Get started" are sent on from the sign-in page. Full landing page: Phase 7.
 export default function Home() {
-  const me = useMe();
-  const router = useRouter();
-  useEffect(() => {
-    if (me.data) router.replace("/home");
-  }, [me.data, router]);
-
   return (
     <main className="relative mx-auto flex min-h-dvh max-w-xl flex-col justify-center gap-8 overflow-hidden px-6 py-16">
       <Logo className="relative" />

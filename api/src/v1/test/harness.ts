@@ -46,8 +46,13 @@ export class TestClient {
 
   constructor(private app: FastifyInstance) {}
 
+  /** The session cookie header this client would send (for replay tests). */
+  cookieHeader(): string {
+    return [...this.cookies].map(([k, v]) => `${k}=${v}`).join("; ");
+  }
+
   async request<T = any>(method: string, url: string, payload?: unknown): Promise<Res<T>> {
-    const cookie = [...this.cookies].map(([k, v]) => `${k}=${v}`).join("; ");
+    const cookie = this.cookieHeader();
     const res = await this.app.inject({
       method: method as "GET",
       url,
