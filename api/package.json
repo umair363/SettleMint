@@ -5,13 +5,16 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "npm run build -w @settlemint/shared && tsc",
+    "build": "npm run build -w @settlemint/shared && tsc && node -e \"require('fs').cpSync('src/v1/db/migrations','dist/v1/db/migrations',{recursive:true})\"",
     "typecheck": "tsc --noEmit",
     "start": "node dist/server.js",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "dev:v1": "tsx watch src/v1/main.ts",
+    "start:v1": "node dist/v1/main.js",
+    "v1:db:generate": "drizzle-kit generate --config drizzle.v1.config.ts"
   },
   "keywords": [],
   "author": "",
