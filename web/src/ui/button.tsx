@@ -19,7 +19,7 @@ const buttonStyles = cva(
         primary: "bg-accent text-accent-fg hover:bg-accent-hover",
         secondary: "bg-surface-2 text-fg hover:bg-surface-3 border border-line",
         ghost: "text-fg-muted hover:text-fg hover:bg-surface-2",
-        danger: "bg-negative-soft text-negative hover:bg-negative hover:text-white",
+        danger: "bg-negative-soft text-negative hover:bg-negative hover:text-bg",
         outline: "border border-line-strong text-fg hover:bg-surface-2",
       },
       size: {
@@ -33,7 +33,7 @@ const buttonStyles = cva(
       {
         variant: "primary",
         size: ["md", "lg"],
-        className: "shadow-[0_6px_18px_-10px_color-mix(in_oklab,var(--accent)_70%,transparent)]",
+        className: "shadow-lift",
       },
     ],
     defaultVariants: { variant: "primary", size: "md" },

@@ -11,9 +11,10 @@ import { NewGroupSheet } from "@/features/groups/new-group-sheet";
 import { PageBody, PageHeader } from "@/features/shell/page-header";
 import { totalsByCurrency, useActivity, useGroups, useMe } from "@/lib/queries";
 import { Button } from "@/ui/button";
-import { EmptyState, ErrorState, Skeleton, SkeletonRows } from "@/ui/feedback";
+import { EmptyState, ErrorState, PreviewRow, Skeleton, SkeletonRows } from "@/ui/feedback";
 import { Money } from "@/ui/money";
 import { listContainer, listItem } from "@/ui/motion";
+import { BalanceCard } from "@/ui/balance-card";
 import { Card, List, SectionHeader } from "@/ui/surface";
 
 function greeting() {
@@ -35,18 +36,16 @@ function BalanceHero() {
   }
   if (totals.length === 0) {
     return (
-      <Card className="relative overflow-hidden p-6">
-        <div aria-hidden className="pointer-events-none absolute -end-10 -top-10 size-40 rounded-full bg-accent-soft blur-2xl" />
+      <BalanceCard balance={0}>
         <p className="text-sm text-fg-muted">Your balance</p>
         <p className="mt-1 font-display text-3xl font-semibold">All settled up</p>
         <p className="mt-1 text-sm text-fg-muted">Nobody owes anybody. Nice.</p>
-      </Card>
+      </BalanceCard>
     );
   }
   return (
-    <Card className="relative overflow-hidden p-6">
-      <div aria-hidden className="pointer-events-none absolute -end-12 -top-12 size-48 rounded-full bg-accent-soft blur-3xl" />
-      <div className="relative space-y-4">
+    <BalanceCard balance={totals.reduce((s, t) => s + Math.sign(t.net), 0)}>
+      <div className="space-y-4">
         {totals.map((t) => (
           <div key={t.currency}>
             <p className="text-sm text-fg-muted">
@@ -64,7 +63,7 @@ function BalanceHero() {
           </div>
         ))}
       </div>
-    </Card>
+    </BalanceCard>
   );
 }
 
@@ -87,6 +86,12 @@ export default function HomePage() {
           <Card>
             <EmptyState
               icon={<Sparkles />}
+              preview={
+                <div className="space-y-2">
+                  <PreviewRow emoji="✈️" title="Lisbon trip" subtitle="4 people · you are owed" amount="€128.50" tone="positive" />
+                  <PreviewRow emoji="🏠" title="Flat 4B" subtitle="3 people · you owe" amount="£42.00" tone="negative" />
+                </div>
+              }
               title="Let's split your first bill"
               body="Make a group for a trip, your home, or just you and a friend. People you add don't need the app."
               action={

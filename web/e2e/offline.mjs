@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions -- assertions are written as `cond ? ok() : fail()` */
 // Offline test: app opens offline from cache, offline expense syncs after reconnect + reload.
 import http from "node:http";
 import fs from "node:fs";

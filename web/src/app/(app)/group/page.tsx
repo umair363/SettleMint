@@ -21,13 +21,17 @@ import { InviteSheet } from "@/features/groups/invite-sheet";
 import { SettleSheet, type SettleTarget } from "@/features/groups/settle-sheet";
 import { PageBody, PageHeader } from "@/features/shell/page-header";
 import { dayLabel } from "@/lib/dates";
-import { useExpenses, useGroup, useSettlements } from "@/lib/queries";
+import { useExpenses, useGroup, useSetExpenseDeleted, useSettlements } from "@/lib/queries";
+import { toast } from "sonner";
+import { SettledCheck } from "@/ui/settled-check";
+import { SwipeRow } from "@/ui/swipe-row";
 import { Avatar, AvatarStack } from "@/ui/avatar";
 import { Button, IconButton } from "@/ui/button";
 import { Segmented } from "@/ui/controls";
-import { EmptyState, ErrorState, Skeleton, SkeletonRows } from "@/ui/feedback";
+import { EmptyState, ErrorState, PreviewRow, Skeleton, SkeletonRows } from "@/ui/feedback";
 import { Money } from "@/ui/money";
 import { springSoft } from "@/ui/motion";
+import { BalanceCard } from "@/ui/balance-card";
 import { Card, List, SectionHeader } from "@/ui/surface";
 
 type Tab = "expenses" | "balances";
@@ -111,6 +115,14 @@ function ExpensesTab({ group, onOpen }: { group: GroupDetailDto; onOpen: (e: Exp
   const expenses = useExpenses(group.id);
   const settlements = useSettlements(group.id);
   const { openAddExpense } = useAddExpense();
+  const setDeleted = useSetExpenseDeleted(group.id);
+  const remove = (e: ExpenseDto) => {
+    setDeleted.mutate({ id: e.id, deleted: true });
+    toast("Expense deleted", {
+      description: e.description,
+      action: { label: "Undo", onClick: () => setDeleted.mutate({ id: e.id, deleted: false }) },
+    });
+  };
 
   const items = useMemo(() => {
     const exp = expenses.data?.pages.flatMap((p) => p.items) ?? [];
@@ -146,6 +158,12 @@ function ExpensesTab({ group, onOpen }: { group: GroupDetailDto; onOpen: (e: Exp
       <Card>
         <EmptyState
           icon={<Inbox />}
+          preview={
+            <div className="space-y-2">
+              <PreviewRow emoji="🍽️" title="Dinner" subtitle="You paid · split 3 ways" amount="you lent 40.00" tone="positive" />
+              <PreviewRow emoji="🚕" title="Taxi from the airport" subtitle="Bilal paid" amount="you owe 12.00" tone="negative" />
+            </div>
+          }
           title="No expenses yet"
           body="Add the first one. It takes a few seconds."
           action={
@@ -173,7 +191,9 @@ function ExpensesTab({ group, onOpen }: { group: GroupDetailDto; onOpen: (e: Exp
                   transition={springSoft}
                 >
                   {item.kind === "expense" ? (
-                    <ExpenseRow group={group} expense={item.expense} onOpen={() => onOpen(item.expense)} />
+                    <SwipeRow onAction={() => remove(item.expense)} disabled={item.expense.lines.length === 0}>
+                      <ExpenseRow group={group} expense={item.expense} onOpen={() => onOpen(item.expense)} />
+                    </SwipeRow>
                   ) : (
                     <SettlementRow group={group} settlement={item.settlement} />
                   )}
@@ -276,6 +296,7 @@ function GroupScreen() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settle, setSettle] = useState<SettleTarget | null>(null);
   const [openExpense, setOpenExpense] = useState<ExpenseDto | null>(null);
+  const [celebrate, setCelebrate] = useState(false);
 
   if (!id || (group.error instanceof ApiError && group.error.status === 404)) {
     return (
@@ -345,15 +366,20 @@ function GroupScreen() {
           {active.length} {active.length === 1 ? "person" : "people"} · {g.currency}
         </button>
 
-        <Card className="relative overflow-hidden p-6">
-          <div aria-hidden className="pointer-events-none absolute -end-12 -top-12 size-44 rounded-full bg-accent-soft blur-3xl" />
-          <div className="relative">
+        <BalanceCard balance={g.myBalance}>
+          <div>
             <p className="text-sm text-fg-muted">
               {g.myBalance > 0 ? "You are owed" : g.myBalance < 0 ? "You owe" : "You're settled up"}
             </p>
-            <p className="mt-0.5 font-display text-4xl font-semibold tracking-tight">
-              <Money minor={g.myBalance} currency={g.currency} tone="auto" absolute animated />
-            </p>
+            {celebrate && g.myBalance === 0 ? (
+              <div className="mt-2">
+                <SettledCheck />
+              </div>
+            ) : (
+              <p className="mt-0.5 font-display text-4xl font-semibold tracking-tight">
+                <Money minor={g.myBalance} currency={g.currency} tone="auto" absolute animated />
+              </p>
+            )}
             <div className="mt-5 grid grid-cols-2 gap-2">
               <Button leading={<Plus className="size-4" />} onClick={() => openAddExpense({ groupId: g.id })}>
                 Add expense
@@ -371,7 +397,7 @@ function GroupScreen() {
               </Button>
             </div>
           </div>
-        </Card>
+        </BalanceCard>
 
         {active.length === 1 && (
           <Card className="flex items-center gap-4 p-4">
@@ -414,7 +440,7 @@ function GroupScreen() {
         }}
       />
       <GroupSettingsSheet group={g} open={settingsOpen} onOpenChange={setSettingsOpen} />
-      <SettleSheet group={g} target={settle} onClose={() => setSettle(null)} />
+      <SettleSheet group={g} target={settle} onClose={() => setSettle(null)} onSettledMe={() => setCelebrate(true)} />
       <ExpenseDetailSheet group={g} expense={openExpense} onClose={() => setOpenExpense(null)} />
     </>
   );

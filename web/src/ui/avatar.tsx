@@ -46,7 +46,9 @@ export function Avatar({ id, name, image, size = "md", pending, className }: Ava
         pending && "outline-2 outline-offset-1 outline-dashed outline-line-strong",
         className,
       )}
-      style={{ background: `linear-gradient(135deg, hsl(${hue} 62% 52%), hsl(${(hue + 28) % 360} 58% 40%))` }}
+      // OKLCH keeps every hue at the same perceived lightness, so white
+      // initials stay above 4.5:1 contrast for all of them (HSL yellows didn't).
+      style={{ background: `linear-gradient(135deg, oklch(0.52 0.13 ${hue}), oklch(0.43 0.12 ${(hue + 28) % 360}))` }}
       aria-hidden
     >
       {image ? (

@@ -25,7 +25,7 @@ const NAV = [
 function Logo({ className }: { className?: string }) {
   return (
     <span className={cn("inline-flex items-center gap-2 font-display text-lg font-semibold tracking-tight", className)}>
-      <span className="flex size-8 items-center justify-center rounded-[10px] bg-accent text-accent-fg shadow-glow">
+      <span className="flex size-8 items-center justify-center rounded-[10px] bg-accent text-accent-fg shadow-lift">
         <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden>
           <path d="M5 12.5 10 17 19 7.5" />
         </svg>
@@ -55,7 +55,7 @@ function AddButton({ className }: { className?: string }) {
       whileHover={{ scale: 1.04 }}
       transition={springSnappy}
       className={cn(
-        "flex size-14 items-center justify-center rounded-full bg-accent text-accent-fg shadow-glow",
+        "flex size-14 items-center justify-center rounded-full bg-accent text-accent-fg shadow-lift",
         className,
       )}
     >

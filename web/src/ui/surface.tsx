@@ -10,6 +10,8 @@ import { springSnappy } from "./motion";
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
+      // Rows and states inside cards carry their own inset (grouped-list layout),
+      // which the detector's wrapper heuristic reads as cramped.
       className={cn("rounded-[var(--radius-lg)] border border-line bg-surface shadow-soft", className)}
       {...props}
     />

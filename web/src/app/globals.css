@@ -22,7 +22,7 @@
 
   --fg: #f1f4f6;
   --fg-muted: #a1abb8;
-  --fg-subtle: #6c7786;
+  --fg-subtle: #8a95a3;
 
   --accent: #3dd68c;
   --accent-hover: #52e09b;
@@ -42,7 +42,6 @@
   --glass-line: rgb(255 255 255 / 0.09);
   --scrim: rgb(3 6 10 / 0.6);
   --shadow-color: 0 0% 0%;
-  --glow: 0 0 0 1px rgb(61 214 140 / 0.35), 0 8px 32px -8px rgb(61 214 140 / 0.45);
 }
 
 [data-theme="light"] {
@@ -57,7 +56,7 @@
 
   --fg: #0c1511;
   --fg-muted: #4a5751;
-  --fg-subtle: #7b8983;
+  --fg-subtle: #5a6862;
 
   --accent: #3dd68c;
   --accent-hover: #2fc77e;
@@ -78,7 +77,6 @@
   --glass-line: rgb(12 24 18 / 0.08);
   --scrim: rgb(10 20 15 / 0.35);
   --shadow-color: 150 20% 20%;
-  --glow: 0 0 0 1px rgb(31 170 104 / 0.3), 0 8px 28px -8px rgb(31 170 104 / 0.4);
 }
 
 @theme inline {
@@ -108,8 +106,8 @@
   --color-glass-line: var(--glass-line);
   --color-scrim: var(--scrim);
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-outfit), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
 
   --radius-sm: 0.625rem;
   --radius-md: 0.875rem;
@@ -118,10 +116,12 @@
 
   --shadow-soft: 0 1px 2px hsl(var(--shadow-color) / 0.06), 0 4px 16px -4px hsl(var(--shadow-color) / 0.12);
   --shadow-float: 0 2px 4px hsl(var(--shadow-color) / 0.08), 0 16px 48px -12px hsl(var(--shadow-color) / 0.35);
-  --shadow-glow: var(--glow);
+  /* Lifted action (the add button): neutral elevation, no coloured glow. */
+  --shadow-lift: 0 1px 0 rgb(255 255 255 / 0.25) inset, 0 6px 16px -4px hsl(var(--shadow-color) / 0.45), 0 2px 4px hsl(var(--shadow-color) / 0.2);
 
   --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
-  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Confident arrival: fast start, gentle settle. */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 
   --animate-shimmer: shimmer 1.6s linear infinite;
   @keyframes shimmer {
@@ -146,6 +146,16 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     min-height: 100dvh;
+    font-optical-sizing: auto;
+  }
+  /* Readable wrapping: balanced headings, no lonely last words in paragraphs. */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
   }
   :focus-visible {
     outline: 2px solid var(--accent);

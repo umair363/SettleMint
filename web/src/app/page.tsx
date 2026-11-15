@@ -17,11 +17,6 @@ export default function Home() {
 
   return (
     <main className="relative mx-auto flex min-h-dvh max-w-xl flex-col justify-center gap-8 overflow-hidden px-6 py-16">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-32 start-1/2 h-96 w-[36rem] -translate-x-1/2 rounded-full opacity-70 blur-3xl rtl:translate-x-1/2"
-        style={{ background: "radial-gradient(closest-side, var(--accent-soft), transparent)" }}
-      />
       <Logo className="relative" />
       <div className="relative space-y-4">
         <h1 className="font-display text-5xl font-semibold leading-[1.05] tracking-tight">
@@ -46,7 +41,7 @@ export default function Home() {
       </ul>
       <Link
         href="/sign-in"
-        className="relative inline-flex h-14 items-center justify-center gap-2 self-start rounded-[var(--radius-lg)] bg-accent px-7 text-base font-semibold text-accent-fg shadow-glow"
+        className="relative inline-flex h-14 items-center justify-center gap-2 self-start rounded-[var(--radius-lg)] bg-accent px-7 text-base font-semibold text-accent-fg shadow-lift"
       >
         Get started <ArrowRight className="size-4 rtl:rotate-180" />
       </Link>

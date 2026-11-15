@@ -28,14 +28,25 @@ export function SettleSheet({
   group,
   target,
   onClose,
+  onSettledMe,
 }: {
   group: GroupDetailDto;
   target: SettleTarget | null;
   onClose: () => void;
+  /** Called when this payment brings the viewer's balance in the group to zero. */
+  onSettledMe?: () => void;
 }) {
   return (
     <Sheet open={Boolean(target)} onOpenChange={(o) => !o && onClose()} title="Record a payment" tall>
-      {target && <SettleForm key={`${target.fromMemberId}-${target.toMemberId}`} group={group} target={target} onDone={onClose} />}
+      {target && (
+        <SettleForm
+          key={`${target.fromMemberId}-${target.toMemberId}`}
+          group={group}
+          target={target}
+          onDone={onClose}
+          onSettledMe={onSettledMe}
+        />
+      )}
     </Sheet>
   );
 }
@@ -77,7 +88,17 @@ function PersonPicker({
   );
 }
 
-function SettleForm({ group, target, onDone }: { group: GroupDetailDto; target: SettleTarget; onDone: () => void }) {
+function SettleForm({
+  group,
+  target,
+  onDone,
+  onSettledMe,
+}: {
+  group: GroupDetailDto;
+  target: SettleTarget;
+  onDone: () => void;
+  onSettledMe?: () => void;
+}) {
   const [from, setFrom] = useState(target.fromMemberId);
   const [to, setTo] = useState(target.toMemberId);
   const [expr, setExpr] = useState(amountToExpr(target.amount, group.currency));
@@ -100,6 +121,10 @@ function SettleForm({ group, target, onDone }: { group: GroupDetailDto; target: 
       note: note.trim() || null,
       date: todayIso(),
     });
+    const me = group.myMemberId;
+    const before = group.balances[me] ?? 0;
+    const after = before + (from === me ? amount : 0) - (to === me ? amount : 0);
+    if (before !== 0 && after === 0) onSettledMe?.();
     toast.success("Payment recorded", {
       description: `${fromName?.isMe ? "You" : fromName?.displayName} paid ${toName?.isMe ? "you" : toName?.displayName}`,
     });
