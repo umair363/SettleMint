@@ -106,6 +106,11 @@ export default function HomePage() {
             <p className="flex items-center justify-center gap-1.5 pb-6 text-sm text-fg-muted">
               <Link2 className="size-4" /> Got an invite link? Just open it.
             </p>
+            <p className="pb-6 text-center text-sm">
+              <Link href="/groups" className="font-medium text-positive">
+                Coming from Splitwise? Import your groups
+              </Link>
+            </p>
           </Card>
         ) : (
           <>

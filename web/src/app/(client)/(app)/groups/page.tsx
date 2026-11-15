@@ -1,9 +1,10 @@
 "use client";
 
-import { Archive, Plus, Users } from "lucide-react";
+import { Archive, FileUp, Plus, Users } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { GroupRow } from "@/features/groups/group-row";
+import { ImportSheet } from "@/features/groups/import-sheet";
 import { NewGroupSheet } from "@/features/groups/new-group-sheet";
 import { SearchButton } from "@/features/search/search-palette";
 import { PageBody, PageHeader } from "@/features/shell/page-header";
@@ -18,6 +19,7 @@ function Groups() {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   // "?new=1" (from the add-expense sheet) opens the new-group sheet.
   const open = creating || params.get("new") === "1";
   const setOpen = (o: boolean) => {
@@ -93,8 +95,12 @@ function Groups() {
             )}
           </>
         )}
+        <Button variant="ghost" block leading={<FileUp className="size-4" />} onClick={() => setImportOpen(true)}>
+          Import a group from Splitwise
+        </Button>
       </PageBody>
       <NewGroupSheet open={open} onOpenChange={setOpen} />
+      <ImportSheet open={importOpen} onOpenChange={setImportOpen} />
     </>
   );
 }

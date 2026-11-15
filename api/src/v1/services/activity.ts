@@ -8,6 +8,7 @@ export type ActivityType =
   | "group.updated"
   | "group.deleted"
   | "group.restored"
+  | "group.imported"
   | "member.added"
   | "member.joined"
   | "member.renamed"

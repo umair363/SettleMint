@@ -671,6 +671,56 @@ describe("recurring expenses", () => {
   });
 });
 
+describe("Splitwise import", () => {
+  const SAMPLE = `Date,Description,Category,Cost,Currency,Ana Souza,Bilal Khan,Chen
+2024-03-01,Hotel,Hotels,300.00,EUR,200.00,-100.00,-100.00
+2024-03-02,"Dinner, with wine",Dining out,90.00,EUR,-30.00,60.00,-30.00
+2024-03-03,Taxi,Taxi,10.00,EUR,-3.33,-3.33,6.66
+2024-03-04,Souvenir,General,20.00,USD,-10.00,10.00,0.00
+2024-03-05,Bilal K. paid Ana S.,Payment,40.00,EUR,-40.00,40.00,0.00
+
+2024-03-06,Total balance, , ,EUR,126.67,-3.33,-123.34
+`;
+
+  it("recreates the group with balances identical to Splitwise", async () => {
+    const ana = client();
+    await ana.signUp("Ana");
+    const res = await ana.post("/v1/import/splitwise", { csv: SAMPLE, groupName: "Lisbon (from Splitwise)", meIndex: 0 });
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({ expenses: 3, payments: 1 });
+    expect(res.body.skipped.map((s: { reason: string }) => s.reason)).toEqual([
+      "In USD; the group uses EUR and the export has no exchange rate",
+    ]);
+
+    const g = (await ana.get<GroupDetailDto>(`/v1/groups/${res.body.groupId}`)).body;
+    expect(g.currency).toBe("EUR");
+    const by = (name: string) => g.members.find((m) => m.displayName === name)!;
+    expect(by("Ana Souza")).toMatchObject({ isMe: true, role: "owner", claimed: true });
+    expect(by("Chen").claimed).toBe(false);
+    // The export's "Total balance" row: 126.67 / -3.33 / -123.34
+    expect(g.balances[by("Ana Souza").id]).toBe(12667);
+    expect(g.balances[by("Bilal Khan").id]).toBe(-333);
+    expect(g.balances[by("Chen").id]).toBe(-12334);
+
+    const items = (await ana.get(`/v1/groups/${res.body.groupId}/expenses?limit=50`)).body.items as ExpenseDto[];
+    expect(items.map((e) => [e.description, e.category]).sort()).toEqual([
+      ["Dinner, with wine", "food"],
+      ["Hotel", "accommodation"],
+      ["Taxi", "transport"],
+    ]);
+  });
+
+  it("refuses files it can't read", async () => {
+    const ana = client();
+    await ana.signUp("Ana");
+    const res = await ana.post("/v1/import/splitwise", { csv: "hello,world", groupName: "x", meIndex: 0 });
+    expect(res.status).toBe(422);
+    expect(res.body.error.message).toMatch(/Splitwise export/);
+    const notMe = await ana.post("/v1/import/splitwise", { csv: SAMPLE, groupName: "x", meIndex: 9 });
+    expect(notMe.status).toBe(422);
+  });
+});
+
 describe("live updates", () => {
   /** Open the event stream as this client and collect events. */
   async function listen(base: string, c: TestClient) {
