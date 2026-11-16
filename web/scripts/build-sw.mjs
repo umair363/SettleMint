@@ -8,7 +8,18 @@ import { fileURLToPath } from "node:url";
 const root = fileURLToPath(new URL("..", import.meta.url));
 const out = join(root, "out");
 
-const SKIP = [/\.map$/, /^sw\.js$/, /^404\.html$/, /^_not-found/, /\/_not-found/, /\.DS_Store$/, /^design/];
+const SKIP = [
+  /\.map$/,
+  /^sw\.js$/,
+  /^404\.html$/,
+  /^_not-found/,
+  /\/_not-found/,
+  /\.DS_Store$/,
+  /^design/,
+  // Translated landing pages and crawler files: public web pages, not part of the app.
+  /^(es|pt|fr|de|hi|ur|ar)(\.html|\.txt|\/)/,
+  /^(sitemap\.xml|robots\.txt)$/,
+];
 
 function walk(dir) {
   return readdirSync(dir).flatMap((name) => {

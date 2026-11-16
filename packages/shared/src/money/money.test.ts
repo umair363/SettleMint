@@ -60,6 +60,22 @@ describe("decimal strings", () => {
   });
 });
 
+describe("formatMoney in right-to-left locales", () => {
+  it("keeps Latin currency symbols whole with direction isolates", () => {
+    const usd = formatMoney(9999, "USD", { locale: "ar" });
+    expect(usd).toContain("⁦US$⁩");
+    // Symbols in Arabic script, and left-to-right locales, are left alone.
+    expect(formatMoney(9999, "USD", { locale: "en" })).not.toContain("⁦");
+    expect(formatMoney(18500, "AED", { locale: "ar" })).not.toContain("⁦");
+    // "E£" has a Latin letter, so it is isolated too.
+    expect(formatMoney(12000, "EGP", { locale: "ar-EG" })).toContain("⁦E£⁩");
+  });
+
+  it("still parses back what it shows", () => {
+    expect(parseMoneyInput(formatMoney(9999, "USD", { locale: "ar", hideCurrency: true }), "USD", "ar")).toBe(9999);
+  });
+});
+
 describe("parseMoneyInput", () => {
   it("reads what people type", () => {
     expect(parseMoneyInput("19.99", "USD", "en")).toBe(1999);

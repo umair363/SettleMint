@@ -13,6 +13,7 @@ import { AddExpenseProvider, useAddExpense } from "@/features/expenses/add-expen
 import { AddExpenseSheet } from "@/features/expenses/add-expense-sheet";
 import { SearchPalette } from "@/features/search/search-palette";
 import { useMe } from "@/lib/queries";
+import { useHydrated } from "@/lib/use-hydrated";
 import { Avatar } from "@/ui/avatar";
 import { Button } from "@/ui/button";
 import { cn } from "@/ui/cn";
@@ -142,6 +143,7 @@ function Sidebar({ pathname, name, userId, image }: { pathname: string; name: st
 
 function Gate({ children }: { children: ReactNode }) {
   const me = useMe();
+  const hydrated = useHydrated();
   const router = useRouter();
   const pathname = usePathname();
   const { openAddExpense } = useAddExpense();
@@ -175,7 +177,7 @@ function Gate({ children }: { children: ReactNode }) {
     }
   }, [unauthorized, needsName, router]);
 
-  if (me.data && !needsName) {
+  if (hydrated && me.data && !needsName) {
     return (
       <>
         <Sidebar pathname={pathname} name={me.data.name} userId={me.data.id} image={me.data.image} />
@@ -186,7 +188,7 @@ function Gate({ children }: { children: ReactNode }) {
       </>
     );
   }
-  if (me.error && !unauthorized) {
+  if (hydrated && me.error && !unauthorized) {
     const offline = me.error instanceof ApiError && me.error.isNetwork;
     return (
       <div className="flex min-h-dvh items-center justify-center">

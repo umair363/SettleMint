@@ -10,6 +10,7 @@ import fr from "./messages/fr";
 import hi from "./messages/hi";
 import pt from "./messages/pt";
 import ur from "./messages/ur";
+import { landingMessages } from "./landing";
 
 const catalogs: Record<Language, unknown> = { en, es, pt, fr, de, hi, ur, ar };
 
@@ -47,11 +48,16 @@ function neededCategories(lang: Language) {
   return new Set(Array.from({ length: 201 }, (_, n) => rules.select(n)));
 }
 
-const english = flatten(en as unknown as Tree);
+const SETS = [
+  { name: "app", source: en as unknown, catalogs },
+  { name: "landing", source: landingMessages.en as unknown, catalogs: landingMessages as Record<Language, unknown> },
+];
 const sample = (name: string) =>
   /count|n$|expenses|payments|people|total|seconds/.test(name) ? 3 : name.startsWith("<") ? undefined : "x";
 
-describe("translations", () => {
+describe.each(SETS)("$name translations", ({ source, catalogs }) => {
+  const english = flatten(source as Tree);
+
   it("covers every language in the picker", () => {
     expect(Object.keys(catalogs).sort()).toEqual(LANGUAGES.map((l) => l.code).sort());
   });
