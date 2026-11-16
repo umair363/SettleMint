@@ -36,7 +36,13 @@ export async function recordActivity(
     data?: Record<string, unknown>;
   },
 ) {
-  markGroupChanged(e.groupId);
+  markGroupChanged({
+    groupId: e.groupId,
+    type: e.type,
+    actorUserId: e.actorUserId,
+    actorMemberId: e.actorMemberId,
+    data: e.data ?? {},
+  });
   await db.insert(activityEvents).values({
     id: uuidv7(),
     groupId: e.groupId,

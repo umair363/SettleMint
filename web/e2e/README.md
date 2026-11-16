@@ -4,6 +4,7 @@ Real browser runs of the built app against a local v1 API (Playwright + Chromium
 
 ```bash
 # 1. API on :8001 that accepts the test origin (uses a local PGlite database)
+# (push.mjs also needs VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY from `npx web-push generate-vapid-keys`)
 cd api && PORT=8001 WEB_ORIGINS=http://localhost:4555 FAKE_RECEIPT_READER=1 npx tsx src/v1/main.ts
 
 # 2. Build the web app against it
@@ -14,6 +15,7 @@ node e2e/flow.mjs out ../.e2e-shots phone dark     # sign up → group → expen
 node e2e/offline.mjs out ../.e2e-shots/offline     # open offline, add offline, reload, sync
 node e2e/live.mjs out                              # two browsers: changes appear without reloading
 node e2e/a11y.mjs out                              # axe-core WCAG 2.2 AA on every screen, both themes
+node e2e/push.mjs out                              # notifications: subscribe, worker shows them, real delivery
 ```
 
 `flow.mjs` takes `phone|desktop` and `dark|light`. Both print PASS/FAIL lines or problems found.

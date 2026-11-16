@@ -15,6 +15,8 @@ export interface AppConfig {
   geminiApiKey?: string;
   /** Receipt scans per person per month (bounds AI cost). */
   aiScansPerMonth: number;
+  /** Web Push keys (npx web-push generate-vapid-keys). Notifications are off without them. */
+  vapid?: { publicKey: string; privateKey: string; subject: string };
 }
 
 function required(name: string, value: string | undefined): string {
@@ -42,6 +44,14 @@ export function configFromEnv(env: NodeJS.ProcessEnv = process.env): AppConfig {
     cookieDomain: env.COOKIE_DOMAIN || undefined,
     geminiApiKey: env.GEMINI_API_KEY || undefined,
     aiScansPerMonth: Number(env.AI_SCANS_PER_MONTH) > 0 ? Number(env.AI_SCANS_PER_MONTH) : 30,
+    vapid:
+      env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY
+        ? {
+            publicKey: env.VAPID_PUBLIC_KEY,
+            privateKey: env.VAPID_PRIVATE_KEY,
+            subject: env.VAPID_SUBJECT || "mailto:support@settlemint.online",
+          }
+        : undefined,
     google:
       env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
         ? { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET }

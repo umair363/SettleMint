@@ -5,12 +5,14 @@ import { Download, LogOut, Monitor, Moon, Share, ShieldCheck, Sun } from "lucide
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import { NotificationsCard } from "@/features/account/notifications-card";
 import { PaymentHandlesCard } from "@/features/account/payment-handles-card";
 import { YourDataCard } from "@/features/account/your-data-card";
 import { useInstall } from "@/features/pwa/pwa";
 import { PageBody, PageHeader } from "@/features/shell/page-header";
 import { authClient } from "@/lib/auth-client";
 import { persister } from "@/lib/persist";
+import { disablePush } from "@/lib/push";
 import { useMe, useUpdateMe } from "@/lib/queries";
 import { Avatar } from "@/ui/avatar";
 import { Button } from "@/ui/button";
@@ -132,6 +134,8 @@ export default function AccountPage() {
 
   const signOut = async () => {
     setSigningOut(true);
+    // Stop this device getting the next person's notifications (needs the session, so first).
+    await disablePush();
     await authClient.signOut();
     // Nothing from this account may stay on a shared device.
     qc.clear();
@@ -193,6 +197,8 @@ export default function AccountPage() {
         {!me.data.isGuest && <PaymentHandlesCard />}
 
         <InstallCard />
+
+        <NotificationsCard />
 
         <section>
           <SectionHeader title="Appearance" />

@@ -95,3 +95,44 @@ self.addEventListener("fetch", (event) => {
     })(),
   );
 });
+
+// ─── Notifications ──────────────────────────────────────────────────────────
+// Every push must show something (browsers revoke silent pushes). Same-group
+// notifications replace each other via `tag`, so a busy evening is one card.
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { body: event.data ? event.data.text() : "" };
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || "SettleMint", {
+      body: data.body || "Something changed in one of your groups.",
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      tag: data.tag,
+      renotify: Boolean(data.tag),
+      data: { url: data.url || "/home" },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = new URL(event.notification.data?.url || "/home", self.location.origin);
+  // Only ever open our own pages.
+  const url = target.origin === self.location.origin ? target.href : new URL("/home", self.location.origin).href;
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const open = windows.find((w) => new URL(w.url).origin === self.location.origin);
+      if (open) {
+        await open.focus();
+        if ("navigate" in open) await open.navigate(url).catch(() => undefined);
+        return;
+      }
+      await self.clients.openWindow(url);
+    })(),
+  );
+});

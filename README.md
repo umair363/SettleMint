@@ -45,6 +45,8 @@ on a shared money engine the mobile app will reuse.
   edit conflicts caught instead of silently overwritten.
 - **Offline-first.** Opens instantly from saved data; anything you add
   offline syncs when you're back.
+- **Live and notified.** Changes appear on everyone's screen as they happen,
+  and an optional notification tells you when friends add expenses or pay you.
 
 ## Architecture
 
@@ -110,6 +112,10 @@ and an axe-core accessibility audit of every screen in both themes. See
    unrelated sites, so `*.pages.dev` + `*.onrender.com` can't keep you signed in.
 5. Set `KEEP_ALIVE_URL` to the API's `/health` URL so the free instance
    doesn't sleep.
+6. **Notifications (optional, free):** run `npx web-push generate-vapid-keys`
+   once and set `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` on the API. Keep the
+   pair: replacing it disconnects every subscribed device.
+7. **Receipt scanning (optional):** set `GEMINI_API_KEY` from Google AI Studio.
 
 <br />
 

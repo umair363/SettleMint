@@ -38,6 +38,15 @@ jobs:
     name: Browser tests (flow, offline, accessibility)
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    # A real Postgres, so the production database path (driver, migrations, SQL) is exercised.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: settlemint
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -46,17 +55,20 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - name: Build shared package
-        run: npm run build:shared
-      - name: Start API (local PGlite database)
+      - name: Build API the way Render does
+        run: npm run build -w api
+      - name: Start API on Postgres
         working-directory: api
         env:
+          V1_DATABASE_URL: postgres://postgres:postgres@localhost:5432/settlemint
           PORT: "8001"
           WEB_ORIGINS: http://localhost:4555
           # Sample receipt instead of the AI, so the scanning flow is testable without a key.
           FAKE_RECEIPT_READER: "1"
         run: |
-          nohup npx tsx src/v1/main.ts > ../api.log 2>&1 &
+          # Throwaway notification keys for this run only.
+          eval "$(node -e "const k=require('web-push').generateVAPIDKeys();console.log('export VAPID_PUBLIC_KEY='+k.publicKey+' VAPID_PRIVATE_KEY='+k.privateKey)")"
+          nohup npm run start:v1 > ../api.log 2>&1 &
           for i in $(seq 1 60); do curl -sf localhost:8001/health && exit 0; sleep 1; done
           cat ../api.log; exit 1
       - name: Build web against it
@@ -72,9 +84,15 @@ jobs:
       - name: Live updates (two browsers)
         working-directory: web
         run: node e2e/live.mjs out
+      - name: Notifications (subscribe, worker, real delivery)
+        working-directory: web
+        run: node e2e/push.mjs out
       - name: Accessibility (axe, WCAG 2.2 AA)
         working-directory: web
         run: node e2e/a11y.mjs out
+      - name: API log
+        if: failure()
+        run: cat api.log
       - name: Keep screenshots
         if: always()
         uses: actions/upload-artifact@v4
