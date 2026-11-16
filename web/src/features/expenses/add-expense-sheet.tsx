@@ -12,14 +12,16 @@ import {
   type MemberDto,
   type RecurrenceFrequency,
 } from "@settlemint/shared";
-import { Calendar, Check, ChevronDown, ChevronLeft, Repeat, Equal, Percent, Receipt, Scale, SlidersHorizontal, Users } from "lucide-react";
+import { Calendar, Camera, Check, ChevronDown, ChevronLeft, ListChecks, LoaderCircle, Repeat, Equal, Percent, Receipt, Scale, SlidersHorizontal, Users } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useLocale } from "use-intl";
 import { uuidv7 } from "uuidv7";
+import { api } from "@/lib/api";
 import { guessCategory } from "@/lib/category-guess";
+import { prepareReceiptImage } from "@/lib/image";
 import { dayLabel, todayIso } from "@/lib/dates";
 import { useCreateExpense, useCreateRecurring, useGroup, useGroups, useUpdateExpense } from "@/lib/queries";
 import { amountToExpr, AmountDisplay, AmountPad, evaluateAmount } from "@/ui/amount-pad";
@@ -34,9 +36,11 @@ import { Money } from "@/ui/money";
 import { springSoft } from "@/ui/motion";
 import { Sheet } from "@/ui/sheet";
 import { useAddExpense } from "./add-expense-context";
+import { ItemsEditor } from "./items-editor";
 import {
   draftFromSpec,
   equalDraft,
+  itemizedDraft,
   METHOD_LABEL,
   minorToInputText,
   previewSplit,
@@ -186,6 +190,32 @@ function FormBody({
     expense ? draftFromSpec(expense.split, expense.currency, locale) : equalDraft(memberIds.filter((id) => !byId.get(id)?.left)),
   );
 
+  const [scanning, setScanning] = useState(false);
+  const scanReceipt = async (file: File) => {
+    setScanning(true);
+    try {
+      const image = await prepareReceiptImage(file);
+      const r = await api.scanReceipt({ image: image.data, mimeType: image.mimeType, currency });
+      if (r.merchant) setDescription(r.merchant);
+      setCurrency(r.currency);
+      setExpr(amountToExpr(r.total, r.currency));
+      if (r.date) setDate(r.date);
+      if (r.items.length) {
+        setDraft(itemizedDraft(r.items, r.extras, memberIds.filter((id) => !byId.get(id)?.left)));
+        setPanel("split");
+      }
+      toast.success(r.items.length ? `Read ${r.items.length} items` : "Read the total", {
+        description: `${r.scansLeft} scans left this month`,
+      });
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Couldn't read that photo", {
+        description: err instanceof ApiError && err.code === "AI_UNAVAILABLE" ? undefined : "You can still enter it by hand.",
+      });
+    } finally {
+      setScanning(false);
+    }
+  };
+
   const total = evaluateAmount(expr, currency) ?? 0;
   const spec = useMemo(() => specFromDraft(draft, memberIds, currency, locale), [draft, memberIds, currency, locale]);
   const preview = useMemo(() => previewSplit(total, spec), [total, spec]);
@@ -323,6 +353,28 @@ function FormBody({
                 containerClassName="flex-1"
                 enterKeyHint="done"
               />
+              <label
+                className={cn(
+                  "flex size-12 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-md)] bg-surface-2 text-fg-muted transition-colors hover:bg-surface-3 hover:text-fg",
+                  scanning && "pointer-events-none",
+                )}
+                title="Scan a receipt"
+              >
+                {scanning ? <LoaderCircle className="size-5 animate-spin" aria-hidden /> : <Camera className="size-5" aria-hidden />}
+                <span className="sr-only">{scanning ? "Reading receipt…" : "Scan a receipt"}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="sr-only"
+                  disabled={scanning}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (file) void scanReceipt(file);
+                  }}
+                />
+              </label>
             </div>
 
             <div className="flex flex-1 flex-col justify-center">
@@ -634,6 +686,7 @@ const METHOD_ICONS: Record<EditableMethod, ReactNode> = {
   percent: <Percent />,
   shares: <Scale />,
   adjustment: <SlidersHorizontal />,
+  itemized: <ListChecks />,
 };
 
 function SplitPanel({
@@ -663,20 +716,42 @@ function SplitPanel({
   const usesToggle = draft.method === "equal" || draft.method === "adjustment";
   const allIncluded = draft.included.length === members.length;
 
-  return (
-    <div className="space-y-4">
-      <h3 className="font-display text-lg font-semibold">How to split</h3>
-      <Segmented<EditableMethod>
-        label="Split method"
-        size="sm"
-        value={draft.method}
-        onChange={(method) => onDraft({ ...draft, method, included: draft.included.length ? draft.included : members.map((m) => m.id) })}
-        options={(Object.keys(METHOD_LABEL) as EditableMethod[]).map((m) => ({
+  const methodPicker = (
+    <Segmented<EditableMethod>
+      label="Split method"
+      size="sm"
+      value={draft.method}
+      onChange={(method) => onDraft({ ...draft, method, included: draft.included.length ? draft.included : members.map((m) => m.id) })}
+      options={(Object.keys(METHOD_LABEL) as EditableMethod[])
+        // "Items" appears once a receipt has supplied them.
+        .filter((m) => m !== "itemized" || Boolean(draft.items?.length))
+        .map((m) => ({
           value: m,
           label: <span className="sr-only min-[400px]:not-sr-only">{METHOD_LABEL[m]}</span>,
           icon: METHOD_ICONS[m],
         }))}
-      />
+    />
+  );
+
+  if (draft.method === "itemized") {
+    return (
+      <div className="space-y-4">
+        <h3 className="font-display text-lg font-semibold">Who had what</h3>
+        {methodPicker}
+        <ItemsEditor members={members} myMemberId={myMemberId} currency={currency} draft={draft} onDraft={onDraft} preview={preview} />
+        {preview.problem && (
+          <p role="alert" className="text-center text-sm text-warning">
+            {preview.problem}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <h3 className="font-display text-lg font-semibold">How to split</h3>
+      {methodPicker}
       <p className="text-sm text-fg-muted">
         {draft.method === "equal" && "Everyone ticked pays the same."}
         {draft.method === "exact" && "Type what each person owes."}

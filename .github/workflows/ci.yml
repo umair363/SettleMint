@@ -53,6 +53,8 @@ jobs:
         env:
           PORT: "8001"
           WEB_ORIGINS: http://localhost:4555
+          # Sample receipt instead of the AI, so the scanning flow is testable without a key.
+          FAKE_RECEIPT_READER: "1"
         run: |
           nohup npx tsx src/v1/main.ts > ../api.log 2>&1 &
           for i in $(seq 1 60); do curl -sf localhost:8001/health && exit 0; sleep 1; done

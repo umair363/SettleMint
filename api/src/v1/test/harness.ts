@@ -10,6 +10,20 @@ import { createMemoryMailer } from "../mailer";
 
 export const WEB_ORIGIN = "http://localhost:3000";
 
+/** Stand-in for the AI receipt reader: tests set what it answers next. */
+export function createFakeReceiptReader() {
+  const fake = {
+    next: null as unknown,
+    calls: 0,
+    async read() {
+      fake.calls++;
+      if (fake.next instanceof Error) throw fake.next;
+      return fake.next;
+    },
+  };
+  return fake;
+}
+
 /** A fresh API on an in-memory Postgres (PGlite), with migrations applied. */
 export async function createTestApp() {
   const client = new PGlite();
@@ -22,12 +36,15 @@ export async function createTestApp() {
     webOrigins: [WEB_ORIGIN],
     webUrl: WEB_ORIGIN,
     authSecret: "test-secret-0123456789-0123456789-0123456789",
+    aiScansPerMonth: 3,
   };
-  const app = await buildApp({ db, config, mailer, logger: false });
+  const receiptReader = createFakeReceiptReader();
+  const app = await buildApp({ db, config, mailer, logger: false, receiptReader });
   return {
     app,
     db,
     mailer,
+    receiptReader,
     async close() {
       await app.close();
       await client.close();

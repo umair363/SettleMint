@@ -14,6 +14,9 @@ export type ApiErrorCode =
   | "MEMBER_HAS_BALANCE"
   | "ALREADY_CLAIMED"
   | "RATE_LIMITED"
+  | "AI_UNAVAILABLE"
+  | "AI_QUOTA"
+  | "AI_FAILED"
   | "INTERNAL"
   // Money engine codes (see MoneyErrorCode)
   | "INVALID_AMOUNT"
@@ -137,6 +140,19 @@ export interface ExpenseDto {
   deleted: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+/** What a receipt photo was read as. Amounts in minor units of `currency`. */
+export interface ReceiptScanDto {
+  merchant: string | null;
+  date: string | null;
+  currency: string;
+  total: number;
+  items: { label: string; amount: number }[];
+  /** Tax + tip + service - discounts: total minus the items. */
+  extras: number;
+  /** Scans left this month. */
+  scansLeft: number;
 }
 
 export interface ImportResultDto {

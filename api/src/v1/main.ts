@@ -8,6 +8,7 @@ import { connectPostgres, MIGRATIONS_FOLDER, type Db } from "./db/client";
 import * as schema from "./db/schema";
 import { announceGroupChanged } from "./live";
 import { createMailer } from "./mailer";
+import { sampleReceiptReader } from "./services/receipts";
 import { materializeRecurring } from "./services/recurring";
 
 dotenv.config();
@@ -33,7 +34,10 @@ async function main() {
   const url = process.env.V1_DATABASE_URL;
   if (!url && config.env === "production") throw new Error("V1_DATABASE_URL must be set in production");
   const { db, close } = url ? await connectPostgres(url) : await connectLocalPglite();
-  const app = await buildApp({ db, config, mailer: createMailer() });
+  // FAKE_RECEIPT_READER=1: a canned receipt instead of the AI, for building and
+  // testing the scanning screens without a key. Never in production.
+  const fakeReader = process.env.FAKE_RECEIPT_READER === "1" && config.env !== "production" ? sampleReceiptReader : undefined;
+  const app = await buildApp({ db, config, mailer: createMailer(), ...(fakeReader ? { receiptReader: fakeReader } : {}) });
 
   await app.listen({ port: Number(process.env.PORT ?? 8001), host: "0.0.0.0" });
   // Recurring bills: catch up now, then every hour. Opening a group also

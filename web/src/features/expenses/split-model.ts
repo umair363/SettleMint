@@ -7,7 +7,15 @@ import {
   type SplitSpec,
 } from "@settlemint/shared";
 
-export type EditableMethod = "equal" | "exact" | "percent" | "shares" | "adjustment";
+export type EditableMethod = "equal" | "exact" | "percent" | "shares" | "adjustment" | "itemized";
+
+/** One receipt line and who shared it. */
+export interface DraftItem {
+  key: string;
+  label: string;
+  amount: number;
+  memberIds: string[];
+}
 
 /** What the split editor holds while the person types. */
 export interface SplitDraft {
@@ -16,6 +24,21 @@ export interface SplitDraft {
   included: string[];
   /** Raw text per person for exact / percent / shares / adjustment. */
   values: Record<string, string>;
+  /** Receipt lines (itemized). */
+  items?: DraftItem[];
+  /** Tax + tip + service - discounts (itemized), minor units. */
+  extras?: number;
+}
+
+/** Draft from a scanned receipt: everyone shares every item until told otherwise. */
+export function itemizedDraft(items: { label: string; amount: number }[], extras: number, memberIds: string[]): SplitDraft {
+  return {
+    method: "itemized",
+    included: memberIds,
+    values: {},
+    items: items.map((it, i) => ({ key: `item-${i}`, label: it.label, amount: it.amount, memberIds })),
+    extras,
+  };
 }
 
 /**
@@ -63,7 +86,13 @@ export function draftFromSpec(spec: SplitSpec, currency: string, locale: string)
       };
     case "itemized": {
       const ids = [...new Set(spec.items.flatMap((i) => i.memberIds))];
-      return equalDraft(ids);
+      return {
+        method: "itemized",
+        included: ids,
+        values: {},
+        items: spec.items.map((it, i) => ({ key: `item-${i}`, label: it.label ?? `Item ${i + 1}`, amount: it.amount, memberIds: it.memberIds })),
+        extras: spec.extras ?? 0,
+      };
     }
   }
 }
@@ -80,6 +109,16 @@ export function specFromDraft(draft: SplitDraft, memberOrder: string[], currency
     ? draft.included.includes(id)
     : true);
   switch (draft.method) {
+    case "itemized":
+      return {
+        method: "itemized",
+        items: (draft.items ?? []).map((it) => ({
+          amount: it.amount,
+          label: it.label,
+          memberIds: memberOrder.filter((id) => it.memberIds.includes(id)),
+        })),
+        extras: draft.extras ?? 0,
+      };
     case "equal":
       return { method: "equal", memberIds: ordered };
     case "adjustment":
@@ -143,6 +182,7 @@ export function previewSplit(total: number, spec: SplitSpec): SplitPreview {
       ZERO_TOTAL_WEIGHT: "Give at least one person a share",
       INVALID_WEIGHT: "Shares must be numbers",
       NEGATIVE_SHARE: "Adjustments are bigger than the total",
+      ITEMS_SUM_MISMATCH: "The items plus tax and tip need to add up to the total",
       DUPLICATE_MEMBER: "Someone appears twice",
     };
     return { shares: null, problem: problem[err.code] ?? err.message, remaining, percentTotal };
@@ -155,4 +195,5 @@ export const METHOD_LABEL: Record<EditableMethod, string> = {
   percent: "Percent",
   shares: "Shares",
   adjustment: "Adjust",
+  itemized: "Items",
 };

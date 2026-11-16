@@ -343,3 +343,19 @@ export const recurringRules = pgTable(
   },
   (t) => [index("recurring_due_idx").on(t.active, t.nextDate), index("recurring_group_idx").on(t.groupId)],
 );
+
+// ─── AI usage ──────────────────────────────────────────────────────────────
+
+/** Receipt scans per person per month, to keep AI costs bounded. */
+export const aiUsage = pgTable(
+  "ai_usage",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    /** "YYYY-MM" */
+    period: varchar("period", { length: 7 }).notNull(),
+    scans: integer("scans").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.period] })],
+);

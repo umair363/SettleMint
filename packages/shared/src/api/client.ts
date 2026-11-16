@@ -24,6 +24,7 @@ import type {
   MemberDto,
   Page,
   PaymentHandleDto,
+  ReceiptScanDto,
   RecurringRuleDto,
   SearchResultDto,
   SettlementDto,
@@ -117,6 +118,8 @@ export function createApiClient(opts: ApiClientOptions) {
       delete: () => request<void>("DELETE", "/me", { confirm: "DELETE" }),
     },
     search: (q: string) => get<SearchResultDto>("/search", { q }),
+    scanReceipt: (body: { image: string; mimeType: "image/jpeg" | "image/png" | "image/webp"; currency?: string }) =>
+      post<ReceiptScanDto>("/ai/receipt", body),
     importSplitwise: (body: { csv: string; groupName: string; meIndex: number }) =>
       post<ImportResultDto>("/import/splitwise", body),
     groups: {
