@@ -13,6 +13,7 @@ import { Button } from "@/ui/button";
 import { TextField } from "@/ui/field";
 import { Sheet } from "@/ui/sheet";
 import { Card } from "@/ui/surface";
+import { useTranslations } from "use-intl";
 
 /** Export everything, or delete the account (privacy-law and store requirements). */
 export function YourDataCard() {
@@ -22,6 +23,7 @@ export function YourDataCard() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [typed, setTyped] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const t = useTranslations("yourData");
 
   const exportData = async () => {
     setExporting(true);
@@ -35,7 +37,7 @@ export function YourDataCard() {
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      toast.error("Couldn't export right now. Try again in a moment.");
+      toast.error(t("exportFailed"));
     } finally {
       setExporting(false);
     }
@@ -52,22 +54,22 @@ export function YourDataCard() {
       router.replace("/");
     } catch {
       setDeleting(false);
-      toast.error("Couldn't delete the account. Try again.");
+      toast.error(t("deleteFailed"));
     }
   };
 
   return (
     <Card className="space-y-4 p-5">
       <div>
-        <p className="font-semibold">Your data</p>
-        <p className="text-sm text-fg-muted">Download everything SettleMint has about you, or delete your account.</p>
+        <p className="font-semibold">{t("title")}</p>
+        <p className="text-sm text-fg-muted">{t("body")}</p>
       </div>
       <div className="flex flex-wrap gap-2">
         <Button variant="secondary" size="sm" leading={<Download className="size-4" />} loading={exporting} onClick={exportData}>
-          Export my data
+          {t("export")}
         </Button>
         <Button variant="danger" size="sm" leading={<Trash2 className="size-4" />} onClick={() => setDeleteOpen(true)}>
-          Delete account
+          {t("delete")}
         </Button>
       </div>
 
@@ -77,22 +79,19 @@ export function YourDataCard() {
           setDeleteOpen(o);
           if (!o) setTyped("");
         }}
-        title="Delete your account?"
-        description="This can't be undone."
+        title={t("confirmTitle")}
+        description={t("cantUndo")}
         showDescription
       >
         <div className="space-y-4 pb-2">
           <ul className="list-disc space-y-1.5 ps-5 text-[15px] text-fg-muted">
-            <li>You&apos;ll be signed out everywhere and your sign-in methods removed.</li>
-            <li>
-              Expenses you were part of stay in your groups under your name, so your friends&apos; balances stay correct, but
-              they&apos;re no longer linked to you.
-            </li>
-            <li>Groups you own pass to the longest-standing member.</li>
+            <li>{t("point1")}</li>
+            <li>{t("point2")}</li>
+            <li>{t("point3")}</li>
           </ul>
-          <TextField label='Type "DELETE" to confirm' value={typed} onChange={(e) => setTyped(e.target.value)} autoCapitalize="characters" />
-          <Button variant="danger" block size="lg" disabled={typed !== "DELETE"} loading={deleting} onClick={deleteAccount}>
-            Delete my account
+          <TextField label={t("typeToConfirm", { word: t("confirmWord") })} value={typed} onChange={(e) => setTyped(e.target.value)} autoCapitalize="characters" />
+          <Button variant="danger" block size="lg" disabled={typed.trim().toLocaleUpperCase() !== t("confirmWord").toLocaleUpperCase()} loading={deleting} onClick={deleteAccount}>
+            {t("deleteMine")}
           </Button>
         </div>
       </Sheet>

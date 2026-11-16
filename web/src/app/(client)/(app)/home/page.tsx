@@ -4,6 +4,7 @@ import { Activity, ArrowRight, Link2, Plus, Sparkles, Users } from "lucide-react
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useState } from "react";
+import { useTranslations } from "use-intl";
 import { ActivityRow } from "@/features/activity/activity-row";
 import { useAddExpense } from "@/features/expenses/add-expense-context";
 import { GroupRow } from "@/features/groups/group-row";
@@ -18,14 +19,15 @@ import { listContainer, listItem } from "@/ui/motion";
 import { BalanceCard } from "@/ui/balance-card";
 import { Card, List, SectionHeader } from "@/ui/surface";
 
-function greeting() {
+function partOfDay() {
   const h = new Date().getHours();
-  return h < 5 ? "Good night" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  return h < 5 ? "night" : h < 12 ? "morning" : h < 18 ? "afternoon" : "evening";
 }
 
 function BalanceHero() {
   const groups = useGroups();
   const totals = totalsByCurrency(groups.data);
+  const t = useTranslations("home");
 
   if (groups.isPending) {
     return (
@@ -38,27 +40,29 @@ function BalanceHero() {
   if (totals.length === 0) {
     return (
       <BalanceCard balance={0}>
-        <p className="text-sm text-fg-muted">Your balance</p>
-        <p className="mt-1 font-display text-3xl font-semibold">All settled up</p>
-        <p className="mt-1 text-sm text-fg-muted">Nobody owes anybody. Nice.</p>
+        <p className="text-sm text-fg-muted">{t("yourBalance")}</p>
+        <p className="mt-1 font-display text-3xl font-semibold">{t("allSettled")}</p>
+        <p className="mt-1 text-sm text-fg-muted">{t("nobodyOwes")}</p>
       </BalanceCard>
     );
   }
   return (
     <BalanceCard balance={totals.reduce((s, t) => s + Math.sign(t.net), 0)}>
       <div className="space-y-4">
-        {totals.map((t) => (
-          <div key={t.currency}>
+        {totals.map((b) => (
+          <div key={b.currency}>
             <p className="text-sm text-fg-muted">
-              {t.net > 0 ? "Overall, you are owed" : t.net < 0 ? "Overall, you owe" : "Overall, you're even"}
+              {t("overall", { state: b.net > 0 ? "owed" : b.net < 0 ? "owe" : "even" })}
             </p>
             <p className="mt-0.5 font-display text-4xl font-semibold tracking-tight">
-              <Money minor={t.net} currency={t.currency} tone="auto" absolute animated />
+              <Money minor={b.net} currency={b.currency} tone="auto" absolute animated />
             </p>
-            {t.owed > 0 && t.owe > 0 && (
+            {b.owed > 0 && b.owe > 0 && (
               <p className="mt-1 text-sm text-fg-muted">
-                <Money minor={t.owed} currency={t.currency} tone="positive" /> owed to you ·{" "}
-                <Money minor={t.owe} currency={t.currency} tone="negative" /> you owe
+                {t.rich("owedAndOwe", {
+                  owed: () => <Money minor={b.owed} currency={b.currency} tone="positive" />,
+                  owe: () => <Money minor={b.owe} currency={b.currency} tone="negative" />,
+                })}
               </p>
             )}
           </div>
@@ -74,6 +78,8 @@ export default function HomePage() {
   const activity = useActivity();
   const { openAddExpense } = useAddExpense();
   const [newGroupOpen, setNewGroupOpen] = useState(false);
+  const t = useTranslations("home");
+  const tc = useTranslations("common");
   const firstName = me.data?.name.split(" ")[0] ?? "";
   const active = (groups.data ?? []).filter((g) => !g.archived);
   const recent = activity.data?.pages[0]?.items.slice(0, 5) ?? [];
@@ -81,7 +87,7 @@ export default function HomePage() {
 
   return (
     <>
-      <PageHeader title={`${greeting()}${firstName ? `, ${firstName}` : ""}`} actions={<SearchButton />} />
+      <PageHeader title={t("greeting", { part: partOfDay(), name: firstName || "none" })} actions={<SearchButton />} />
       <PageBody>
         {isNew ? (
           <Card>
@@ -89,26 +95,26 @@ export default function HomePage() {
               icon={<Sparkles />}
               preview={
                 <div className="space-y-2">
-                  <PreviewRow emoji="✈️" title="Lisbon trip" subtitle="4 people · you are owed" amount="€128.50" tone="positive" />
-                  <PreviewRow emoji="🏠" title="Flat 4B" subtitle="3 people · you owe" amount="£42.00" tone="negative" />
+                  <PreviewRow emoji="✈️" title={t("sampleTrip")} subtitle={t("sampleTripLine")} amount="€128.50" tone="positive" />
+                  <PreviewRow emoji="🏠" title={t("sampleHome")} subtitle={t("sampleHomeLine")} amount="£42.00" tone="negative" />
                 </div>
               }
-              title="Let's split your first bill"
-              body="Make a group for a trip, your home, or just you and a friend. People you add don't need the app."
+              title={t("firstBillTitle")}
+              body={t("firstBillBody")}
               action={
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Button leading={<Plus className="size-4" />} onClick={() => setNewGroupOpen(true)}>
-                    Create a group
+                    {t("createGroup")}
                   </Button>
                 </div>
               }
             />
             <p className="flex items-center justify-center gap-1.5 pb-6 text-sm text-fg-muted">
-              <Link2 className="size-4" /> Got an invite link? Just open it.
+              <Link2 className="size-4" /> {t("haveInvite")}
             </p>
             <p className="pb-6 text-center text-sm">
               <Link href="/groups" className="font-medium text-positive">
-                Coming from Splitwise? Import your groups
+                {t("fromSplitwise")}
               </Link>
             </p>
           </Card>
@@ -117,19 +123,19 @@ export default function HomePage() {
             <BalanceHero />
             <div className="grid grid-cols-2 gap-3">
               <Button variant="secondary" size="lg" leading={<Plus className="size-5" />} onClick={() => openAddExpense()}>
-                Add expense
+                {tc("addExpense")}
               </Button>
               <Button variant="secondary" size="lg" leading={<Users className="size-5" />} onClick={() => setNewGroupOpen(true)}>
-                New group
+                {t("newGroup")}
               </Button>
             </div>
 
             <section>
               <SectionHeader
-                title="Groups"
+                title={t("groups")}
                 action={
                   <Link href="/groups" className="inline-flex items-center gap-1 text-sm font-medium text-positive">
-                    All <ArrowRight className="size-3.5 rtl:rotate-180" />
+                    {tc("all")} <ArrowRight className="size-3.5 rtl:rotate-180" />
                   </Link>
                 }
               />
@@ -156,10 +162,10 @@ export default function HomePage() {
 
             <section>
               <SectionHeader
-                title="Recent activity"
+                title={t("recentActivity")}
                 action={
                   <Link href="/activity" className="inline-flex items-center gap-1 text-sm font-medium text-positive">
-                    All <ArrowRight className="size-3.5 rtl:rotate-180" />
+                    {tc("all")} <ArrowRight className="size-3.5 rtl:rotate-180" />
                   </Link>
                 }
               />
@@ -169,7 +175,7 @@ export default function HomePage() {
                 </Card>
               ) : recent.length === 0 ? (
                 <Card>
-                  <EmptyState icon={<Activity />} title="Nothing yet" body="Expenses and payments in your groups show up here." />
+                  <EmptyState icon={<Activity />} title={t("nothingYet")} body={t("activityEmpty")} />
                 </Card>
               ) : (
                 <List>

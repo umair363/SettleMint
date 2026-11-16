@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { Drawer } from "vaul";
 import { IconButton } from "./button";
 import { cn } from "./cn";
+import { useTranslations } from "use-intl";
 
 export interface SheetProps {
   open: boolean;
@@ -36,6 +37,7 @@ export function Sheet({
   tall,
   className,
 }: SheetProps) {
+  const t = useTranslations("ui");
   return (
     <Drawer.Root open={open} onOpenChange={onOpenChange} shouldScaleBackground={false} repositionInputs={false}>
       <Drawer.Portal>
@@ -63,7 +65,7 @@ export function Sheet({
                 {description ?? title}
               </Drawer.Description>
             </div>
-            <IconButton label="Close" size="sm" variant="solid" onClick={() => onOpenChange(false)} className="-me-1">
+            <IconButton label={t("close")} size="sm" variant="solid" onClick={() => onOpenChange(false)} className="-me-1">
               <X className="size-4" />
             </IconButton>
           </div>

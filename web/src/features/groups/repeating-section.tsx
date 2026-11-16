@@ -1,19 +1,14 @@
 "use client";
 
-import { getCategoryMeta, type GroupDetailDto, type RecurringRuleDto } from "@settlemint/shared";
+import { getCategoryMeta, type GroupDetailDto } from "@settlemint/shared";
 import { Repeat } from "lucide-react";
 import { toast } from "sonner";
-import { useLocale } from "use-intl";
+import { useLocale, useTranslations } from "use-intl";
 import { dayLabel } from "@/lib/dates";
 import { useRecurring, useStopRecurring } from "@/lib/queries";
 import { Money } from "@/ui/money";
 import { List, SectionHeader } from "@/ui/surface";
 
-function cadence(r: RecurringRuleDto) {
-  if (r.interval === 1) return { weekly: "Weekly", monthly: "Monthly", yearly: "Yearly" }[r.frequency];
-  const unit = { weekly: "weeks", monthly: "months", yearly: "years" }[r.frequency];
-  return `Every ${r.interval} ${unit}`;
-}
 
 /** Bills that add themselves: rent, subscriptions, anything that repeats. */
 export function RepeatingSection({ group }: { group: GroupDetailDto }) {
@@ -21,11 +16,12 @@ export function RepeatingSection({ group }: { group: GroupDetailDto }) {
   const rules = useRecurring(group.id);
   const stop = useStopRecurring(group.id);
   const visible = (rules.data ?? []).filter((r) => r.active || r.pausedReason);
+  const t = useTranslations("repeating");
   if (visible.length === 0) return null;
 
   return (
     <section>
-      <SectionHeader title="Repeating" />
+      <SectionHeader title={t("title")} />
       <List>
         {visible.map((r) => (
           <div key={r.id} className="flex items-center gap-3 px-4 py-3">
@@ -38,10 +34,10 @@ export function RepeatingSection({ group }: { group: GroupDetailDto }) {
                 <Repeat className="size-3.5 shrink-0" aria-hidden />
                 {r.active ? (
                   <>
-                    {cadence(r)} · next {dayLabel(r.nextDate, locale)}
+                    {t("cadence", { frequency: r.frequency, count: r.interval })} · {t("next", { date: dayLabel(r.nextDate, locale) })}
                   </>
                 ) : (
-                  <span className="text-warning">Paused: {r.pausedReason}</span>
+                  <span className="text-warning">{t("paused", { reason: r.pausedReason ?? "" })}</span>
                 )}
               </span>
             </span>
@@ -50,13 +46,13 @@ export function RepeatingSection({ group }: { group: GroupDetailDto }) {
               {r.active && (
                 <button
                   type="button"
-                  aria-label={`Stop repeating ${r.description}`}
+                  aria-label={t("stopLabel", { item: r.description })}
                   className="rounded-md px-1 text-[13px] font-medium text-fg-muted hover:text-negative"
                   onClick={() =>
-                    stop.mutate(r.id, { onSuccess: () => toast.success(`Stopped “${r.description}”`, { description: "Past expenses stay." }) })
+                    stop.mutate(r.id, { onSuccess: () => toast.success(t("stopped", { item: r.description }), { description: t("pastStay") }) })
                   }
                 >
-                  Stop
+                  {t("stop")}
                 </button>
               )}
             </span>

@@ -3,6 +3,7 @@ import { formatMoney, isCurrencyCode } from "@settlemint/shared";
 import { sendNotification } from "web-push";
 import type { Db } from "../db/client";
 import { groups, members, pushSubscriptions, user } from "../db/schema";
+import { noticeText } from "./notification-text";
 
 export interface PushTarget {
   endpoint: string;
@@ -59,7 +60,7 @@ export function createNotifier(db: Db, sender: PushSender, webUrl: string) {
         .from(members)
         .leftJoin(user, eq(user.id, members.userId))
         .where(and(eq(members.groupId, n.groupId), isNull(members.leftAt), isNotNull(members.userId)));
-      const actorName = people.find((p) => p.memberId === n.actorMemberId)?.name ?? "Someone";
+      const actorName = people.find((p) => p.memberId === n.actorMemberId)?.name;
       const d = n.data;
       const money = (locale: string | null) =>
         typeof d.amount === "number" && typeof d.currency === "string" && isCurrencyCode(d.currency)
@@ -84,26 +85,29 @@ export function createNotifier(db: Db, sender: PushSender, webUrl: string) {
       await Promise.allSettled(
         subs.map(async (s) => {
           const r = recipients.find((x) => x.userId === s.userId)!;
+          // In the recipient's language and number format.
           const amount = money(r.locale);
+          const say = noticeText(r.locale);
+          const actor = actorName ?? say.someone;
           let body: string;
           switch (n.type) {
             case "expense.created":
-              body = `${actorName} added “${str(d.description)}”${amount ? ` · ${amount}` : ""}`;
+              body = say.added(actor, str(d.description), amount);
               break;
             case "expense.updated":
-              body = `${actorName} edited “${str((d.after as Record<string, unknown>)?.description)}”`;
+              body = say.edited(actor, str((d.after as Record<string, unknown>)?.description));
               break;
             case "expense.deleted":
-              body = `${actorName} deleted “${str(d.description)}”`;
+              body = say.deleted(actor, str(d.description));
               break;
             case "settlement.created":
               body =
                 r.memberId === d.toMemberId
-                  ? `${str(d.fromName) || "Someone"} paid you ${amount}`
-                  : `${actorName} recorded that you paid ${str(d.toName) || "them"} ${amount}`;
+                  ? say.paidYou(str(d.fromName) || say.someone, amount)
+                  : say.recordedYouPaid(actor, str(d.toName) || say.them, amount);
               break;
             default:
-              body = `${str(d.displayName) || actorName} joined the group`;
+              body = say.joined(str(d.displayName) || actor);
           }
           const payload = JSON.stringify({
             title: `${group.emoji ? `${group.emoji} ` : ""}${group.name}`,

@@ -6,22 +6,14 @@ import { toast } from "sonner";
 import { disablePush, enablePush, pushState, type PushState } from "@/lib/push";
 import { Switch } from "@/ui/controls";
 import { Card, SectionHeader } from "@/ui/surface";
+import { useTranslations } from "use-intl";
 
-const HINT: Partial<Record<PushState, React.ReactNode>> = {
-  "needs-install": (
-    <>
-      On iPhone, first tap <Share className="inline size-4 align-text-bottom" aria-label="Share" /> then “Add to Home
-      Screen”, and open SettleMint from there.
-    </>
-  ),
-  denied: "Notifications are blocked for SettleMint. Allow them in your browser's site settings, then come back.",
-  unsupported: "This browser can't show notifications from SettleMint.",
-};
 
 /** Opt in to being told when friends add expenses or pay you, on this device. */
 export function NotificationsCard() {
   const [state, setState] = useState<PushState | null>(null);
   const [busy, setBusy] = useState(false);
+  const t = useTranslations("notifications");
 
   useEffect(() => {
     let live = true;
@@ -39,7 +31,7 @@ export function NotificationsCard() {
       if (on) {
         const next = await enablePush();
         setState(next);
-        if (next === "on") toast.success("Notifications are on for this device");
+        if (next === "on") toast.success(t("on"));
       } else {
         await disablePush();
         setState("off");
@@ -47,18 +39,25 @@ export function NotificationsCard() {
     } catch (err) {
       toast.error(
         err instanceof Error && err.message === "PUSH_UNAVAILABLE"
-          ? "Notifications aren't available yet."
-          : "Couldn't switch notifications on. Try again in a moment.",
+          ? t("unavailable")
+          : t("failed"),
       );
     } finally {
       setBusy(false);
     }
   };
 
-  const hint = HINT[state];
+  const hint =
+    state === "needs-install"
+      ? t.rich("needsInstall", { share: () => <Share className="inline size-4 align-text-bottom" aria-label={t("share")} /> })
+      : state === "denied"
+        ? t("denied")
+        : state === "unsupported"
+          ? t("unsupported")
+          : null;
   return (
     <section>
-      <SectionHeader title="Notifications" />
+      <SectionHeader title={t("title")} />
       <Card className="space-y-3 p-5">
         <div className="flex items-start gap-3">
           <span className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-positive">
@@ -66,8 +65,8 @@ export function NotificationsCard() {
           </span>
           <div className="min-w-0 flex-1">
             <Switch
-              label="On this device"
-              description="When friends add or change expenses, or pay you."
+              label={t("onThisDevice")}
+              description={t("description")}
               checked={state === "on"}
               disabled={busy || Boolean(hint)}
               onCheckedChange={toggle}

@@ -4,7 +4,7 @@ import { currencyExponent, formatMoney, MAX_AMOUNT_MINOR } from "@settlemint/sha
 import { Delete } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo } from "react";
-import { useLocale } from "use-intl";
+import { useLocale, useTranslations } from "use-intl";
 import { cn } from "./cn";
 import { haptic, springSnappy } from "./motion";
 
@@ -84,6 +84,7 @@ export function AmountDisplay({
   className?: string;
 }) {
   const locale = useLocale();
+  const t = useTranslations("ui");
   const dec = useDecimalSeparator(locale);
   const value = evaluateAmount(expr, currency);
   const hasMath = /[+-]/.test(expr.slice(1));
@@ -103,7 +104,7 @@ export function AmountDisplay({
           onClick={onCurrencyClick}
           disabled={!onCurrencyClick}
           className="rounded-full bg-surface-2 px-2.5 py-1 text-sm font-semibold text-fg-muted transition-colors enabled:hover:bg-surface-3 enabled:hover:text-fg"
-          aria-label={`Currency: ${currency}. Change currency`}
+          aria-label={t("currencyLabel", { currency })}
         >
           {symbol !== currency ? `${symbol} ${currency}` : currency}
         </button>
@@ -154,6 +155,7 @@ export function AmountPad({
   captureKeyboard?: boolean;
 }) {
   const locale = useLocale();
+  const t = useTranslations("ui");
   const dec = useDecimalSeparator(locale);
   const exp = currencyExponent(currency);
 
@@ -194,15 +196,15 @@ export function AmountPad({
         const isOp = k === "+" || k === "-";
         const label =
           k === "back"
-            ? "Delete"
+            ? t("keyDelete")
             : k === "clear"
-              ? "Clear"
+              ? t("keyClear")
               : k === "."
-                ? `Decimal ${dec}`
+                ? t("keyDecimal", { separator: dec })
                 : k === "+"
-                  ? "Add"
+                  ? t("keyAdd")
                   : k === "-"
-                    ? "Subtract"
+                    ? t("keySubtract")
                     : k;
         return (
           <motion.button

@@ -12,6 +12,19 @@ const [outDir] = process.argv.slice(2);
 const API = "http://localhost:8001";
 const ORIGIN = "http://localhost:4555";
 
+/** API call that waits out sign-up rate limits (several suites sign up back to back). */
+async function call(context, method, url, data) {
+  for (let attempt = 0; ; attempt++) {
+    const res = await context.request.fetch(`${API}${url}`, { method, data, headers: { origin: ORIGIN } });
+    if (res.status() === 429 && attempt < 4) {
+      await new Promise((r) => setTimeout(r, 11_000));
+      continue;
+    }
+    if (!res.ok()) throw new Error(`${method} ${url} -> ${res.status()} ${await res.text()}`);
+    return res.status() === 204 ? null : res.json();
+  }
+}
+
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".png": "image/png", ".woff2": "font/woff2", ".txt": "text/plain" };
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(new URL(req.url, "http://x").pathname);
@@ -31,11 +44,7 @@ const check = (ok, msg) => {
 
 async function account(name) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
-  const api = async (method, url, data) => {
-    const res = await ctx.request.fetch(`${API}${url}`, { method, data, headers: { origin: ORIGIN } });
-    if (!res.ok()) throw new Error(`${method} ${url} -> ${res.status()} ${await res.text()}`);
-    return res.status() === 204 ? null : res.json();
-  };
+  const api = (method, url, data) => call(ctx, method, url, data);
   await api("POST", "/v1/auth/sign-up/email", {
     name,
     email: `${name.toLowerCase()}-${Date.now()}@example.com`,

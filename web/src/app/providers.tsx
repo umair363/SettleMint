@@ -6,33 +6,12 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { OfflineBanner, ServiceWorker } from "@/features/pwa/pwa";
 import { CACHE_BUSTER, persister } from "@/lib/persist";
 import { registerMutationDefaults } from "@/lib/queries";
-import { useState, useSyncExternalStore, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Toaster, toast } from "sonner";
-import { IntlProvider } from "use-intl";
+import { I18nProvider } from "@/i18n/provider";
+import { tr } from "@/i18n/runtime";
+import { apiErrorText } from "@/lib/api-error-text";
 import { ThemeProvider, useTheme } from "@/ui/theme";
-
-/**
- * The viewer's locale decides number, money and date formatting. The static
- * HTML is rendered as "en"; the real locale is applied after the first
- * paint to avoid a hydration mismatch.
- */
-function browserLocale(): string {
-  const candidate = navigator.languages?.[0] ?? navigator.language ?? "en";
-  try {
-    return Intl.NumberFormat.supportedLocalesOf([candidate])[0] ?? "en";
-  } catch {
-    return "en";
-  }
-}
-
-function subscribeLanguage(onChange: () => void) {
-  window.addEventListener("languagechange", onChange);
-  return () => window.removeEventListener("languagechange", onChange);
-}
-
-function useViewerLocale() {
-  return useSyncExternalStore(subscribeLanguage, browserLocale, () => "en");
-}
 
 function ThemedToaster() {
   const { resolved } = useTheme();
@@ -72,7 +51,7 @@ function makeQueryClient() {
         // except offline, where the offline pill already says so.
         const offline = err instanceof ApiError && err.isNetwork && !onlineManager.isOnline();
         if (query.state.data !== undefined && !offline && !(err instanceof ApiError && err.status === 401)) {
-          toast.error("Couldn't refresh", { id: "refresh-failed", description: "Showing saved data." });
+          toast.error(tr()("errors.refreshFailed"), { id: "refresh-failed", description: tr()("errors.showingSaved") });
         }
       },
     }),
@@ -82,8 +61,8 @@ function makeQueryClient() {
         // Everything else (e.g. an expense saved after its sheet closed) is reported here,
         // so a failed save is never silent.
         if (mutation.meta?.handlesErrors) return;
-        toast.error(err instanceof ApiError ? err.message : "Something went wrong", {
-          description: err instanceof ApiError && err.isNetwork ? "Check your connection and try again." : undefined,
+        toast.error(apiErrorText(err), {
+          description: err instanceof ApiError && err.isNetwork ? tr()("errors.checkConnection") : undefined,
         });
       },
     }),
@@ -107,10 +86,9 @@ function makeQueryClient() {
 
 export function Providers({ children }: { children: ReactNode }) {
   const [client] = useState(makeQueryClient);
-  const locale = useViewerLocale();
   return (
     <ThemeProvider>
-      <IntlProvider locale={locale} messages={{}} onError={() => {}}>
+      <I18nProvider>
         <PersistQueryClientProvider
           client={client}
           persistOptions={{
@@ -132,7 +110,7 @@ export function Providers({ children }: { children: ReactNode }) {
           <OfflineBanner />
           <ServiceWorker />
         </PersistQueryClientProvider>
-      </IntlProvider>
+      </I18nProvider>
     </ThemeProvider>
   );
 }

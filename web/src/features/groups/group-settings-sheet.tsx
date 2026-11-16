@@ -16,6 +16,7 @@ import { TextField } from "@/ui/field";
 import { Money } from "@/ui/money";
 import { Sheet } from "@/ui/sheet";
 import { SectionHeader } from "@/ui/surface";
+import { useTranslations } from "use-intl";
 
 export function GroupSettingsSheet({
   group,
@@ -36,6 +37,8 @@ export function GroupSettingsSheet({
   const [confirm, setConfirm] = useState<"leave" | "delete" | null>(null);
   const me = group.members.find((m) => m.isMe);
   const isAdmin = me?.role === "owner" || me?.role === "admin";
+  const t = useTranslations("groupSettings");
+  const tc = useTranslations("common");
 
   const leave = useMutation({
     meta: { handlesErrors: true },
@@ -43,7 +46,7 @@ export function GroupSettingsSheet({
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: keys.groups });
       router.replace("/groups");
-      toast.success(`You left ${group.name}`);
+      toast.success(t("left", { group: group.name }));
     },
   });
   const del = useMutation({
@@ -52,8 +55,8 @@ export function GroupSettingsSheet({
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: keys.groups });
       router.replace("/groups");
-      toast(`Deleted ${group.name}`, {
-        action: { label: "Undo", onClick: () => api.groups.restore(group.id).then(() => qc.invalidateQueries({ queryKey: keys.groups })) },
+      toast(t("deleted", { group: group.name }), {
+        action: { label: tc("undo"), onClick: () => api.groups.restore(group.id).then(() => qc.invalidateQueries({ queryKey: keys.groups })) },
       });
     },
   });
@@ -61,12 +64,12 @@ export function GroupSettingsSheet({
   const saveField = (changes: Parameters<typeof update.mutate>[0]) =>
     update.mutate(changes, {
       onError: (err) => {
-        if (err instanceof ApiError && err.code === "VERSION_CONFLICT") toast.error("Someone else just changed this group. Try again.");
+        if (err instanceof ApiError && err.code === "VERSION_CONFLICT") toast.error(t("conflict"));
       },
     });
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} title="Group settings" tall>
+    <Sheet open={open} onOpenChange={onOpenChange} title={t("title")} tall>
       <div className="space-y-7 py-2">
         <form
           onSubmit={(e) => {
@@ -75,14 +78,14 @@ export function GroupSettingsSheet({
           }}
         >
           <TextField
-            label="Name"
+            label={t("name")}
             value={name}
             maxLength={100}
             onChange={(e) => setName(e.target.value)}
             trailing={
               name.trim() !== group.name && name.trim() ? (
                 <Button type="submit" size="sm" loading={update.isPending}>
-                  Save
+                  {tc("save")}
                 </Button>
               ) : undefined
             }
@@ -93,19 +96,19 @@ export function GroupSettingsSheet({
           <Switch
             checked={group.simplifyDebts}
             onCheckedChange={(v) => saveField({ version: group.version, simplifyDebts: v })}
-            label="Simplify debts"
-            description="Settle up in as few payments as possible. Off: everyone pays back exactly who paid for them."
+            label={t("simplify")}
+            description={t("simplifyHelp")}
           />
           <Switch
             checked={group.archived}
             onCheckedChange={(v) => saveField({ version: group.version, archived: v })}
-            label="Archive"
-            description="Hide it from your lists. Nothing is deleted."
+            label={t("archive")}
+            description={t("archiveHelp")}
           />
         </div>
 
         <section>
-          <SectionHeader title={`People (${group.members.filter((m) => !m.left).length})`} />
+          <SectionHeader title={t("people", { count: group.members.filter((m) => !m.left).length })} />
           <ul className="space-y-1">
             {group.members
               .filter((m) => !m.left)
@@ -124,25 +127,25 @@ export function GroupSettingsSheet({
                           rename.mutate({ memberId: m.id, displayName: editName.trim() }, { onSuccess: () => setEditing(null) });
                         }}
                       >
-                        <TextField aria-label="New name" autoFocus value={editName} onChange={(e) => setEditName(e.target.value)} containerClassName="flex-1" maxLength={60} />
+                        <TextField aria-label={t("newName")} autoFocus value={editName} onChange={(e) => setEditName(e.target.value)} containerClassName="flex-1" maxLength={60} />
                         <Button type="submit" size="sm" className="mt-1.5" disabled={!editName.trim()} loading={rename.isPending}>
-                          Save
+                          {tc("save")}
                         </Button>
                       </form>
                     ) : (
                       <>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate font-medium">
-                            {m.isMe ? "You" : m.displayName}
-                            {m.role !== "member" && <span className="ms-1.5 text-xs text-fg-subtle">{m.role}</span>}
+                            {m.isMe ? tc("you") : m.displayName}
+                            {m.role !== "member" && <span className="ms-1.5 text-xs text-fg-subtle">{t("role", { role: m.role })}</span>}
                           </span>
                           <span className="block text-xs text-fg-muted">
-                            {!m.claimed ? "Hasn't joined yet" : balance === 0 ? "Settled up" : <Money minor={balance} currency={group.currency} tone="auto" signed />}
+                            {!m.claimed ? t("notJoined") : balance === 0 ? t("settledUp") : <Money minor={balance} currency={group.currency} tone="auto" signed />}
                           </span>
                         </span>
                         {canEdit && (
                           <IconButton
-                            label={`Rename ${m.displayName}`}
+                            label={t("rename", { name: m.displayName })}
                             size="sm"
                             onClick={() => {
                               setEditing(m.id);
@@ -154,11 +157,11 @@ export function GroupSettingsSheet({
                         )}
                         {canRemove && (
                           <IconButton
-                            label={`Remove ${m.displayName}`}
+                            label={t("remove", { name: m.displayName })}
                             size="sm"
                             disabled={balance !== 0}
-                            title={balance !== 0 ? "Settle up before removing" : undefined}
-                            onClick={() => remove.mutate(m.id, { onSuccess: () => toast.success(`Removed ${m.displayName}`) })}
+                            title={balance !== 0 ? t("settleFirst") : undefined}
+                            onClick={() => remove.mutate(m.id, { onSuccess: () => toast.success(t("removed", { name: m.displayName })) })}
                           >
                             <UserMinus className="size-4" />
                           </IconButton>
@@ -173,11 +176,11 @@ export function GroupSettingsSheet({
 
         <div className="space-y-2 border-t border-line pt-5">
           <Button variant="secondary" block leading={<LogOut className="size-4" />} onClick={() => setConfirm("leave")}>
-            Leave group
+            {t("leave")}
           </Button>
           {me?.role === "owner" && (
             <Button variant="danger" block leading={<Trash2 className="size-4" />} onClick={() => setConfirm("delete")}>
-              Delete group
+              {t("delete")}
             </Button>
           )}
         </div>
@@ -186,20 +189,16 @@ export function GroupSettingsSheet({
       <ConfirmDialog
         open={confirm === "leave"}
         onOpenChange={(o) => !o && setConfirm(null)}
-        title={`Leave ${group.name}?`}
-        body={
-          (group.balances[me?.id ?? ""] ?? 0) !== 0
-            ? "You need to settle up first. Your balance in this group isn't zero."
-            : "You won't see this group any more. Your past expenses stay for everyone else."
-        }
-        confirmLabel="Leave"
+        title={t("leaveTitle", { group: group.name })}
+        body={(group.balances[me?.id ?? ""] ?? 0) !== 0 ? t("leaveBlocked") : t("leaveBody")}
+        confirmLabel={t("leaveConfirm")}
         destructive
         loading={leave.isPending}
         onConfirm={() =>
           leave.mutate(undefined, {
-            onError: (err) => {
+            onError: () => {
               setConfirm(null);
-              toast.error(err instanceof ApiError ? err.message : "Couldn't leave the group");
+              toast.error(t("leaveFailed"));
             },
           })
         }
@@ -207,16 +206,16 @@ export function GroupSettingsSheet({
       <ConfirmDialog
         open={confirm === "delete"}
         onOpenChange={(o) => !o && setConfirm(null)}
-        title={`Delete ${group.name}?`}
-        body="Everyone loses access to the group and its history. You can undo right after."
-        confirmLabel="Delete group"
+        title={t("deleteTitle", { group: group.name })}
+        body={t("deleteBody")}
+        confirmLabel={t("delete")}
         destructive
         loading={del.isPending}
         onConfirm={() =>
           del.mutate(undefined, {
-            onError: (err) => {
+            onError: () => {
               setConfirm(null);
-              toast.error(err instanceof ApiError ? err.message : "Couldn't delete the group");
+              toast.error(t("deleteFailed"));
             },
           })
         }

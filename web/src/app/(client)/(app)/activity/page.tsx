@@ -3,7 +3,7 @@
 import type { ActivityDto } from "@settlemint/shared";
 import { Activity } from "lucide-react";
 import { useMemo } from "react";
-import { useLocale } from "use-intl";
+import { useLocale, useTranslations } from "use-intl";
 import { ActivityRow } from "@/features/activity/activity-row";
 import { PageBody, PageHeader } from "@/features/shell/page-header";
 import { dayLabel } from "@/lib/dates";
@@ -21,6 +21,7 @@ export default function ActivityPage() {
   const locale = useLocale();
   const me = useMe();
   const activity = useActivity();
+  const t = useTranslations("activity");
 
   const days = useMemo(() => {
     const byDay = new Map<string, ActivityDto[]>();
@@ -33,7 +34,7 @@ export default function ActivityPage() {
 
   return (
     <>
-      <PageHeader title="Activity" subtitle="Everything that happened in your groups." />
+      <PageHeader title={t("title")} subtitle={t("subtitle")} />
       <PageBody>
         {activity.isPending ? (
           <Card>
@@ -45,7 +46,7 @@ export default function ActivityPage() {
           </Card>
         ) : days.length === 0 ? (
           <Card>
-            <EmptyState icon={<Activity />} title="Nothing here yet" body="When anyone adds an expense or records a payment, you'll see it here." />
+            <EmptyState icon={<Activity />} title={t("emptyTitle")} body={t("emptyBody")} />
           </Card>
         ) : (
           <>
@@ -61,7 +62,7 @@ export default function ActivityPage() {
             ))}
             {activity.hasNextPage && (
               <Button variant="secondary" block loading={activity.isFetchingNextPage} onClick={() => activity.fetchNextPage()}>
-                Show older
+                {t("showOlder")}
               </Button>
             )}
           </>

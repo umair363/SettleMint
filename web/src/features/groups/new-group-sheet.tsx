@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent, type KeyboardEvent } from "react";
-import { useLocale } from "use-intl";
+import { useLocale, useTranslations } from "use-intl";
 import { guessCurrency } from "@/lib/currency-guess";
 import { useCreateGroup, useMe } from "@/lib/queries";
 import { Avatar } from "@/ui/avatar";
@@ -16,19 +16,13 @@ import { springSnappy } from "@/ui/motion";
 import { Sheet } from "@/ui/sheet";
 import { GROUP_TYPE_STYLE } from "./group-row";
 
-const TYPES = [
-  { value: "direct", label: "Friend" },
-  { value: "trip", label: "Trip" },
-  { value: "home", label: "Home" },
-  { value: "couple", label: "Couple" },
-  { value: "event", label: "Event" },
-  { value: "other", label: "Other" },
-] as const;
-type GroupType = (typeof TYPES)[number]["value"];
+const TYPES = ["direct", "trip", "home", "couple", "event", "other"] as const;
+type GroupType = (typeof TYPES)[number];
 
 export function NewGroupSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const t = useTranslations("newGroup");
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} title="New group" tall>
+    <Sheet open={open} onOpenChange={onOpenChange} title={t("title")} tall>
       {open && <NewGroupForm onDone={() => onOpenChange(false)} />}
     </Sheet>
   );
@@ -45,6 +39,8 @@ function NewGroupForm({ onDone }: { onDone: () => void }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [person, setPerson] = useState("");
   const [people, setPeople] = useState<string[]>([]);
+  const t = useTranslations("newGroup");
+  const tc = useTranslations("common");
 
   const currencyValue = currency ?? me.data?.defaultCurrency ?? guessCurrency(locale);
 
@@ -90,55 +86,55 @@ function NewGroupForm({ onDone }: { onDone: () => void }) {
 
   return (
     <form onSubmit={submit} className="flex h-full flex-col gap-5 pt-1">
-      <div className="flex gap-2 overflow-x-auto no-scrollbar" role="radiogroup" aria-label="Kind of group">
-        {TYPES.map((t) => (
+      <div className="flex gap-2 overflow-x-auto no-scrollbar" role="radiogroup" aria-label={t("kind")}>
+        {TYPES.map((kind) => (
           <motion.button
-            key={t.value}
+            key={kind}
             type="button"
             role="radio"
-            aria-checked={type === t.value}
-            onClick={() => setType(t.value)}
+            aria-checked={type === kind}
+            onClick={() => setType(kind)}
             whileTap={{ scale: 0.94 }}
             transition={springSnappy}
             className={cn(
               "flex min-w-16 flex-1 flex-col items-center gap-1 rounded-[var(--radius-md)] border px-2 py-2.5 text-xs font-medium transition-colors",
-              type === t.value ? "border-accent bg-accent-soft text-fg" : "border-line bg-surface-2 text-fg-muted",
+              type === kind ? "border-accent bg-accent-soft text-fg" : "border-line bg-surface-2 text-fg-muted",
             )}
           >
             <span className="text-2xl" aria-hidden>
-              {GROUP_TYPE_STYLE[t.value].emoji}
+              {GROUP_TYPE_STYLE[kind].emoji}
             </span>
-            {t.label}
+            {t(`type.${kind}`)}
           </motion.button>
         ))}
       </div>
 
       <TextField
-        label={type === "direct" ? "Their name" : "Name"}
+        label={type === "direct" ? t("theirName") : t("name")}
         required
         autoFocus
         maxLength={100}
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder={type === "direct" ? "e.g. Sam" : type === "trip" ? "Lisbon 2026" : type === "home" ? "Flat 4B" : type === "couple" ? "Us" : "Saturday BBQ"}
+        placeholder={t(`placeholder.${type}`)}
       />
 
       <div className="space-y-1.5">
-        <span className="text-[13px] font-medium text-fg-muted">Currency</span>
+        <span className="text-[13px] font-medium text-fg-muted">{t("currency")}</span>
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
           className="flex h-12 w-full items-center justify-between rounded-[var(--radius-md)] border border-line bg-surface-2 px-3.5 text-start hover:border-line-strong"
         >
           <span className="font-medium">{currencyValue}</span>
-          <span className="text-sm text-positive">Change</span>
+          <span className="text-sm text-positive">{tc("change")}</span>
         </button>
       </div>
 
       {type !== "direct" && (
       <div className="space-y-1.5">
         <label htmlFor="add-person" className="text-[13px] font-medium text-fg-muted">
-          Who&apos;s in? <span className="text-fg-subtle">(optional)</span>
+          {t("whoIn")} <span className="text-fg-subtle">{t("optional")}</span>
         </label>
         <div className="flex min-h-12 flex-wrap items-center gap-1.5 rounded-[var(--radius-md)] border border-line bg-surface-2 p-1.5 focus-within:border-accent focus-within:ring-4 focus-within:ring-accent-soft">
           <AnimatePresence initial={false}>
@@ -156,7 +152,7 @@ function NewGroupForm({ onDone }: { onDone: () => void }) {
                 {p}
                 <button
                   type="button"
-                  aria-label={`Remove ${p}`}
+                  aria-label={t("remove", { name: p })}
                   onClick={() => setPeople((ps) => ps.filter((x) => x !== p))}
                   className="flex size-6 items-center justify-center rounded-full text-fg-subtle hover:bg-surface-3 hover:text-fg"
                 >
@@ -171,18 +167,18 @@ function NewGroupForm({ onDone }: { onDone: () => void }) {
             onChange={(e) => setPerson(e.target.value)}
             onKeyDown={onPersonKey}
             onBlur={addPerson}
-            placeholder={people.length ? "Add another" : "Type a name, press Enter"}
+            placeholder={people.length ? t("addAnother") : t("typeName")}
             className="h-9 min-w-32 flex-1 bg-transparent px-2 text-[15px] text-fg placeholder:text-fg-subtle focus:outline-none"
             enterKeyHint="enter"
           />
         </div>
-        <p className="text-[13px] text-fg-subtle">They don&apos;t need the app. You&apos;ll get a link to share next.</p>
+        <p className="text-[13px] text-fg-subtle">{t("noAppNeeded")}</p>
       </div>
       )}
 
       <div className="mt-auto pb-2">
         <Button type="submit" block size="lg" loading={create.isPending} disabled={!name.trim()}>
-          {type === "direct" ? "Start splitting" : "Create group"}
+          {type === "direct" ? t("startSplitting") : t("create")}
         </Button>
       </div>
       <CurrencyPicker open={pickerOpen} onOpenChange={setPickerOpen} value={currencyValue} onChange={setCurrency} />

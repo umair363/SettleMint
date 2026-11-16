@@ -4,7 +4,9 @@ import { ArrowRight, KeyRound, Mail, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useTranslations } from "use-intl";
 import { AuthLayout } from "@/features/auth/auth-layout";
+import { I18nProvider } from "@/i18n/provider";
 import { safeNext } from "@/features/auth/safe-next";
 import { authClient } from "@/lib/auth-client";
 import { GOOGLE_SIGN_IN } from "@/lib/env";
@@ -14,10 +16,29 @@ import { TextField } from "@/ui/field";
 
 type Step = "email" | "code" | "password";
 
-function errorText(err: { message?: string; status?: number } | null | undefined, fallback: string) {
+type SignInT = ReturnType<typeof useTranslations<"signIn">>;
+
+/** Better Auth's messages are English; known codes get a translated sentence. */
+function errorText(t: SignInT, err: { code?: string; status?: number } | null | undefined, fallback: string) {
   if (!err) return fallback;
-  if (err.status === 429) return "Too many attempts. Wait a minute and try again.";
-  return err.message || fallback;
+  if (err.status === 429) return t("tooMany");
+  switch (err.code) {
+    case "INVALID_OTP":
+      return t("badCode");
+    case "OTP_EXPIRED":
+      return t("codeExpired");
+    case "INVALID_EMAIL_OR_PASSWORD":
+      return t("wrongPassword");
+    case "USER_ALREADY_EXISTS":
+    case "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL":
+      return t("accountExists");
+    case "PASSWORD_TOO_SHORT":
+      return t("passwordShort");
+    case "INVALID_EMAIL":
+      return t("badEmail");
+    default:
+      return fallback;
+  }
 }
 
 /** Where to go after signing in. Read when needed (not during render), so the page pre-renders fully. */
@@ -25,8 +46,18 @@ function nextPath() {
   return safeNext(new URLSearchParams(window.location.search).get("next"));
 }
 
+// Outside the app's providers (kept light), so it brings its own translations.
 export default function SignInPage() {
+  return (
+    <I18nProvider>
+      <SignIn />
+    </I18nProvider>
+  );
+}
+
+function SignIn() {
   const router = useRouter();
+  const t = useTranslations("signIn");
   // Already signed in (e.g. tapped "Get started" again): go straight on. Better Auth's
   // session endpoint answers "no session" with a 200, so a signed-out visit logs no error.
   const session = authClient.useSession();
@@ -51,8 +82,8 @@ export default function SignInPage() {
 
   useEffect(() => {
     if (resendIn <= 0) return;
-    const t = setTimeout(() => setResendIn((s) => s - 1), 1000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setResendIn((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
   }, [resendIn]);
 
   const finish = async (isNewAccount = false) => {
@@ -68,7 +99,7 @@ export default function SignInPage() {
     setBusy(true);
     const { error } = await authClient.emailOtp.sendVerificationOtp({ email: email.trim(), type: "sign-in" });
     setBusy(false);
-    if (error) return setError(errorText(error, "Couldn't send the code"));
+    if (error) return setError(errorText(t, error, t("sendFailed")));
     setStep("code");
     setResendIn(30);
     setTimeout(() => codeRef.current?.focus(), 50);
@@ -83,7 +114,7 @@ export default function SignInPage() {
     setBusy(false);
     if (error) {
       setCode("");
-      return setError(errorText(error, "That code didn't work"));
+      return setError(errorText(t, error, t("badCode")));
     }
     await finish();
   };
@@ -97,7 +128,7 @@ export default function SignInPage() {
       ? await authClient.signUp.email({ email: email.trim(), password, name: name.trim() })
       : await authClient.signIn.email({ email: email.trim(), password });
     setBusy(false);
-    if (error) return setError(errorText(error, creating ? "Couldn't create the account" : "Wrong email or password"));
+    if (error) return setError(errorText(t, error, creating ? t("createFailed") : t("wrongPassword")));
     await finish(creating);
   };
 
@@ -106,7 +137,7 @@ export default function SignInPage() {
     setBusy(true);
     const { error } = await authClient.signIn.anonymous();
     setBusy(false);
-    if (error) return setError(errorText(error, "Couldn't start a guest session"));
+    if (error) return setError(errorText(t, error, t("guestFailed")));
     await finish();
   };
 
@@ -122,8 +153,18 @@ export default function SignInPage() {
     <AuthLayout
       footer={
         <>
-          By continuing you agree to the <Link href="/terms" className="underline">Terms</Link> and{" "}
-          <Link href="/privacy" className="underline">Privacy Policy</Link>.
+          {t.rich("agree", {
+            terms: (chunks) => (
+              <Link href="/terms" className="underline">
+                {chunks}
+              </Link>
+            ),
+            privacy: (chunks) => (
+              <Link href="/privacy" className="underline">
+                {chunks}
+              </Link>
+            ),
+          })}
         </>
       }
     >
@@ -134,24 +175,24 @@ export default function SignInPage() {
             className="animate-enter space-y-5"
           >
             <div className="space-y-1.5 text-center">
-              <h1 className="font-display text-3xl font-semibold tracking-tight">Split anything, with anyone</h1>
-              <p className="text-fg-muted">Sign in or create an account. No password needed.</p>
+              <h1 className="font-display text-3xl font-semibold tracking-tight">{t("title")}</h1>
+              <p className="text-fg-muted">{t("subtitle")}</p>
             </div>
             <TextField
               type="email"
-              label="Email"
+              label={t("email")}
               autoComplete="email"
               inputMode="email"
               required
               autoFocus
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder={t("emailPlaceholder")}
               leading={<Mail className="size-4" />}
               error={error}
             />
             <Button type="submit" block size="lg" loading={busy} trailing={<ArrowRight className="size-4 rtl:rotate-180" />}>
-              Email me a code
+              {t("emailCode")}
             </Button>
             {GOOGLE_SIGN_IN && (
               <Button variant="secondary" block size="lg" onClick={google}>
@@ -161,15 +202,15 @@ export default function SignInPage() {
                   <path fill="#FBBC05" d="M5.8 14.2A6.6 6.6 0 0 1 5.4 12c0-.8.1-1.5.4-2.2V6.9H2A11 11 0 0 0 1 12c0 1.8.4 3.4 1 4.9l3.8-2.7Z" />
                   <path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.2-3.2A11 11 0 0 0 2 6.9l3.8 2.9C6.7 7.3 9.1 5.4 12 5.4Z" />
                 </svg>
-                Continue with Google
+                {t("google")}
               </Button>
             )}
             <div className="flex items-center justify-between text-sm">
               <button type="button" onClick={() => setStep("password")} className="inline-flex items-center gap-1.5 text-fg-muted hover:text-fg">
-                <KeyRound className="size-4" /> Use a password
+                <KeyRound className="size-4" /> {t("usePassword")}
               </button>
               <button type="button" onClick={asGuest} disabled={busy} className="inline-flex items-center gap-1.5 text-fg-muted hover:text-fg">
-                <Sparkles className="size-4" /> Try without an account
+                <Sparkles className="size-4" /> {t("guest")}
               </button>
             </div>
           </form>
@@ -181,9 +222,9 @@ export default function SignInPage() {
             className="animate-enter space-y-5 text-center"
           >
             <div className="space-y-1.5">
-              <h1 className="font-display text-3xl font-semibold tracking-tight">Check your email</h1>
+              <h1 className="font-display text-3xl font-semibold tracking-tight">{t("checkEmail")}</h1>
               <p className="text-fg-muted">
-                We sent a 6-digit code to <span className="font-medium text-fg">{email}</span>
+                {t.rich("codeSent", { email, b: (chunks) => <span className="font-medium text-fg">{chunks}</span> })}
               </p>
             </div>
             <input
@@ -196,7 +237,7 @@ export default function SignInPage() {
               }}
               inputMode="numeric"
               autoComplete="one-time-code"
-              aria-label="6-digit code"
+              aria-label={t("codeLabel")}
               aria-invalid={error ? true : undefined}
               disabled={busy}
               placeholder="••••••"
@@ -208,11 +249,11 @@ export default function SignInPage() {
               </p>
             )}
             <Button block size="lg" loading={busy} disabled={code.length !== 6} onClick={() => verify(code)}>
-              Continue
+              {t("continue")}
             </Button>
             <div className="flex items-center justify-between text-sm">
               <button type="button" onClick={() => setStep("email")} className="text-fg-muted hover:text-fg">
-                Use another email
+                {t("otherEmail")}
               </button>
               <button
                 type="button"
@@ -220,7 +261,7 @@ export default function SignInPage() {
                 onClick={() => sendCode()}
                 className="text-fg-muted hover:text-fg disabled:opacity-50"
               >
-                {resendIn > 0 ? `Resend in ${resendIn}s` : "Resend code"}
+                {resendIn > 0 ? t("resendIn", { seconds: resendIn }) : t("resend")}
               </button>
             </div>
           </div>
@@ -233,32 +274,32 @@ export default function SignInPage() {
             className="animate-enter space-y-4"
           >
             <h1 className="text-center font-display text-3xl font-semibold tracking-tight">
-              {creating ? "Create your account" : "Welcome back"}
+              {creating ? t("createTitle") : t("welcomeBack")}
             </h1>
             {creating && (
-              <TextField label="Your name" autoComplete="name" required value={name} onChange={(e) => setName(e.target.value)} />
+              <TextField label={t("yourName")} autoComplete="name" required value={name} onChange={(e) => setName(e.target.value)} />
             )}
-            <TextField label="Email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            <TextField label={t("email")} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
             <TextField
-              label="Password"
+              label={t("password")}
               type="password"
               autoComplete={creating ? "new-password" : "current-password"}
               required
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              hint={creating ? "At least 8 characters." : undefined}
+              hint={creating ? t("passwordHint") : undefined}
               error={error}
             />
             <Button type="submit" block size="lg" loading={busy}>
-              {creating ? "Create account" : "Sign in"}
+              {creating ? t("createAccount") : t("signIn")}
             </Button>
             <div className="flex items-center justify-between text-sm">
               <button type="button" onClick={() => setStep("email")} className="text-fg-muted hover:text-fg">
-                Use an email code instead
+                {t("useCode")}
               </button>
               <button type="button" onClick={() => setCreating((c) => !c)} className="font-medium text-positive">
-                {creating ? "I have an account" : "Create account"}
+                {creating ? t("haveAccount") : t("createAccount")}
               </button>
             </div>
           </form>

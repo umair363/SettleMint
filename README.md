@@ -45,6 +45,9 @@ on a shared money engine the mobile app will reuse.
   edit conflicts caught instead of silently overwritten.
 - **Offline-first.** Opens instantly from saved data; anything you add
   offline syncs when you're back.
+- **Eight languages.** English, Spanish, Portuguese, French, German, Hindi,
+  Urdu and Arabic, fully right-to-left for Urdu and Arabic. Numbers, money and
+  dates follow your region; notifications arrive in each person's language.
 - **Live and notified.** Changes appear on everyone's screen as they happen,
   and an optional notification tells you when friends add expenses or pay you.
 

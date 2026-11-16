@@ -3,7 +3,7 @@
 import { CURRENCY_CODES, currencyName, currencySymbol } from "@settlemint/shared";
 import { Check, Search } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useLocale } from "use-intl";
+import { useLocale, useTranslations } from "use-intl";
 import { cn } from "./cn";
 import { TextField } from "./field";
 import { Sheet } from "./sheet";
@@ -24,6 +24,7 @@ export function CurrencyPicker({
   recent?: string[];
 }) {
   const locale = useLocale();
+  const t = useTranslations("ui");
   const [q, setQ] = useState("");
 
   const all = useMemo(
@@ -68,20 +69,20 @@ export function CurrencyPicker({
           <span className="block truncate text-[15px] text-fg">{c.name}</span>
           <span className="block text-xs text-fg-subtle">{c.code}</span>
         </span>
-        {c.code === value && <Check className="size-4 text-positive" aria-label="Selected" />}
+        {c.code === value && <Check className="size-4 text-positive" aria-label={t("selected")} />}
       </button>
     </li>
   );
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} title="Currency" tall>
+    <Sheet open={open} onOpenChange={onOpenChange} title={t("currency")} tall>
       <div className="sticky top-0 z-10 -mx-5 bg-transparent px-5 pb-3">
         <TextField
           autoFocus
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search 150+ currencies"
-          aria-label="Search currencies"
+          aria-label={t("searchCurrencies")}
           leading={<Search className="size-4" />}
         />
       </div>
@@ -93,9 +94,9 @@ export function CurrencyPicker({
         )
       ) : (
         <>
-          <p className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wider text-fg-subtle">Common</p>
+          <p className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wider text-fg-subtle">{t("common")}</p>
           <ul>{top.map(row)}</ul>
-          <p className="px-3 pb-1 pt-4 text-xs font-semibold uppercase tracking-wider text-fg-subtle">All currencies</p>
+          <p className="px-3 pb-1 pt-4 text-xs font-semibold uppercase tracking-wider text-fg-subtle">{t("allCurrencies")}</p>
           <ul>{all.map(row)}</ul>
         </>
       )}

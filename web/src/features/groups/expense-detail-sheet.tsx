@@ -3,9 +3,9 @@
 import { getCategoryMeta, type ExpenseDto, type GroupDetailDto } from "@settlemint/shared";
 import { History, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { useLocale } from "use-intl";
+import { useLocale, useTranslations } from "use-intl";
 import { useAddExpense } from "@/features/expenses/add-expense-context";
-import { METHOD_LABEL } from "@/features/expenses/split-model";
+import type { CategoryKey } from "@/i18n/messages/en";
 import { describeActivity } from "@/lib/activity-text";
 import { dayLabel, timeAgo } from "@/lib/dates";
 import { useEntityHistory, useMe, useSetExpenseDeleted } from "@/lib/queries";
@@ -25,8 +25,9 @@ export function ExpenseDetailSheet({
   expense: ExpenseDto | null;
   onClose: () => void;
 }) {
+  const t = useTranslations("expenseDetail");
   return (
-    <Sheet open={Boolean(expense)} onOpenChange={(o) => !o && onClose()} title={expense?.description ?? "Expense"} tall>
+    <Sheet open={Boolean(expense)} onOpenChange={(o) => !o && onClose()} title={expense?.description ?? t("expense")} tall>
       {expense && <Detail group={group} expense={expense} onClose={onClose} />}
     </Sheet>
   );
@@ -43,15 +44,20 @@ function Detail({ group, expense, onClose }: { group: GroupDetailDto; expense: E
   const foreign = expense.currency !== group.currency;
   const payers = expense.lines.filter((l) => l.paid > 0);
   const owers = expense.lines.filter((l) => l.owed > 0);
+  const t = useTranslations("expenseDetail");
+  const tc = useTranslations("common");
+  const ta = useTranslations("activity");
+  const tcat = useTranslations("categories");
+  const tm = useTranslations("split");
 
   const remove = () => {
     setDeleted.mutate({ id: expense.id, deleted: true });
     onClose();
-    toast("Expense deleted", {
+    toast(t("deleted"), {
       description: expense.description,
       action: {
-        label: "Undo",
-        onClick: () => setDeleted.mutate({ id: expense.id, deleted: false }, { onSuccess: () => toast.success("Restored") }),
+        label: tc("undo"),
+        onClick: () => setDeleted.mutate({ id: expense.id, deleted: false }, { onSuccess: () => toast.success(t("restored")) }),
       },
     });
   };
@@ -67,26 +73,30 @@ function Detail({ group, expense, onClose }: { group: GroupDetailDto; expense: E
             <Money minor={expense.amount} currency={expense.currency} />
           </p>
           <p className="text-sm text-fg-muted">
-            {cat.label} · {dayLabel(expense.date, locale)}
+            {tcat(cat.id as CategoryKey)} · {dayLabel(expense.date, locale)}
           </p>
         </div>
       </div>
 
       {foreign && (
         <p className="rounded-[var(--radius-md)] bg-info-soft px-4 py-3 text-sm text-info">
-          <Money minor={expense.groupAmount} currency={group.currency} /> in the group currency, at 1 {expense.currency} ={" "}
-          {Number(expense.fxRate)} {group.currency}.
+          {t.rich("fx", {
+            amount: () => <Money minor={expense.groupAmount} currency={group.currency} />,
+            from: expense.currency,
+            rate: Number(expense.fxRate).toLocaleString(locale, { maximumFractionDigits: 6 }),
+            to: group.currency,
+          })}
         </p>
       )}
 
       <section className="space-y-2">
-        <h3 className="text-[13px] font-semibold uppercase tracking-wider text-fg-subtle">Paid by</h3>
+        <h3 className="text-[13px] font-semibold uppercase tracking-wider text-fg-subtle">{t("paidBy")}</h3>
         {payers.map((l) => {
           const m = member(l.memberId);
           return (
             <div key={l.memberId} className="flex items-center gap-3">
               <Avatar id={l.memberId} name={m?.displayName ?? "?"} image={m?.image} size="sm" />
-              <span className="flex-1 font-medium">{m?.isMe ? "You" : m?.displayName}</span>
+              <span className="flex-1 font-medium">{m?.isMe ? tc("you") : m?.displayName}</span>
               <Money minor={l.paid} currency={expense.currency} />
             </div>
           );
@@ -95,7 +105,7 @@ function Detail({ group, expense, onClose }: { group: GroupDetailDto; expense: E
 
       <section className="space-y-2">
         <h3 className="flex items-center justify-between text-[13px] font-semibold uppercase tracking-wider text-fg-subtle">
-          Split {expense.split.method !== "itemized" && <Badge>{METHOD_LABEL[expense.split.method]}</Badge>}
+          {t("split")} {expense.split.method !== "itemized" && <Badge>{tm(`method.${expense.split.method}`)}</Badge>}
         </h3>
         {owers.map((l) => {
           const m = member(l.memberId);
@@ -103,8 +113,8 @@ function Detail({ group, expense, onClose }: { group: GroupDetailDto; expense: E
             <div key={l.memberId} className="flex items-center gap-3">
               <Avatar id={l.memberId} name={m?.displayName ?? "?"} image={m?.image} size="sm" pending={!m?.claimed} />
               <span className="flex-1 font-medium">
-                {m?.isMe ? "You" : m?.displayName}
-                {m?.left && <span className="ms-1 text-xs text-fg-subtle">(left)</span>}
+                {m?.isMe ? tc("you") : m?.displayName}
+                {m?.left && <span className="ms-1 text-xs text-fg-subtle">{t("left")}</span>}
               </span>
               <Money minor={l.owed} currency={expense.currency} tone="muted" />
             </div>
@@ -123,16 +133,16 @@ function Detail({ group, expense, onClose }: { group: GroupDetailDto; expense: E
             openAddExpense({ expense });
           }}
         >
-          Edit
+          {tc("edit")}
         </Button>
         <Button variant="danger" leading={<Trash2 className="size-4" />} onClick={remove}>
-          Delete
+          {tc("delete")}
         </Button>
       </div>
 
       <section className="space-y-2">
         <h3 className="flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-wider text-fg-subtle">
-          <History className="size-3.5" /> History
+          <History className="size-3.5" /> {t("history")}
         </h3>
         {history.isPending ? (
           <Spinner />
@@ -140,7 +150,7 @@ function Detail({ group, expense, onClose }: { group: GroupDetailDto; expense: E
           <ol className="space-y-2 border-s border-line ps-4">
             {(history.data?.items ?? []).map((h) => (
               <li key={h.id} className="text-sm">
-                <span className="text-fg">{describeActivity(h, me.data?.id).text}</span>
+                <span className="text-fg">{describeActivity(h, me.data?.id, ta).text}</span>
                 <span className="block text-xs text-fg-subtle">{timeAgo(h.createdAt, locale)}</span>
               </li>
             ))}

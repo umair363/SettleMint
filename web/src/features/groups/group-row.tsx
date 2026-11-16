@@ -1,7 +1,7 @@
 "use client";
 
 import type { GroupSummaryDto } from "@settlemint/shared";
-import { useLocale } from "use-intl";
+import { useLocale, useTranslations } from "use-intl";
 import { timeAgo } from "@/lib/dates";
 import { Money } from "@/ui/money";
 import { ListRow } from "@/ui/surface";
@@ -30,10 +30,11 @@ export function GroupIcon({ type, emoji, size = "md" }: { type: string; emoji: s
 }
 
 export function BalanceLabel({ minor, currency }: { minor: number; currency: string }) {
-  if (minor === 0) return <span className="text-sm text-fg-subtle">settled up</span>;
+  const t = useTranslations("groups");
+  if (minor === 0) return <span className="text-sm text-fg-subtle">{t("settledUp")}</span>;
   return (
     <span className="text-sm leading-tight">
-      <span className="block text-xs text-fg-muted">{minor > 0 ? "you are owed" : "you owe"}</span>
+      <span className="block text-xs text-fg-muted">{minor > 0 ? t("youAreOwed") : t("youOwe")}</span>
       <Money minor={minor} currency={currency} tone="auto" absolute className="font-semibold" />
     </span>
   );
@@ -41,13 +42,14 @@ export function BalanceLabel({ minor, currency }: { minor: number; currency: str
 
 export function GroupRow({ group }: { group: GroupSummaryDto }) {
   const locale = useLocale();
+  const t = useTranslations("groups");
   return (
     <ListRow
       href={`/group?id=${group.id}`}
       chevron
       leading={<GroupIcon type={group.type} emoji={group.emoji} />}
       title={group.name}
-      subtitle={`${group.memberCount} ${group.memberCount === 1 ? "person" : "people"} · ${timeAgo(group.lastActivityAt, locale)}`}
+      subtitle={`${t("people", { count: group.memberCount })} · ${timeAgo(group.lastActivityAt, locale)}`}
       trailing={<BalanceLabel minor={group.myBalance} currency={group.currency} />}
     />
   );

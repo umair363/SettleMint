@@ -6,10 +6,12 @@ import type { ReactNode } from "react";
 import { Button } from "./button";
 import { cn } from "./cn";
 import { springSoft } from "./motion";
+import { useTranslations } from "use-intl";
 
-export function Spinner({ className, label = "Loading" }: { className?: string; label?: string }) {
+export function Spinner({ className, label }: { className?: string; label?: string }) {
+  const t = useTranslations("ui");
   return (
-    <span role="status" aria-label={label} className="inline-flex">
+    <span role="status" aria-label={label ?? t("loading")} className="inline-flex">
       <LoaderCircle className={cn("size-5 animate-spin text-fg-subtle", className)} aria-hidden />
     </span>
   );
@@ -105,7 +107,7 @@ export function PreviewRow({ emoji, title, subtitle, amount, tone }: { emoji: st
 }
 
 export function ErrorState({
-  title = "Couldn't load this",
+  title,
   body,
   offline,
   onRetry,
@@ -117,6 +119,7 @@ export function ErrorState({
   onRetry?: () => void;
   className?: string;
 }) {
+  const t = useTranslations("ui");
   return (
     <div role="alert" className={cn("flex flex-col items-center px-6 py-10 text-center", className)}>
       <div
@@ -128,16 +131,16 @@ export function ErrorState({
         {offline ? <CloudOff aria-hidden /> : <TriangleAlert aria-hidden />}
       </div>
       <h3 className="font-display text-base font-semibold text-fg">
-        {offline ? "You're offline" : title}
+        {offline ? t("offlineTitle") : (title ?? t("loadFailed"))}
       </h3>
       {(body || offline) && (
         <p className="mt-1 max-w-xs text-sm text-fg-muted">
-          {offline ? "Showing what's saved on this device. Changes sync when you're back online." : body}
+          {offline ? t("offlineBody") : body}
         </p>
       )}
       {onRetry && (
         <Button variant="secondary" size="sm" className="mt-5" onClick={onRetry}>
-          Try again
+          {t("retry")}
         </Button>
       )}
     </div>

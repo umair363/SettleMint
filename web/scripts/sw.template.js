@@ -4,6 +4,8 @@
  * is cached by the app itself (IndexedDB). */
 const VERSION = "%%VERSION%%";
 const PRECACHE = /*%%PRECACHE%%*/ [];
+// Cached on first use (other languages, extra fonts) and kept across updates.
+const LAZY = /*%%LAZY%%*/ [];
 const CACHE = `settlemint-${VERSION}`;
 
 self.addEventListener("install", (event) => {
@@ -14,7 +16,19 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
       const names = await caches.keys();
-      await Promise.all(names.filter((n) => n.startsWith("settlemint-") && n !== CACHE).map((n) => caches.delete(n)));
+      const old = names.filter((n) => n.startsWith("settlemint-") && n !== CACHE);
+      // Carry over files fetched on first use that this version still has
+      // (hashed names, so identical), e.g. the person's language: offline after
+      // an update keeps working in their language.
+      const current = await caches.open(CACHE);
+      for (const name of old) {
+        const previous = await caches.open(name);
+        for (const url of LAZY) {
+          const hit = await previous.match(url);
+          if (hit) await current.put(url, hit);
+        }
+      }
+      await Promise.all(old.map((n) => caches.delete(n)));
       await self.clients.claim();
     })(),
   );
