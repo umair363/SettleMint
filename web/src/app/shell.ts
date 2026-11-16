@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Noto_Sans_Arabic, Noto_Sans_Devanagari } from "next/font/google";
-import type { ReactNode } from "react";
-import { languageScript } from "@/i18n/languages";
-import { themeScript } from "@/ui/theme";
-import "./globals.css";
+import { SITE_URL } from "@/lib/env";
+
+// Shared by both root layouts: (main) for the app, (site)/[lang] for the
+// translated public pages.
 
 // One family, chosen by rendering money-heavy samples of 14 typefaces side by
 // side: Bricolage Grotesque has true tabular figures, characterful numerals
@@ -18,13 +18,14 @@ const bricolage = Bricolage_Grotesque({
 
 // Arabic/Urdu and Hindi letters fall back to these. Not preloaded, and split by
 // script, so the files download only when such text is actually on screen.
+// (Measured: cheaper to lay out than a long chain of system fallbacks.)
 const arabic = Noto_Sans_Arabic({ subsets: ["arabic"], variable: "--font-arabic", display: "swap", preload: false });
 const devanagari = Noto_Sans_Devanagari({ subsets: ["devanagari"], variable: "--font-devanagari", display: "swap", preload: false });
 
-// Public pages that are English-only for now keep lang="en".
-const UNTRANSLATED = ["/", "/privacy", "/terms"];
+export const fontVariables = `${bricolage.variable} ${arabic.variable} ${devanagari.variable}`;
 
-export const metadata: Metadata = {
+export const baseMetadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: { default: "SettleMint", template: "%s · SettleMint" },
   description: "Split bills with anyone, in any currency. Free, fast, and fair to the cent.",
   applicationName: "SettleMint",
@@ -38,7 +39,7 @@ export const metadata: Metadata = {
   },
 };
 
-export const viewport: Viewport = {
+export const baseViewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -47,17 +48,3 @@ export const viewport: Viewport = {
     { media: "(prefers-color-scheme: light)", color: "#f5f7f6" },
   ],
 };
-
-export default function RootLayout({ children }: { children: ReactNode }) {
-  return (
-    <html lang="en" data-theme="dark" className={`${bricolage.variable} ${arabic.variable} ${devanagari.variable}`} suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-        <script dangerouslySetInnerHTML={{ __html: languageScript(UNTRANSLATED) }} />
-      </head>
-      <body>
-        {children}
-      </body>
-    </html>
-  );
-}

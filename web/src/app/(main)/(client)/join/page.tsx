@@ -12,6 +12,7 @@ import { api } from "@/lib/api";
 import { apiErrorText } from "@/lib/api-error-text";
 import { authClient } from "@/lib/auth-client";
 import { keys, useMe } from "@/lib/queries";
+import { useHydrated } from "@/lib/use-hydrated";
 import { Avatar } from "@/ui/avatar";
 import { Button } from "@/ui/button";
 import { cn } from "@/ui/cn";
@@ -24,6 +25,7 @@ function Join() {
   const router = useRouter();
   const qc = useQueryClient();
   const me = useMe();
+  const hydrated = useHydrated();
   const signedIn = Boolean(me.data);
   const t = useTranslations("join");
 
@@ -67,7 +69,7 @@ function Join() {
       </AuthLayout>
     );
   }
-  if (preview.isPending || me.isPending) {
+  if (!hydrated || preview.isPending || me.isPending) {
     return (
       <AuthLayout>
         <div className="flex justify-center py-10">

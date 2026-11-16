@@ -55,6 +55,8 @@ for (const theme of ["dark", "light"]) {
 
   await page.goto("http://localhost:4555/", { waitUntil: "load" });
   await audit(page, at("landing"));
+  await page.goto("http://localhost:4555/ar", { waitUntil: "load" });
+  await audit(page, at("landing (Arabic, right-to-left)"));
   await page.goto("http://localhost:4555/sign-in", { waitUntil: "load" });
   await audit(page, at("sign-in"));
 

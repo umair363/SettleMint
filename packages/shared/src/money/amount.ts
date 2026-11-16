@@ -193,8 +193,18 @@ function getFormatter(currency: string, opts: FormatMoneyOptions): Intl.NumberFo
 
 /** Format minor units for display in the viewer's locale: 1999 USD -> "$19.99". */
 export function formatMoney(minor: number, currency: string, opts: FormatMoneyOptions = {}): string {
-  return getFormatter(currency, opts).format(minorToMajor(minor, currency));
+  const formatter = getFormatter(currency, opts);
+  const value = minorToMajor(minor, currency);
+  if (!opts.locale || !RTL_LOCALE.test(opts.locale)) return formatter.format(value);
+  // In right-to-left text a symbol like "US$" or "R$" would be torn apart
+  // ("$US"): isolate Latin-letter symbols so they stay whole.
+  return formatter
+    .formatToParts(value)
+    .map((p) => (p.type === "currency" && /[A-Za-z]/.test(p.value) ? `⁦${p.value}⁩` : p.value))
+    .join("");
 }
+
+const RTL_LOCALE = /^(ar|ur|fa|he|ps|sd|ug|yi)(-|_|$)/i;
 
 /** The symbol a locale uses for a currency ("$", "€", "Rs", "¥"). */
 export function currencySymbol(currency: string, locale?: string): string {

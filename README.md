@@ -107,8 +107,9 @@ and an axe-core accessibility audit of every screen in both themes. See
    Fill in the variables it asks for. Migrations run on start-up.
 3. **Web:** in Cloudflare Pages, connect the repo with
    build command `npm ci && npm run build -w web`, output directory
-   `web/out`, and `NEXT_PUBLIC_API_URL` set to the API's URL. The build
-   writes `_headers` (strict CSP and security headers) for you.
+   `web/out`, `NEXT_PUBLIC_API_URL` set to the API's URL and
+   `NEXT_PUBLIC_SITE_URL` to the site's own address (canonical links, sitemap).
+   The build writes `_headers` (strict CSP and security headers) for you.
 4. **Domain (required for sign-in):** put both on one domain, e.g.
    `app.settlemint.online` (Pages) and `api.settlemint.online` (Render), and
    set `COOKIE_DOMAIN=.settlemint.online`. Browsers block cookies between

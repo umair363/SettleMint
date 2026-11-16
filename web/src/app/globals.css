@@ -166,6 +166,12 @@
   html:lang(hi) {
     line-height: 1.6;
   }
+  /* Arabic script is joined: any letter-spacing pulls words apart ("الفو اتير").
+     Important in the base layer outranks the tracking-* utilities. */
+  html:lang(ar) *,
+  html:lang(ur) * {
+    letter-spacing: normal !important;
+  }
   /* Readable wrapping: balanced headings, no lonely last words in paragraphs. */
   h1,
   h2,

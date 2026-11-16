@@ -9,6 +9,7 @@ import { AuthLayout } from "@/features/auth/auth-layout";
 import { safeNext } from "@/features/auth/safe-next";
 import { guessCurrency } from "@/lib/currency-guess";
 import { keys, useMe, useUpdateMe } from "@/lib/queries";
+import { useHydrated } from "@/lib/use-hydrated";
 import { Button } from "@/ui/button";
 import { CurrencyPicker } from "@/ui/currency-picker";
 import { Spinner } from "@/ui/feedback";
@@ -16,6 +17,7 @@ import { TextField } from "@/ui/field";
 
 export default function WelcomePage() {
   const me = useMe();
+  const hydrated = useHydrated();
   const router = useRouter();
   const locale = useLocale();
   const qc = useQueryClient();
@@ -31,7 +33,7 @@ export default function WelcomePage() {
     if (unauthorized) router.replace("/sign-in?next=/welcome");
   }, [unauthorized, router]);
 
-  if (!me.data) {
+  if (!hydrated || !me.data) {
     return (
       <div className="flex min-h-dvh items-center justify-center">
         <Spinner />
