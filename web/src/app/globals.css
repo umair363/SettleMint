@@ -106,8 +106,8 @@
   --color-glass-line: var(--glass-line);
   --color-scrim: var(--scrim);
 
-  --font-sans: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-bricolage), var(--font-arabic), var(--font-devanagari), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-bricolage), var(--font-arabic), var(--font-devanagari), ui-sans-serif, system-ui, sans-serif;
 
   --radius-sm: 0.625rem;
   --radius-md: 0.875rem;
@@ -155,6 +155,16 @@
     -moz-osx-font-smoothing: grayscale;
     min-height: 100dvh;
     font-optical-sizing: auto;
+  }
+  /* Waiting for this language's text (a few ms from the offline cache): hide, don't flash English. */
+  html[data-i18n-pending] [data-i18n-root] {
+    visibility: hidden;
+  }
+  /* Arabic script and Devanagari need more room above and below than Latin. */
+  html:lang(ar),
+  html:lang(ur),
+  html:lang(hi) {
+    line-height: 1.6;
   }
   /* Readable wrapping: balanced headings, no lonely last words in paragraphs. */
   h1,

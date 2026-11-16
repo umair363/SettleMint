@@ -70,6 +70,12 @@ describe("parseMoneyInput", () => {
     expect(parseMoneyInput("1,234", "USD", "en")).toBe(123400);
     expect(parseMoneyInput("1.234", "EUR", "de")).toBe(123400);
     expect(parseMoneyInput("1 234,56", "EUR", "fr")).toBe(123456);
+    // Arabic-Indic, Persian/Urdu and Devanagari digits, Arabic separators, bidi marks
+    expect(parseMoneyInput("١٢٫٥٠", "USD", "ar-EG")).toBe(1250);
+    expect(parseMoneyInput("١٬٢٣٤٫٥٠", "USD", "ar-SA")).toBe(123450);
+    expect(parseMoneyInput("۱۲۳٫۴", "PKR", "ur")).toBe(12340);
+    expect(parseMoneyInput("१,२३४.५०", "INR", "hi")).toBe(123450);
+    expect(parseMoneyInput("‏12.50", "USD", "ar")).toBe(1250);
     expect(parseMoneyInput("1,50,000", "INR", "en-IN")).toBe(15000000);
     expect(parseMoneyInput("12.", "USD", "en")).toBe(1200);
     expect(parseMoneyInput(".5", "USD", "en")).toBe(50);

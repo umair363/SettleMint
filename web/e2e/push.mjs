@@ -14,6 +14,19 @@ const [outDir] = process.argv.slice(2);
 const API = "http://localhost:8001";
 const ORIGIN = "http://localhost:4555";
 
+/** API call that waits out sign-up rate limits (several suites sign up back to back). */
+async function call(context, method, url, data) {
+  for (let attempt = 0; ; attempt++) {
+    const res = await context.request.fetch(`${API}${url}`, { method, data, headers: { origin: ORIGIN } });
+    if (res.status() === 429 && attempt < 4) {
+      await new Promise((r) => setTimeout(r, 11_000));
+      continue;
+    }
+    if (!res.ok()) throw new Error(`${method} ${url} -> ${res.status()} ${await res.text()}`);
+    return res.status() === 204 ? null : res.json();
+  }
+}
+
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".png": "image/png", ".woff2": "font/woff2", ".txt": "text/plain" };
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(new URL(req.url, "http://x").pathname);
@@ -54,11 +67,7 @@ async function until(page, fn, ok, timeout = 15000) {
 const subscription = () => navigator.serviceWorker.ready.then((r) => r.pushManager.getSubscription()).then(Boolean);
 
 try {
-  const api = async (method, url, data) => {
-    const res = await ctx.request.fetch(`${API}${url}`, { method, data, headers: { origin: ORIGIN } });
-    if (!res.ok()) throw new Error(`${method} ${url} -> ${res.status()} ${await res.text()}`);
-    return res.status() === 204 ? null : res.json();
-  };
+  const api = (method, url, data) => call(ctx, method, url, data);
   await api("POST", "/v1/auth/sign-up/email", { name: "Ben", email: `ben-${Date.now()}@example.com`, password: "correct-horse-battery" });
   await api("PATCH", "/v1/me", { defaultCurrency: "USD" });
 
@@ -100,11 +109,7 @@ try {
     // The whole real path: Ana adds an expense -> API signs and sends a push
     // -> Google's push service -> this browser's worker shows it.
     const ana = await chromium.launch().then((b) => b.newContext());
-    const anaApi = async (method, url, data) => {
-      const res = await ana.request.fetch(`${API}${url}`, { method, data, headers: { origin: ORIGIN } });
-      if (!res.ok()) throw new Error(`${method} ${url} -> ${res.status()} ${await res.text()}`);
-      return res.status() === 204 ? null : res.json();
-    };
+    const anaApi = (method, url, data) => call(ana, method, url, data);
     await anaApi("POST", "/v1/auth/sign-up/email", { name: "Ana", email: `ana-${Date.now()}@example.com`, password: "correct-horse-battery" });
     const group = await anaApi("POST", "/v1/groups", { name: "Push test", currency: "USD", people: [{ displayName: "Ben" }] });
     const benSpot = group.members.find((m) => m.displayName === "Ben").id;

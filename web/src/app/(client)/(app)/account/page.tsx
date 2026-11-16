@@ -5,6 +5,8 @@ import { Download, LogOut, Monitor, Moon, Share, ShieldCheck, Sun } from "lucide
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "use-intl";
+import { LanguageCard } from "@/features/account/language-card";
 import { NotificationsCard } from "@/features/account/notifications-card";
 import { PaymentHandlesCard } from "@/features/account/payment-handles-card";
 import { YourDataCard } from "@/features/account/your-data-card";
@@ -29,6 +31,7 @@ function SaveGuestAccount() {
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = useTranslations("account");
 
   const send = async (e: FormEvent) => {
     e.preventDefault();
@@ -36,7 +39,7 @@ function SaveGuestAccount() {
     setError(null);
     const { error } = await authClient.emailOtp.sendVerificationOtp({ email: email.trim(), type: "sign-in" });
     setBusy(false);
-    if (error) return setError(error.message ?? "Couldn't send the code");
+    if (error) return setError(t("sendFailed"));
     setSent(true);
   };
 
@@ -47,9 +50,9 @@ function SaveGuestAccount() {
     // Signing in while a guest links the guest's groups to the real account.
     const { error } = await authClient.signIn.emailOtp({ email: email.trim(), otp: code });
     setBusy(false);
-    if (error) return setError(error.message ?? "That code didn't work");
+    if (error) return setError(t("badCode"));
     await qc.invalidateQueries();
-    toast.success("Your account is saved");
+    toast.success(t("saved"));
   };
 
   return (
@@ -59,14 +62,14 @@ function SaveGuestAccount() {
           <ShieldCheck className="size-5" />
         </span>
         <div>
-          <p className="font-semibold">You&apos;re using a guest account</p>
-          <p className="text-sm text-fg-muted">Add your email to keep your groups if you change phones or clear your browser.</p>
+          <p className="font-semibold">{t("guestTitle")}</p>
+          <p className="text-sm text-fg-muted">{t("guestBody")}</p>
         </div>
       </div>
       {sent ? (
         <form onSubmit={verify} className="space-y-3">
           <TextField
-            label={`Code sent to ${email}`}
+            label={t("codeSent", { email })}
             inputMode="numeric"
             autoComplete="one-time-code"
             maxLength={6}
@@ -75,14 +78,14 @@ function SaveGuestAccount() {
             error={error}
           />
           <Button type="submit" block loading={busy} disabled={code.length !== 6}>
-            Save my account
+            {t("saveAccount")}
           </Button>
         </form>
       ) : (
         <form onSubmit={send} className="space-y-3">
-          <TextField type="email" label="Email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} error={error} />
+          <TextField type="email" label={t("email")} autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} error={error} />
           <Button type="submit" block loading={busy}>
-            Send code
+            {t("sendCode")}
           </Button>
         </form>
       )}
@@ -92,6 +95,7 @@ function SaveGuestAccount() {
 
 function InstallCard() {
   const { state, install } = useInstall();
+  const t = useTranslations("account");
   if (state === "installed" || state === "unavailable") return null;
   return (
     <Card className="flex items-center gap-4 p-5">
@@ -99,20 +103,16 @@ function InstallCard() {
         <Download className="size-5" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="font-semibold">Install SettleMint</p>
+        <p className="font-semibold">{t("install")}</p>
         <p className="text-sm text-fg-muted">
-          {state === "ios" ? (
-            <>
-              Tap <Share className="inline size-4 align-text-bottom" aria-label="Share" /> then “Add to Home Screen”.
-            </>
-          ) : (
-            "Open it like an app, even offline."
-          )}
+          {state === "ios"
+            ? t.rich("installIos", { share: () => <Share className="inline size-4 align-text-bottom" aria-label={t("share")} /> })
+            : t("installBody")}
         </p>
       </div>
       {state === "prompt" && (
         <Button size="sm" onClick={install}>
-          Install
+          {t("installButton")}
         </Button>
       )}
     </Card>
@@ -128,6 +128,7 @@ export default function AccountPage() {
   const [name, setName] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const t = useTranslations("account");
 
   if (!me.data) return null;
   const nameValue = name ?? me.data.name;
@@ -145,50 +146,50 @@ export default function AccountPage() {
 
   return (
     <>
-      <PageHeader title="Account" />
+      <PageHeader title={t("title")} />
       <PageBody>
         <Card className="flex items-center gap-4 p-5">
           <Avatar id={me.data.id} name={me.data.name} image={me.data.image} size="lg" />
           <div className="min-w-0">
             <p className="truncate font-display text-xl font-semibold">{me.data.name}</p>
-            <p className="truncate text-sm text-fg-muted">{me.data.email ?? "Guest"}</p>
+            <p className="truncate text-sm text-fg-muted">{me.data.email ?? t("guest")}</p>
           </div>
         </Card>
 
         {me.data.isGuest && <SaveGuestAccount />}
 
         <section>
-          <SectionHeader title="Profile" />
+          <SectionHeader title={t("profile")} />
           <Card className="space-y-5 p-5">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                update.mutate({ name: nameValue.trim() }, { onSuccess: () => toast.success("Name updated") });
+                update.mutate({ name: nameValue.trim() }, { onSuccess: () => toast.success(t("nameUpdated")) });
               }}
             >
               <TextField
-                label="Name"
+                label={t("name")}
                 value={nameValue}
                 maxLength={60}
                 onChange={(e) => setName(e.target.value)}
                 trailing={
                   nameValue.trim() && nameValue.trim() !== me.data.name ? (
                     <Button type="submit" size="sm" loading={update.isPending}>
-                      Save
+                      {t("save")}
                     </Button>
                   ) : undefined
                 }
               />
             </form>
             <div className="space-y-1.5">
-              <span className="text-[13px] font-medium text-fg-muted">Default currency for new groups</span>
+              <span className="text-[13px] font-medium text-fg-muted">{t("defaultCurrency")}</span>
               <button
                 type="button"
                 onClick={() => setPickerOpen(true)}
                 className="flex h-12 w-full items-center justify-between rounded-[var(--radius-md)] border border-line bg-surface-2 px-3.5 text-start hover:border-line-strong"
               >
-                <span className="font-medium">{me.data.defaultCurrency ?? "Not set"}</span>
-                <span className="text-sm text-positive">Change</span>
+                <span className="font-medium">{me.data.defaultCurrency ?? t("notSet")}</span>
+                <span className="text-sm text-positive">{t("change")}</span>
               </button>
             </div>
           </Card>
@@ -200,17 +201,19 @@ export default function AccountPage() {
 
         <NotificationsCard />
 
+        <LanguageCard />
+
         <section>
-          <SectionHeader title="Appearance" />
+          <SectionHeader title={t("appearance")} />
           <Card className="p-5">
             <Segmented<ThemePreference>
-              label="Theme"
+              label={t("theme")}
               value={preference}
               onChange={setPreference}
               options={[
-                { value: "light", label: "Light", icon: <Sun /> },
-                { value: "dark", label: "Dark", icon: <Moon /> },
-                { value: "system", label: "Auto", icon: <Monitor /> },
+                { value: "light", label: t("light"), icon: <Sun /> },
+                { value: "dark", label: t("dark"), icon: <Moon /> },
+                { value: "system", label: t("auto"), icon: <Monitor /> },
               ]}
             />
           </Card>
@@ -219,15 +222,15 @@ export default function AccountPage() {
         <YourDataCard />
 
         <Button variant="secondary" block size="lg" loading={signingOut} leading={<LogOut className="size-4" />} onClick={signOut}>
-          Sign out
+          {t("signOut")}
         </Button>
-        <p className="pb-4 text-center text-xs text-fg-subtle">SettleMint · made for fair friendships</p>
+        <p className="pb-4 text-center text-xs text-fg-subtle">{t("tagline")}</p>
       </PageBody>
       <CurrencyPicker
         open={pickerOpen}
         onOpenChange={setPickerOpen}
         value={me.data.defaultCurrency ?? "USD"}
-        onChange={(c) => update.mutate({ defaultCurrency: c }, { onSuccess: () => toast.success(`Default currency: ${c}`) })}
+        onChange={(c) => update.mutate({ defaultCurrency: c }, { onSuccess: () => toast.success(t("currencySet", { currency: c })) })}
       />
     </>
   );

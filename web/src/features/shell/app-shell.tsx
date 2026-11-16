@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
+import { useTranslations } from "use-intl";
 import { Logo } from "./logo";
 import { useLiveUpdates } from "@/features/pwa/live-updates";
 import { AddExpenseProvider, useAddExpense } from "@/features/expenses/add-expense-context";
@@ -19,10 +20,10 @@ import { ErrorState, Spinner } from "@/ui/feedback";
 import { haptic, springSnappy } from "@/ui/motion";
 
 const NAV = [
-  { href: "/home", label: "Home", icon: House, match: (p: string) => p === "/home" },
-  { href: "/groups", label: "Groups", icon: Users, match: (p: string) => p === "/groups" || p === "/group" },
-  { href: "/activity", label: "Activity", icon: Activity, match: (p: string) => p === "/activity" },
-  { href: "/account", label: "Account", icon: UserRound, match: (p: string) => p === "/account" },
+  { href: "/home", label: "home", icon: House, match: (p: string) => p === "/home" },
+  { href: "/groups", label: "groups", icon: Users, match: (p: string) => p === "/groups" || p === "/group" },
+  { href: "/activity", label: "activity", icon: Activity, match: (p: string) => p === "/activity" },
+  { href: "/account", label: "account", icon: UserRound, match: (p: string) => p === "/account" },
 ] as const;
 
 
@@ -34,10 +35,11 @@ function currentGroupId(): string | undefined {
 
 function AddButton({ className }: { className?: string }) {
   const { openAddExpense } = useAddExpense();
+  const t = useTranslations("nav");
   return (
     <motion.button
       type="button"
-      aria-label="Add expense"
+      aria-label={t("addExpense")}
       onClick={() => {
         haptic(10);
         openAddExpense({ groupId: currentGroupId() });
@@ -56,6 +58,7 @@ function AddButton({ className }: { className?: string }) {
 }
 
 function BottomNav({ pathname }: { pathname: string }) {
+  const t = useTranslations("nav");
   const left = NAV.slice(0, 2);
   const right = NAV.slice(2);
   const item = (n: (typeof NAV)[number]) => {
@@ -75,13 +78,13 @@ function BottomNav({ pathname }: { pathname: string }) {
           <motion.span layoutId="bottom-nav-dot" transition={springSnappy} className="absolute top-1 h-1 w-6 rounded-full bg-accent" />
         )}
         <Icon className="size-[22px]" strokeWidth={active ? 2.3 : 1.9} aria-hidden />
-        {n.label}
+        {t(n.label)}
       </Link>
     );
   };
   return (
     <nav
-      aria-label="Main"
+      aria-label={t("main")}
       className="glass safe-bottom fixed inset-x-0 bottom-0 z-40 rounded-t-[var(--radius-xl)] border-b-0 px-2 pt-1 lg:hidden"
     >
       <div className="mx-auto flex max-w-md items-center">
@@ -97,15 +100,16 @@ function BottomNav({ pathname }: { pathname: string }) {
 
 function Sidebar({ pathname, name, userId, image }: { pathname: string; name: string; userId: string; image: string | null }) {
   const { openAddExpense } = useAddExpense();
+  const t = useTranslations("nav");
   return (
     <aside className="fixed inset-y-0 start-0 z-30 hidden w-64 flex-col border-e border-line bg-bg-elevated px-4 py-6 lg:flex">
       <Link href="/home" className="px-2">
         <Logo />
       </Link>
       <Button className="mt-8" leading={<Plus className="size-4" />} onClick={() => openAddExpense({ groupId: currentGroupId() })}>
-        Add expense
+        {t("addExpense")}
       </Button>
-      <nav aria-label="Main" className="mt-6 flex flex-col gap-1">
+      <nav aria-label={t("main")} className="mt-6 flex flex-col gap-1">
         {NAV.map((n) => {
           const active = n.match(pathname);
           const Icon = n.icon;
@@ -123,7 +127,7 @@ function Sidebar({ pathname, name, userId, image }: { pathname: string; name: st
                 <motion.span layoutId="side-nav-bg" transition={springSnappy} className="absolute inset-0 rounded-[inherit] bg-surface-2" />
               )}
               <Icon className="relative size-5" aria-hidden />
-              <span className="relative">{n.label}</span>
+              <span className="relative">{t(n.label)}</span>
             </Link>
           );
         })}
@@ -141,6 +145,7 @@ function Gate({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { openAddExpense } = useAddExpense();
+  const t = useTranslations("shell");
 
   // Home-screen shortcut "Add expense" opens /home?add=1.
   const signedIn = Boolean(me.data);
@@ -187,8 +192,8 @@ function Gate({ children }: { children: ReactNode }) {
       <div className="flex min-h-dvh items-center justify-center">
         <ErrorState
           offline={offline}
-          title="Can't reach SettleMint"
-          body="The server may be waking up. This usually takes a few seconds."
+          title={t("cantReach")}
+          body={t("wakingUp")}
           onRetry={() => me.refetch()}
         />
       </div>
@@ -197,7 +202,7 @@ function Gate({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-4" aria-busy>
       <Logo />
-      <Spinner label="Loading your account" />
+      <Spinner label={t("loadingAccount")} />
     </div>
   );
 }

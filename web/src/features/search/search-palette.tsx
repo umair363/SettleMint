@@ -5,7 +5,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useLocale } from "use-intl";
+import { useLocale, useTranslations } from "use-intl";
 import { GroupIcon } from "@/features/groups/group-row";
 import { api } from "@/lib/api";
 import { dayLabel } from "@/lib/dates";
@@ -23,8 +23,9 @@ export function openSearch() {
 }
 
 export function SearchButton() {
+  const t = useTranslations("search");
   return (
-    <IconButton label="Search (Ctrl+K)" variant="solid" onClick={openSearch}>
+    <IconButton label={t("button")} variant="solid" onClick={openSearch}>
       <Search className="size-5" />
     </IconButton>
   );
@@ -33,6 +34,7 @@ export function SearchButton() {
 /** Search every expense and group you're in. ⌘K / Ctrl+K on desktop. */
 export function SearchPalette() {
   const [open, setOpen] = useState(false);
+  const t = useTranslations("search");
 
   useEffect(() => {
     const onOpen = () => setOpen(true);
@@ -51,7 +53,7 @@ export function SearchPalette() {
   }, []);
 
   return (
-    <Sheet open={open} onOpenChange={setOpen} title="Search" tall>
+    <Sheet open={open} onOpenChange={setOpen} title={t("title")} tall>
       {open && <SearchBody onPick={() => setOpen(false)} />}
     </Sheet>
   );
@@ -61,10 +63,11 @@ function SearchBody({ onPick }: { onPick: () => void }) {
   const locale = useLocale();
   const [q, setQ] = useState("");
   const [debounced, setDebounced] = useState("");
+  const t = useTranslations("search");
 
   useEffect(() => {
-    const t = setTimeout(() => setDebounced(q.trim()), 180);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setDebounced(q.trim()), 180);
+    return () => clearTimeout(timer);
   }, [q]);
 
   const results = useQuery({
@@ -82,8 +85,8 @@ function SearchBody({ onPick }: { onPick: () => void }) {
       <div className="sticky top-0 z-10 -mx-5 bg-[color-mix(in_oklab,var(--bg-elevated)_95%,transparent)] px-5 pb-1">
         <TextField
           autoFocus
-          aria-label="Search expenses and groups"
-          placeholder="Dinner, taxi, Lisbon…"
+          aria-label={t("label")}
+          placeholder={t("placeholder")}
           value={q}
           onChange={(e) => setQ(e.target.value)}
           leading={<Search className="size-4" />}
@@ -92,12 +95,12 @@ function SearchBody({ onPick }: { onPick: () => void }) {
         />
       </div>
 
-      {!debounced && <p className="px-1 text-sm text-fg-muted">Search every expense and group you&apos;re in.</p>}
-      {empty && <p className="px-1 text-sm text-fg-muted">Nothing matches “{debounced}”.</p>}
+      {!debounced && <p className="px-1 text-sm text-fg-muted">{t("hint")}</p>}
+      {empty && <p className="px-1 text-sm text-fg-muted">{t("noMatch", { query: debounced })}</p>}
 
       {data && data.groups.length > 0 && (
         <section>
-          <h3 className="px-1 pb-1.5 text-[13px] font-semibold uppercase tracking-[0.08em] text-fg-subtle">Groups</h3>
+          <h3 className="px-1 pb-1.5 text-[13px] font-semibold uppercase tracking-[0.08em] text-fg-subtle">{t("groups")}</h3>
           <ul>
             {data.groups.map((g) => (
               <li key={g.id}>
@@ -117,7 +120,7 @@ function SearchBody({ onPick }: { onPick: () => void }) {
 
       {data && data.expenses.length > 0 && (
         <section>
-          <h3 className="px-1 pb-1.5 text-[13px] font-semibold uppercase tracking-[0.08em] text-fg-subtle">Expenses</h3>
+          <h3 className="px-1 pb-1.5 text-[13px] font-semibold uppercase tracking-[0.08em] text-fg-subtle">{t("expenses")}</h3>
           <ul>
             {data.expenses.map((e) => (
               <li key={e.id}>

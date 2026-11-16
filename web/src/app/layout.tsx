@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque } from "next/font/google";
+import { Bricolage_Grotesque, Noto_Sans_Arabic, Noto_Sans_Devanagari } from "next/font/google";
 import type { ReactNode } from "react";
+import { languageScript } from "@/i18n/languages";
 import { themeScript } from "@/ui/theme";
 import "./globals.css";
 
@@ -14,6 +15,14 @@ const bricolage = Bricolage_Grotesque({
   display: "swap",
   axes: ["opsz"],
 });
+
+// Arabic/Urdu and Hindi letters fall back to these. Not preloaded, and split by
+// script, so the files download only when such text is actually on screen.
+const arabic = Noto_Sans_Arabic({ subsets: ["arabic"], variable: "--font-arabic", display: "swap", preload: false });
+const devanagari = Noto_Sans_Devanagari({ subsets: ["devanagari"], variable: "--font-devanagari", display: "swap", preload: false });
+
+// Public pages that are English-only for now keep lang="en".
+const UNTRANSLATED = ["/", "/privacy", "/terms"];
 
 export const metadata: Metadata = {
   title: { default: "SettleMint", template: "%s · SettleMint" },
@@ -41,9 +50,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" data-theme="dark" className={bricolage.variable} suppressHydrationWarning>
+    <html lang="en" data-theme="dark" className={`${bricolage.variable} ${arabic.variable} ${devanagari.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: languageScript(UNTRANSLATED) }} />
       </head>
       <body>
         {children}

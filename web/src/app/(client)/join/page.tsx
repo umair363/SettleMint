@@ -6,8 +6,10 @@ import { Check, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { useTranslations } from "use-intl";
 import { AuthLayout } from "@/features/auth/auth-layout";
 import { api } from "@/lib/api";
+import { apiErrorText } from "@/lib/api-error-text";
 import { authClient } from "@/lib/auth-client";
 import { keys, useMe } from "@/lib/queries";
 import { Avatar } from "@/ui/avatar";
@@ -23,6 +25,7 @@ function Join() {
   const qc = useQueryClient();
   const me = useMe();
   const signedIn = Boolean(me.data);
+  const t = useTranslations("join");
 
   const preview = useQuery({
     queryKey: [...keys.invite(token), signedIn],
@@ -44,7 +47,7 @@ function Join() {
     mutationFn: async () => {
       if (!signedIn) {
         const { error } = await authClient.signIn.anonymous();
-        if (error) throw new Error(error.message ?? "Couldn't start a guest session");
+        if (error) throw new Error(t("guestFailed"));
       }
       return api.invites.join(token, spot && spot !== "new" ? { memberId: spot } : { displayName: name.trim() || undefined });
     },
@@ -57,9 +60,9 @@ function Join() {
   if (!token || (preview.error instanceof ApiError && preview.error.status === 404)) {
     return (
       <AuthLayout>
-        <ErrorState title="This invite link doesn't work" body="It may have been reset. Ask for a new link." />
+        <ErrorState title={t("badLinkTitle")} body={t("badLinkBody")} />
         <Button variant="secondary" block onClick={() => router.push("/home")}>
-          Go to SettleMint
+          {t("goHome")}
         </Button>
       </AuthLayout>
     );
@@ -86,7 +89,7 @@ function Join() {
     return (
       <AuthLayout>
         <div className="flex justify-center py-10">
-          <Spinner label="Opening the group" />
+          <Spinner label={t("opening")} />
         </div>
       </AuthLayout>
     );
@@ -95,8 +98,12 @@ function Join() {
   const needsName = spot === "new" && !signedIn && !name.trim();
   const joinError =
     join.error instanceof ApiError && join.error.code === "ALREADY_CLAIMED"
-      ? "Someone already joined as that person. Pick another, or join as someone new."
-      : join.error?.message;
+      ? t("claimed")
+      : join.error
+        ? join.error instanceof ApiError
+          ? apiErrorText(join.error)
+          : join.error.message
+        : null;
 
   return (
     <AuthLayout>
@@ -105,18 +112,18 @@ function Join() {
           <div className="mx-auto flex size-16 items-center justify-center rounded-[var(--radius-lg)] bg-surface-2 text-4xl">
             {group.emoji ?? "👥"}
           </div>
-          <p className="text-sm text-fg-muted">You&apos;re invited to</p>
+          <p className="text-sm text-fg-muted">{t("invitedTo")}</p>
           <h1 className="font-display text-3xl font-semibold tracking-tight">{group.name}</h1>
           <p className="text-sm text-fg-muted">
-            {group.memberCount} {group.memberCount === 1 ? "person" : "people"} · {group.currency}
+            {t("people", { count: group.memberCount })} · {group.currency}
           </p>
         </div>
 
         {openSpots.length > 0 && (
           <div className="space-y-2">
-            <p className="text-sm font-medium text-fg-muted">Which one is you?</p>
-            <ul className="space-y-1.5" role="radiogroup" aria-label="Pick your name">
-              {[...openSpots, { id: "new", displayName: "I'm someone new" }].map((s) => (
+            <p className="text-sm font-medium text-fg-muted">{t("whichYou")}</p>
+            <ul className="space-y-1.5" role="radiogroup" aria-label={t("pickName")}>
+              {[...openSpots, { id: "new", displayName: t("someoneNew") }].map((s) => (
                 <li key={s.id}>
                   <button
                     type="button"
@@ -145,7 +152,7 @@ function Join() {
         )}
 
         {(openSpots.length === 0 || spot === "new") && !signedIn && (
-          <TextField label="Your name" value={name} onChange={(e) => setName(e.target.value)} placeholder="So others know it's you" />
+          <TextField label={t("yourName")} value={name} onChange={(e) => setName(e.target.value)} placeholder={t("namePlaceholder")} />
         )}
 
         {joinError && (
@@ -161,14 +168,17 @@ function Join() {
           disabled={(openSpots.length > 0 && !spot) || needsName || (openSpots.length === 0 && !signedIn && !name.trim())}
           onClick={() => join.mutate()}
         >
-          {signedIn ? "Join group" : "Join without an account"}
+          {signedIn ? t("join") : t("joinGuest")}
         </Button>
         {!signedIn && (
           <p className="text-center text-sm text-fg-muted">
-            Have an account?{" "}
-            <Link href={`/sign-in?next=${encodeURIComponent(`/join?t=${token}`)}`} className="font-medium text-positive">
-              Sign in first
-            </Link>
+            {t.rich("haveAccount", {
+              link: (chunks) => (
+                <Link href={`/sign-in?next=${encodeURIComponent(`/join?t=${token}`)}`} className="font-medium text-positive">
+                  {chunks}
+                </Link>
+              ),
+            })}
           </p>
         )}
       </div>

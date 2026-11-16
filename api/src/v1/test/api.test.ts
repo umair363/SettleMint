@@ -799,6 +799,25 @@ describe("push notifications", () => {
     ]);
   });
 
+  it("writes each notification in the recipient's language", async () => {
+    const { ana, ben, group, anaId, benId } = await groupWithBen();
+    await ben.patch("/v1/me", { locale: "es-ES" });
+    const ep = endpoint("ben-es");
+    await ben.post("/v1/push/subscribe", { endpoint: ep, keys });
+    await ana.post(`/v1/groups/${group.id}/expenses`, {
+      description: "Tapas",
+      amount: 2400,
+      currency: "EUR",
+      fxRate: "1.08",
+      date: today,
+      payers: [{ memberId: anaId, amount: 2400 }],
+      split: { method: "equal", memberIds: [anaId, benId] },
+    });
+    await t.app.notifier!.idle();
+    // Intl puts a no-break space before the euro sign.
+    expect(sentTo(ep).map((s) => s.payload.body.replace(/\s/g, " "))).toEqual(["Ana añadió “Tapas” · 24,00 €"]);
+  });
+
   it("sends payments only to the two people involved", async () => {
     const { ana, ben, group, anaId, benId, cyId } = await groupWithBen();
     const cy = client();

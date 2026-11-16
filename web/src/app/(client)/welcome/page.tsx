@@ -4,7 +4,7 @@ import { ApiError } from "@settlemint/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
-import { useLocale } from "use-intl";
+import { useLocale, useTranslations } from "use-intl";
 import { AuthLayout } from "@/features/auth/auth-layout";
 import { safeNext } from "@/features/auth/safe-next";
 import { guessCurrency } from "@/lib/currency-guess";
@@ -23,6 +23,8 @@ export default function WelcomePage() {
   const [name, setName] = useState<string | null>(null);
   const [currency, setCurrency] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const t = useTranslations("welcome");
+  const tc = useTranslations("common");
 
   const unauthorized = me.error instanceof ApiError && me.error.status === 401;
   useEffect(() => {
@@ -57,33 +59,33 @@ export default function WelcomePage() {
     <AuthLayout>
       <form onSubmit={submit} className="space-y-5">
         <div className="space-y-1.5 text-center">
-          <h1 className="font-display text-3xl font-semibold tracking-tight">Welcome to SettleMint</h1>
-          <p className="text-fg-muted">Two quick things and you&apos;re in.</p>
+          <h1 className="font-display text-3xl font-semibold tracking-tight">{t("title")}</h1>
+          <p className="text-fg-muted">{t("subtitle")}</p>
         </div>
         <TextField
-          label="What should friends call you?"
+          label={t("nameLabel")}
           autoComplete="given-name"
           autoFocus
           required
           maxLength={60}
           value={nameValue}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Your name"
+          placeholder={t("namePlaceholder")}
         />
         <div className="space-y-1.5">
-          <p className="text-[13px] font-medium text-fg-muted">Your usual currency</p>
+          <p className="text-[13px] font-medium text-fg-muted">{t("currency")}</p>
           <button
             type="button"
             onClick={() => setPickerOpen(true)}
             className="flex h-12 w-full items-center justify-between rounded-[var(--radius-md)] border border-line bg-surface-2 px-3.5 text-start hover:border-line-strong"
           >
             <span className="font-medium">{currencyValue}</span>
-            <span className="text-sm text-positive">Change</span>
+            <span className="text-sm text-positive">{tc("change")}</span>
           </button>
-          <p className="text-[13px] text-fg-subtle">Each group can still use its own currency.</p>
+          <p className="text-[13px] text-fg-subtle">{t("currencyNote")}</p>
         </div>
         <Button type="submit" block size="lg" disabled={!nameValue.trim()} loading={update.isPending}>
-          Continue
+          {t("continue")}
         </Button>
       </form>
       <CurrencyPicker open={pickerOpen} onOpenChange={setPickerOpen} value={currencyValue} onChange={setCurrency} />

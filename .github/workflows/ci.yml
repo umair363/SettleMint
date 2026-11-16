@@ -65,6 +65,8 @@ jobs:
           WEB_ORIGINS: http://localhost:4555
           # Sample receipt instead of the AI, so the scanning flow is testable without a key.
           FAKE_RECEIPT_READER: "1"
+          # The suites sign up many accounts back to back from one address.
+          AUTH_RATE_LIMIT: "off"
         run: |
           # Throwaway notification keys for this run only.
           eval "$(node -e "const k=require('web-push').generateVAPIDKeys();console.log('export VAPID_PUBLIC_KEY='+k.publicKey+' VAPID_PRIVATE_KEY='+k.privateKey)")"
@@ -87,6 +89,9 @@ jobs:
       - name: Notifications (subscribe, worker, real delivery)
         working-directory: web
         run: node e2e/push.mjs out
+      - name: Languages (Arabic right-to-left, switching, Hindi)
+        working-directory: web
+        run: node e2e/i18n.mjs out ../e2e-shots/i18n
       - name: Accessibility (axe, WCAG 2.2 AA)
         working-directory: web
         run: node e2e/a11y.mjs out

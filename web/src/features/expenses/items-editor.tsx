@@ -1,6 +1,7 @@
 "use client";
 
 import type { MemberDto } from "@settlemint/shared";
+import { useTranslations } from "use-intl";
 import { Avatar } from "@/ui/avatar";
 import { cn } from "@/ui/cn";
 import { haptic } from "@/ui/motion";
@@ -47,9 +48,11 @@ export function ItemsEditor({
   const setAll = (item: DraftItem) =>
     onDraft({ ...draft, items: items.map((it) => (it.key === item.key ? { ...it, memberIds: members.map((m) => m.id) } : it)) });
 
+  const t = useTranslations("split");
+  const tc = useTranslations("common");
   return (
     <div className="space-y-3">
-      <p className="text-sm text-fg-muted">Tap who had each item. Shared items split evenly between the people tapped.</p>
+      <p className="text-sm text-fg-muted">{t("itemsHelp")}</p>
       <ul className="space-y-2">
         {items.map((item) => (
           <li key={item.key} className="rounded-[var(--radius-md)] border border-line bg-surface p-3">
@@ -57,7 +60,7 @@ export function ItemsEditor({
               <span className="min-w-0 truncate font-medium">{item.label}</span>
               <Money minor={item.amount} currency={currency} className="text-[15px] font-medium" />
             </div>
-            <div className="mt-2 flex flex-wrap gap-1.5" role="group" aria-label={`Who had ${item.label}`}>
+            <div className="mt-2 flex flex-wrap gap-1.5" role="group" aria-label={t("whoHad", { item: item.label })}>
               {members.map((m) => {
                 const on = item.memberIds.includes(m.id);
                 return (
@@ -72,13 +75,13 @@ export function ItemsEditor({
                     )}
                   >
                     <Avatar id={m.id} name={m.displayName} image={m.image} size="xs" />
-                    {m.id === myMemberId ? "You" : m.displayName.split(" ")[0]}
+                    {m.id === myMemberId ? tc("you") : m.displayName.split(" ")[0]}
                   </button>
                 );
               })}
               {item.memberIds.length < members.length && (
                 <button type="button" onClick={() => setAll(item)} className="px-1 text-[13px] font-medium text-positive">
-                  Everyone
+                  {t("everyone")}
                 </button>
               )}
             </div>
@@ -88,19 +91,19 @@ export function ItemsEditor({
 
       {extras !== 0 && (
         <div className="flex items-baseline justify-between gap-3 rounded-[var(--radius-md)] bg-surface-2 px-3 py-2.5 text-sm">
-          <span className="text-fg-muted">{extras > 0 ? "Tax, tip & service" : "Discounts"}, shared by what each ordered</span>
+          <span className="text-fg-muted">{t("extras", { kind: extras > 0 ? "charges" : "discounts" })}</span>
           <Money minor={extras} currency={currency} className="font-medium" />
         </div>
       )}
 
       {preview.shares && (
         <div className="space-y-1.5 rounded-[var(--radius-md)] border border-line p-3">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-fg-subtle">Each person pays</p>
+          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-fg-subtle">{t("eachPays")}</p>
           {preview.shares.map((s) => {
             const m = members.find((x) => x.id === s.memberId);
             return (
               <div key={s.memberId} className="flex items-center justify-between text-[15px]">
-                <span>{s.memberId === myMemberId ? "You" : m?.displayName}</span>
+                <span>{s.memberId === myMemberId ? tc("you") : m?.displayName}</span>
                 <Money minor={s.amount} currency={currency} className="font-medium" />
               </div>
             );

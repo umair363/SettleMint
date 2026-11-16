@@ -81,7 +81,7 @@ export function createAuth(db: Db, config: AppConfig, mailer: Mailer) {
       expiresIn: 60 * 60 * 24 * 60, // 60 days
       updateAge: 60 * 60 * 24, // refresh the expiry at most once a day
     },
-    rateLimit: { enabled: config.env !== "test" },
+    rateLimit: { enabled: config.env !== "test" && config.authRateLimit !== false },
     advanced: {
       database: { generateId: () => uuidv7() },
       useSecureCookies: config.env === "production",

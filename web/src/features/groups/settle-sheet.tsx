@@ -3,6 +3,7 @@
 import type { GroupDetailDto } from "@settlemint/shared";
 import { ArrowRight, ArrowRightLeft } from "lucide-react";
 import { useState } from "react";
+import { useTranslations } from "use-intl";
 import { toast } from "sonner";
 import { uuidv7 } from "uuidv7";
 import { todayIso } from "@/lib/dates";
@@ -37,8 +38,9 @@ export function SettleSheet({
   /** Called when this payment brings the viewer's balance in the group to zero. */
   onSettledMe?: () => void;
 }) {
+  const t = useTranslations("settle");
   return (
-    <Sheet open={Boolean(target)} onOpenChange={(o) => !o && onClose()} title="Record a payment" tall>
+    <Sheet open={Boolean(target)} onOpenChange={(o) => !o && onClose()} title={t("title")} tall>
       {target && (
         <SettleForm
           key={`${target.fromMemberId}-${target.toMemberId}`}
@@ -65,6 +67,7 @@ function PersonPicker({
   label: string;
   exclude: string;
 }) {
+  const t = useTranslations("settle");
   return (
     <label className="flex min-w-0 flex-1 flex-col items-center gap-2">
       <span className="text-xs font-medium uppercase tracking-wider text-fg-subtle">{label}</span>
@@ -81,7 +84,7 @@ function PersonPicker({
           .filter((m) => !m.left && m.id !== exclude)
           .map((m) => (
             <option key={m.id} value={m.id}>
-              {m.isMe ? "You" : m.displayName}
+              {m.isMe ? t("you") : m.displayName}
             </option>
           ))}
       </select>
@@ -109,7 +112,8 @@ function SettleForm({
   const amount = evaluateAmount(expr, group.currency) ?? 0;
   const fromName = group.members.find((m) => m.id === from);
   const toName = group.members.find((m) => m.id === to);
-  const owed = group.transfers.find((t) => t.fromMemberId === from && t.toMemberId === to)?.amount ?? 0;
+  const owed = group.transfers.find((x) => x.fromMemberId === from && x.toMemberId === to)?.amount ?? 0;
+  const t = useTranslations("settle");
 
   const save = () => {
     create.mutate({
@@ -126,8 +130,12 @@ function SettleForm({
     const before = group.balances[me] ?? 0;
     const after = before + (from === me ? amount : 0) - (to === me ? amount : 0);
     if (before !== 0 && after === 0) onSettledMe?.();
-    toast.success("Payment recorded", {
-      description: `${fromName?.isMe ? "You" : fromName?.displayName} paid ${toName?.isMe ? "you" : toName?.displayName}`,
+    toast.success(t("recorded"), {
+      description: t("paidLine", {
+        dir: fromName?.isMe ? "out" : toName?.isMe ? "in" : "other",
+        from: fromName?.displayName ?? "",
+        to: toName?.displayName ?? "",
+      }),
     });
     onDone();
   };
@@ -135,10 +143,10 @@ function SettleForm({
   return (
     <div className="flex h-full flex-col gap-4 pt-1">
       <div className="flex items-start gap-2">
-        <PersonPicker group={group} value={from} onChange={setFrom} label="Paid" exclude={to} />
+        <PersonPicker group={group} value={from} onChange={setFrom} label={t("paidLabel")} exclude={to} />
         <button
           type="button"
-          aria-label="Swap who paid and who received"
+          aria-label={t("swap")}
           onClick={() => {
             setFrom(to);
             setTo(from);
@@ -147,7 +155,7 @@ function SettleForm({
         >
           <ArrowRight className="size-5 rtl:rotate-180" />
         </button>
-        <PersonPicker group={group} value={to} onChange={setTo} label="To" exclude={from} />
+        <PersonPicker group={group} value={to} onChange={setTo} label={t("toLabel")} exclude={from} />
       </div>
 
       <AmountDisplay expr={expr} currency={group.currency} />
@@ -157,7 +165,7 @@ function SettleForm({
           onClick={() => setExpr(amountToExpr(owed, group.currency))}
           className="-mt-2 self-center text-sm font-medium text-positive"
         >
-          Full amount: <Money minor={owed} currency={group.currency} />
+          {t.rich("fullAmount", { amount: () => <Money minor={owed} currency={group.currency} /> })}
         </button>
       )}
 
@@ -173,25 +181,25 @@ function SettleForm({
       )}
 
       <Segmented<Method>
-        label="How was it paid?"
+        label={t("howPaid")}
         size="sm"
         value={method}
         onChange={setMethod}
         options={[
-          { value: "cash", label: "Cash" },
-          { value: "bank", label: "Bank" },
-          { value: "app", label: "App" },
-          { value: "other", label: "Other" },
+          { value: "cash", label: t("cash") },
+          { value: "bank", label: t("bank") },
+          { value: "app", label: t("app") },
+          { value: "other", label: t("other") },
         ]}
       />
-      <TextField aria-label="Note" placeholder="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} maxLength={280} />
+      <TextField aria-label={t("note")} placeholder={t("notePlaceholder")} value={note} onChange={(e) => setNote(e.target.value)} maxLength={280} />
 
       <div className={cn("mt-auto space-y-3 pb-2")}>
         {/* Desktop: the pad still listens to the physical keyboard, so the buttons are phone-only. */}
         <AmountPad expr={expr} onChange={setExpr} currency={group.currency} withMath={false} className="sm:hidden" />
-        <p className="hidden text-center text-[13px] text-fg-subtle sm:block">Type to change the amount</p>
+        <p className="hidden text-center text-[13px] text-fg-subtle sm:block">{t("typeAmount")}</p>
         <Button block size="lg" disabled={amount <= 0 || from === to} onClick={save} leading={<ArrowRightLeft className="size-4" />}>
-          Record <Money minor={amount} currency={group.currency} />
+          {t.rich("recordAmount", { amount: () => <Money minor={amount} currency={group.currency} /> })}
         </Button>
       </div>
     </div>

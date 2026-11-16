@@ -3,6 +3,7 @@
 import { AlertDialog } from "radix-ui";
 import type { ReactNode } from "react";
 import { Button } from "./button";
+import { useTranslations } from "use-intl";
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -23,11 +24,12 @@ export function ConfirmDialog({
   title,
   body,
   confirmLabel,
-  cancelLabel = "Cancel",
+  cancelLabel,
   destructive,
   loading,
   onConfirm,
 }: ConfirmDialogProps) {
+  const t = useTranslations("ui");
   return (
     <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
       <AlertDialog.Portal>
@@ -41,7 +43,7 @@ export function ConfirmDialog({
           )}
           <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <AlertDialog.Cancel asChild>
-              <Button variant="secondary">{cancelLabel}</Button>
+              <Button variant="secondary">{cancelLabel ?? t("cancel")}</Button>
             </AlertDialog.Cancel>
             <Button
               variant={destructive ? "danger" : "primary"}

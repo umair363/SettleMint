@@ -3,7 +3,7 @@
 import type { ActivityDto } from "@settlemint/shared";
 import { ArrowRightLeft, Receipt, Settings2, UserPlus } from "lucide-react";
 import Link from "next/link";
-import { useLocale } from "use-intl";
+import { useLocale, useTranslations } from "use-intl";
 import { describeActivity } from "@/lib/activity-text";
 import { timeAgo } from "@/lib/dates";
 import { cn } from "@/ui/cn";
@@ -18,7 +18,8 @@ const ICONS = {
 
 export function ActivityRow({ event, myUserId, showGroup = true }: { event: ActivityDto; myUserId?: string; showGroup?: boolean }) {
   const locale = useLocale();
-  const line = describeActivity(event, myUserId);
+  const t = useTranslations("activity");
+  const line = describeActivity(event, myUserId, t);
   const { Icon, className } = ICONS[line.kind];
   return (
     <Link href={`/group?id=${event.groupId}`} className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-2">

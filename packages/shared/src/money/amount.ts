@@ -63,11 +63,25 @@ export function minorToMajor(minor: number, currency: string): number {
   return minor / 10 ** currencyExponent(currency);
 }
 
+/**
+ * Digits and separators from other scripts as ASCII: Arabic-Indic (Egypt,
+ * Saudi Arabia), Extended Arabic-Indic (Persian/Urdu keyboards), Devanagari,
+ * and the Arabic decimal and thousands marks.
+ */
+export function toAsciiDigits(text: string): string {
+  return text
+    .replace(/[٠-٩]/g, (c) => String(c.charCodeAt(0) - 0x0660))
+    .replace(/[۰-۹]/g, (c) => String(c.charCodeAt(0) - 0x06f0))
+    .replace(/[०-९]/g, (c) => String(c.charCodeAt(0) - 0x0966))
+    .replace(/٫/g, ".")
+    .replace(/٬/g, ",");
+}
+
 function localeSeparators(locale?: string): { group: string; decimal: string } {
   const parts = new Intl.NumberFormat(locale).formatToParts(12345.6);
   return {
-    group: parts.find((p) => p.type === "group")?.value ?? ",",
-    decimal: parts.find((p) => p.type === "decimal")?.value ?? ".",
+    group: toAsciiDigits(parts.find((p) => p.type === "group")?.value ?? ","),
+    decimal: toAsciiDigits(parts.find((p) => p.type === "decimal")?.value ?? "."),
   };
 }
 
@@ -88,7 +102,8 @@ function localeSeparators(locale?: string): { group: string; decimal: string } {
  */
 export function parseMoneyInput(input: string, currency: string, locale?: string): number | null {
   const exp = currencyExponent(currency);
-  let text = input.normalize("NFKC").replace(/[\s  '’_]/g, "");
+  // Bidi marks come along when copying numbers out of right-to-left text.
+  let text = toAsciiDigits(input.normalize("NFKC")).replace(/[\s\u00a0\u202f'\u2019_\u200e\u200f\u061c]/g, "");
   let negative = false;
   if (/^[-−]/.test(text)) {
     negative = true;

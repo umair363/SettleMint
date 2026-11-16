@@ -5,6 +5,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { springSoft } from "@/ui/motion";
+import { tr } from "@/i18n/runtime";
+import { useTranslations } from "use-intl";
 
 /** Registers the service worker and offers a reload when a new version is ready. */
 export function ServiceWorker() {
@@ -22,10 +24,10 @@ export function ServiceWorker() {
     navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
 
     const offerUpdate = (worker: ServiceWorker) =>
-      toast("A new version of SettleMint is ready", {
+      toast(tr()("pwa.updateReady"), {
         id: "sw-update",
         duration: Infinity,
-        action: { label: "Update", onClick: () => worker.postMessage("SKIP_WAITING") },
+        action: { label: tr()("pwa.update"), onClick: () => worker.postMessage("SKIP_WAITING") },
       });
 
     navigator.serviceWorker
@@ -67,6 +69,7 @@ export function useOnline() {
 /** Small pill at the top while offline; everything keeps working from saved data. */
 export function OfflineBanner() {
   const online = useOnline();
+  const t = useTranslations("ui");
   return (
     <AnimatePresence>
       {!online && (
@@ -79,7 +82,7 @@ export function OfflineBanner() {
           className="glass fixed start-1/2 top-[max(env(safe-area-inset-top),0.75rem)] z-50 flex -translate-x-1/2 items-center gap-2 rounded-full px-3.5 py-1.5 text-[13px] font-medium shadow-float rtl:translate-x-1/2"
         >
           <CloudOff className="size-4 text-info" aria-hidden />
-          Offline · changes will sync
+          {t("offline")}
         </motion.div>
       )}
     </AnimatePresence>

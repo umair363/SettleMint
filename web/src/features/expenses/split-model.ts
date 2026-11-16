@@ -6,6 +6,7 @@ import {
   type MemberAmount,
   type SplitSpec,
 } from "@settlemint/shared";
+import { tr } from "@/i18n/runtime";
 
 export type EditableMethod = "equal" | "exact" | "percent" | "shares" | "adjustment" | "itemized";
 
@@ -90,7 +91,7 @@ export function draftFromSpec(spec: SplitSpec, currency: string, locale: string)
         method: "itemized",
         included: ids,
         values: {},
-        items: spec.items.map((it, i) => ({ key: `item-${i}`, label: it.label ?? `Item ${i + 1}`, amount: it.amount, memberIds: it.memberIds })),
+        items: spec.items.map((it, i) => ({ key: `item-${i}`, label: it.label ?? tr()("split.item", { n: i + 1 }), amount: it.amount, memberIds: it.memberIds })),
         extras: spec.extras ?? 0,
       };
     }
@@ -153,10 +154,23 @@ export function specFromDraft(draft: SplitDraft, memberOrder: string[], currency
   }
 }
 
+export const SPLIT_PROBLEMS = [
+  "NO_PARTICIPANTS",
+  "EXACT_SUM_MISMATCH",
+  "PERCENT_SUM_MISMATCH",
+  "ZERO_TOTAL_WEIGHT",
+  "INVALID_WEIGHT",
+  "NEGATIVE_SHARE",
+  "ITEMS_SUM_MISMATCH",
+  "DUPLICATE_MEMBER",
+  "OTHER",
+] as const;
+export type SplitProblem = (typeof SPLIT_PROBLEMS)[number];
+
 export interface SplitPreview {
   shares: MemberAmount[] | null;
-  /** Plain-language problem, or null when the split works. */
-  problem: string | null;
+  /** Why the split doesn't work (translated by the UI as split.problem.*), or null when it does. */
+  problem: SplitProblem | null;
   /** For exact amounts: how much is still unassigned (negative = too much). */
   remaining?: number;
   /** For percent: what the percentages add up to. */
@@ -175,25 +189,10 @@ export function previewSplit(total: number, spec: SplitSpec): SplitPreview {
     return { shares: computeShares(total, spec), problem: null, remaining, percentTotal };
   } catch (err) {
     if (!(err instanceof MoneyError)) throw err;
-    const problem: Record<string, string> = {
-      NO_PARTICIPANTS: "Pick at least one person to split with",
-      EXACT_SUM_MISMATCH: "The amounts need to add up to the total",
-      PERCENT_SUM_MISMATCH: "Percentages need to add up to 100%",
-      ZERO_TOTAL_WEIGHT: "Give at least one person a share",
-      INVALID_WEIGHT: "Shares must be numbers",
-      NEGATIVE_SHARE: "Adjustments are bigger than the total",
-      ITEMS_SUM_MISMATCH: "The items plus tax and tip need to add up to the total",
-      DUPLICATE_MEMBER: "Someone appears twice",
-    };
-    return { shares: null, problem: problem[err.code] ?? err.message, remaining, percentTotal };
+    const problem = (SPLIT_PROBLEMS as readonly string[]).includes(err.code) ? (err.code as SplitProblem) : "OTHER";
+    return { shares: null, problem, remaining, percentTotal };
   }
 }
 
-export const METHOD_LABEL: Record<EditableMethod, string> = {
-  equal: "Equally",
-  exact: "Amounts",
-  percent: "Percent",
-  shares: "Shares",
-  adjustment: "Adjust",
-  itemized: "Items",
-};
+/** Methods in the order the picker shows them (labels: split.method.*). */
+export const EDITABLE_METHODS: readonly EditableMethod[] = ["equal", "exact", "percent", "shares", "adjustment", "itemized"];

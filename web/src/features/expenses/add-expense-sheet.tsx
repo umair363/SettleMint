@@ -17,9 +17,10 @@ import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { useLocale } from "use-intl";
+import { useLocale, useTranslations } from "use-intl";
 import { uuidv7 } from "uuidv7";
 import { api } from "@/lib/api";
+import { apiErrorText } from "@/lib/api-error-text";
 import { guessCategory } from "@/lib/category-guess";
 import { prepareReceiptImage } from "@/lib/image";
 import { dayLabel, todayIso } from "@/lib/dates";
@@ -35,13 +36,14 @@ import { TextField } from "@/ui/field";
 import { Money } from "@/ui/money";
 import { springSoft } from "@/ui/motion";
 import { Sheet } from "@/ui/sheet";
+import type { CategoryKey } from "@/i18n/messages/en";
 import { useAddExpense } from "./add-expense-context";
 import { ItemsEditor } from "./items-editor";
 import {
   draftFromSpec,
   equalDraft,
+  EDITABLE_METHODS,
   itemizedDraft,
-  METHOD_LABEL,
   minorToInputText,
   previewSplit,
   specFromDraft,
@@ -50,7 +52,6 @@ import {
 } from "./split-model";
 
 const LAST_GROUP_KEY = "sm-last-group";
-const REPEAT_LABEL: Record<RecurrenceFrequency, string> = { weekly: "Weekly", monthly: "Monthly", yearly: "Yearly" };
 
 function readLastGroup(): string | null {
   try {
@@ -63,11 +64,12 @@ function readLastGroup(): string | null {
 export function AddExpenseSheet() {
   const { open, options, session, close } = useAddExpense();
   const editing = Boolean(options.expense);
+  const t = useTranslations("expense");
   return (
     <Sheet
       open={open}
       onOpenChange={(o) => !o && close()}
-      title={editing ? "Edit expense" : "Add expense"}
+      title={editing ? t("editTitle") : t("addTitle")}
       tall
       className="sm:w-[min(34rem,calc(100vw-2rem))]"
     >
@@ -101,6 +103,7 @@ function ExpenseForm({
   }, [groups.data]);
   const groupId = chosenGroupId ?? fallbackGroupId;
   const group = useGroup(groupId);
+  const t = useTranslations("expense");
 
   if (groups.isPending || (groupId && group.isPending)) {
     return (
@@ -114,7 +117,7 @@ function ExpenseForm({
     return (
       <ErrorState
         offline={!navigator.onLine}
-        body="Open the group once while online, then you can add expenses to it offline."
+        body={t("openOnline")}
         onRetry={() => (groupId ? group.refetch() : groups.refetch())}
       />
     );
@@ -123,8 +126,8 @@ function ExpenseForm({
     return (
       <EmptyState
         icon={<Users />}
-        title="Start with a group"
-        body="Expenses live in groups: a trip, your home, or just you and a friend."
+        title={t("startTitle")}
+        body={t("startBody")}
         action={
           <Button
             onClick={() => {
@@ -132,7 +135,7 @@ function ExpenseForm({
               router.push("/groups?new=1");
             }}
           >
-            Create a group
+            {t("createGroup")}
           </Button>
         }
       />
@@ -164,6 +167,10 @@ function FormBody({
   onDone: () => void;
 }) {
   const locale = useLocale();
+  const t = useTranslations("expense");
+  const tc = useTranslations("common");
+  const ts = useTranslations("split");
+  const tcat = useTranslations("categories");
   const members = useMemo(() => group.members.filter((m) => !m.left || expense?.lines.some((l) => l.memberId === m.id)), [group.members, expense]);
   const memberIds = useMemo(() => members.map((m) => m.id), [members]);
   const byId = useMemo(() => new Map(members.map((m) => [m.id, m])), [members]);
@@ -204,13 +211,15 @@ function FormBody({
         setDraft(itemizedDraft(r.items, r.extras, memberIds.filter((id) => !byId.get(id)?.left)));
         setPanel("split");
       }
-      toast.success(r.items.length ? `Read ${r.items.length} items` : "Read the total", {
-        description: `${r.scansLeft} scans left this month`,
+      toast.success(r.items.length ? t("scanItems", { count: r.items.length }) : t("scanTotal"), {
+        description: t("scansLeft", { count: r.scansLeft }),
       });
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : "Couldn't read that photo", {
-        description: err instanceof ApiError && err.code === "AI_UNAVAILABLE" ? undefined : "You can still enter it by hand.",
-      });
+      const code = err instanceof ApiError ? err.code : null;
+      toast.error(
+        code === "AI_UNAVAILABLE" ? t("scanOff") : code === "AI_QUOTA" ? t("scanQuota") : t("scanFailed"),
+        { description: code === "AI_UNAVAILABLE" ? undefined : t("scanByHand") },
+      );
     } finally {
       setScanning(false);
     }
@@ -227,13 +236,22 @@ function FormBody({
   const paidSum = payers.reduce((s, p) => s + p.amount, 0);
   const needsRate = currency !== group.currency;
   const cat = getCategoryMeta(category);
+  const catLabel = tcat(cat.id as CategoryKey);
 
   const problem =
     total <= 0
       ? null
       : preview.problem ??
-        (paidSum !== total ? "What people paid has to add up to the total" : null) ??
-        (needsRate && !isValidRate(fxRate.replace(",", ".")) ? `Enter the ${currency} to ${group.currency} rate` : null);
+        (paidSum !== total ? "PAID_MISMATCH" : null) ??
+        (needsRate && !isValidRate(fxRate.replace(",", ".")) ? "RATE_NEEDED" : null);
+  const problemText =
+    problem === "PAID_MISMATCH"
+      ? t("paidMismatch")
+      : problem === "RATE_NEEDED"
+        ? t("rateNeeded", { from: currency, to: group.currency })
+        : problem
+          ? ts(`problem.${problem}`)
+          : null;
   const canSave = total > 0 && !problem;
 
   const create = useCreateExpense(group.id);
@@ -244,7 +262,7 @@ function FormBody({
   const save = () => {
     if (!canSave) return;
     const body = {
-      description: description.trim() || cat.label,
+      description: description.trim() || catLabel,
       amount: total,
       currency,
       fxRate: needsRate ? fxRate.replace(",", ".") : undefined,
@@ -262,15 +280,15 @@ function FormBody({
     }
     const onError = (err: Error) => {
       if (err instanceof ApiError && err.code === "VERSION_CONFLICT") {
-        toast.error("Someone changed this expense while you were editing", { description: "Close and open it again to see their version." });
+        toast.error(t("conflict"), { description: t("conflictHelp") });
       } else {
-        toast.error(err instanceof ApiError ? err.message : "Couldn't save the expense");
+        toast.error(err instanceof ApiError && !err.isNetwork ? apiErrorText(err) : t("saveFailed"));
       }
     };
     if (expense) {
       update.mutate({ id: expense.id, body: { ...body, version: expense.version } }, {
         onSuccess: () => {
-          toast.success("Expense updated");
+          toast.success(t("updated"));
           onDone();
         },
         onError,
@@ -288,12 +306,12 @@ function FormBody({
           // "Today" for this bill means today where the person is.
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         });
-        toast.success(`Added ${body.description}`, { description: `Repeats ${repeat} · ${group.name}` });
+        toast.success(t("added", { item: body.description }), { description: `${t("repeats", { frequency: repeat })} · ${group.name}` });
         onDone();
         return;
       }
       create.mutate({ id: uuidv7(), ...body });
-      toast.success(`Added ${body.description}`, { description: group.name });
+      toast.success(t("added", { item: body.description }), { description: group.name });
       onDone();
     }
   };
@@ -301,14 +319,14 @@ function FormBody({
   const splitSummary =
     draft.method === "equal"
       ? draft.included.length === memberIds.length
-        ? `Equally · everyone`
-        : `Equally · ${draft.included.length} ${draft.included.length === 1 ? "person" : "people"}`
-      : METHOD_LABEL[draft.method];
+        ? t("equallyEveryone")
+        : t("equallyCount", { count: draft.included.length })
+      : ts(`method.${draft.method}`);
   const payerSummary = multiPay
-    ? `${payers.length} people`
+    ? t("peopleCount", { count: payers.length })
     : payerId === group.myMemberId
-      ? "You"
-      : byId.get(payerId)?.displayName ?? "Someone";
+      ? tc("you")
+      : byId.get(payerId)?.displayName ?? tc("someone");
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden">
@@ -339,14 +357,14 @@ function FormBody({
               <button
                 type="button"
                 onClick={() => setPanel("category")}
-                aria-label={`Category: ${cat.label}. Change category`}
+                aria-label={t("categoryLabel", { category: catLabel })}
                 className="flex size-12 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-surface-2 text-2xl hover:bg-surface-3"
               >
                 {cat.emoji}
               </button>
               <TextField
-                aria-label="Description"
-                placeholder="What was it for?"
+                aria-label={t("description")}
+                placeholder={t("descriptionPlaceholder")}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 maxLength={140}
@@ -358,10 +376,10 @@ function FormBody({
                   "flex size-12 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-md)] bg-surface-2 text-fg-muted transition-colors hover:bg-surface-3 hover:text-fg",
                   scanning && "pointer-events-none",
                 )}
-                title="Scan a receipt"
+                title={t("scan")}
               >
                 {scanning ? <LoaderCircle className="size-5 animate-spin" aria-hidden /> : <Camera className="size-5" aria-hidden />}
-                <span className="sr-only">{scanning ? "Reading receipt…" : "Scan a receipt"}</span>
+                <span className="sr-only">{scanning ? t("scanning") : t("scan")}</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -392,8 +410,8 @@ function FormBody({
                   value={fxRate}
                   onChange={(e) => setFxRate(e.target.value.replace(/[^\d.,]/g, ""))}
                   inputMode="decimal"
-                  aria-label={`Exchange rate from ${currency} to ${group.currency}`}
-                  placeholder="rate"
+                  aria-label={t("rateLabel", { from: currency, to: group.currency })}
+                  placeholder={t("ratePlaceholder")}
                   className="tabular h-9 w-28 rounded-[var(--radius-sm)] border border-line bg-surface-2 px-2 text-center text-fg focus:border-accent focus:outline-none"
                 />
                 <span>{group.currency}</span>
@@ -401,8 +419,8 @@ function FormBody({
             )}
 
             <div className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5 pb-3">
-              <Pill onClick={() => setPanel("paidBy")} label="Paid by" value={payerSummary} />
-              <Pill onClick={() => setPanel("split")} label="Split" value={splitSummary} />
+              <Pill onClick={() => setPanel("paidBy")} label={t("paidBy")} value={payerSummary} />
+              <Pill onClick={() => setPanel("split")} label={t("split")} value={splitSummary} />
               <label className="relative inline-flex h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3.5 text-sm hover:bg-surface-3">
                 <Calendar className="size-4 text-fg-subtle" aria-hidden />
                 <span className="font-medium">{dayLabel(date, locale)}</span>
@@ -411,24 +429,24 @@ function FormBody({
                   value={date}
                   max={todayIso()}
                   onChange={(e) => e.target.value && setDate(e.target.value)}
-                  aria-label="Date"
+                  aria-label={t("date")}
                   className="absolute inset-0 cursor-pointer opacity-0"
                 />
               </label>
               {!expense && (
                 <label className="relative inline-flex h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3.5 text-sm hover:bg-surface-3">
                   <Repeat className={cn("size-4", repeat === "never" ? "text-fg-subtle" : "text-positive")} aria-hidden />
-                  <span className="font-medium">{repeat === "never" ? "Once" : REPEAT_LABEL[repeat]}</span>
+                  <span className="font-medium">{t("repeatShort", { frequency: repeat })}</span>
                   <select
-                    aria-label="Repeat"
+                    aria-label={t("repeat")}
                     value={repeat}
                     onChange={(e) => setRepeat(e.target.value as typeof repeat)}
                     className="absolute inset-0 cursor-pointer opacity-0"
                   >
-                    <option value="never">Doesn&apos;t repeat</option>
-                    <option value="weekly">Every week</option>
-                    <option value="monthly">Every month</option>
-                    <option value="yearly">Every year</option>
+                    <option value="never">{t("repeatOption", { frequency: "never" })}</option>
+                    <option value="weekly">{t("repeatOption", { frequency: "weekly" })}</option>
+                    <option value="monthly">{t("repeatOption", { frequency: "monthly" })}</option>
+                    <option value="yearly">{t("repeatOption", { frequency: "yearly" })}</option>
                   </select>
                 </label>
               )}
@@ -438,7 +456,7 @@ function FormBody({
             <div className="space-y-3 pb-2">
               <AmountPad expr={expr} onChange={setExpr} currency={currency} />
               <AnimatePresence>
-                {problem && (
+                {problemText && (
                   <motion.p
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
@@ -446,20 +464,16 @@ function FormBody({
                     role="alert"
                     className="text-center text-sm text-warning"
                   >
-                    {problem}
+                    {problemText}
                   </motion.p>
                 )}
               </AnimatePresence>
               <Button block size="lg" disabled={!canSave} loading={saving} onClick={save}>
-                {total > 0 ? (
-                  <>
-                    {expense ? "Save" : "Add"} <Money minor={total} currency={currency} />
-                  </>
-                ) : expense ? (
-                  "Save"
-                ) : (
-                  "Add expense"
-                )}
+                {total > 0
+                  ? t.rich("saveAmount", { mode: expense ? "save" : "add", amount: () => <Money minor={total} currency={currency} /> })
+                  : expense
+                    ? tc("save")
+                    : tc("addExpense")}
               </Button>
             </div>
           </motion.div>
@@ -477,7 +491,7 @@ function FormBody({
               onClick={() => setPanel("main")}
               className="-ms-1.5 mb-3 inline-flex items-center gap-0.5 self-start rounded-full py-1 pe-2 text-sm font-medium text-fg-muted hover:text-fg"
             >
-              <ChevronLeft className="size-4 rtl:rotate-180" aria-hidden /> Back
+              <ChevronLeft className="size-4 rtl:rotate-180" aria-hidden /> {tc("back")}
             </button>
             <div className="min-h-0 flex-1 overflow-y-auto pb-4">
               {panel === "group" && (
@@ -499,7 +513,7 @@ function FormBody({
                           </span>
                           <span className="flex-1 font-medium">{g.name}</span>
                           <span className="text-xs text-fg-subtle">{g.currency}</span>
-                          {g.id === group.id && <Check className="size-4 text-positive" aria-label="Selected" />}
+                          {g.id === group.id && <Check className="size-4 text-positive" aria-label={t("selected")} />}
                         </button>
                       </li>
                     ))}
@@ -525,7 +539,7 @@ function FormBody({
                       <span className="text-2xl" aria-hidden>
                         {c.emoji}
                       </span>
-                      {c.label}
+                      {tcat(c.id as CategoryKey)}
                     </button>
                   ))}
                 </div>
@@ -564,7 +578,7 @@ function FormBody({
             </div>
             {(panel === "split" || (panel === "paidBy" && multiPay)) && (
               <Button block size="lg" onClick={() => setPanel("main")} className="mb-2">
-                Done
+                {tc("done")}
               </Button>
             )}
           </motion.div>
@@ -599,8 +613,8 @@ function Pill({ label, value, onClick }: { label: string; value: string; onClick
   );
 }
 
-function memberName(m: MemberDto, myMemberId: string) {
-  return m.id === myMemberId ? "You" : m.displayName;
+function memberName(m: MemberDto, myMemberId: string, you: string) {
+  return m.id === myMemberId ? you : m.displayName;
 }
 
 function PaidByPanel({
@@ -628,20 +642,22 @@ function PaidByPanel({
   onValues: (v: Record<string, string>) => void;
   paidSum: number;
 }) {
+  const t = useTranslations("expense");
+  const tc = useTranslations("common");
   return (
     <div className="space-y-4">
-      <h3 className="font-display text-lg font-semibold">Who paid?</h3>
-      <Switch checked={multi} onCheckedChange={onMulti} label="Several people paid" description="Split the bill between payers." />
+      <h3 className="font-display text-lg font-semibold">{t("whoPaid")}</h3>
+      <Switch checked={multi} onCheckedChange={onMulti} label={t("severalPaid")} description={t("severalPaidHelp")} />
       <ul className="space-y-1">
         {members.map((m) => (
           <li key={m.id}>
             {multi ? (
               <div className="flex items-center gap-3 rounded-[var(--radius-md)] px-2 py-2">
                 <Avatar id={m.id} name={m.displayName} image={m.image} size="sm" pending={!m.claimed} />
-                <span className="flex-1 truncate font-medium">{memberName(m, myMemberId)}</span>
+                <span className="flex-1 truncate font-medium">{memberName(m, myMemberId, tc("you"))}</span>
                 <input
                   inputMode="decimal"
-                  aria-label={`Amount paid by ${m.displayName}`}
+                  aria-label={t("amountPaidBy", { name: m.displayName })}
                   value={values[m.id] ?? ""}
                   onChange={(e) => onValues({ ...values, [m.id]: e.target.value })}
                   placeholder="0"
@@ -658,8 +674,8 @@ function PaidByPanel({
                 )}
               >
                 <Avatar id={m.id} name={m.displayName} image={m.image} size="sm" pending={!m.claimed} />
-                <span className="flex-1 truncate font-medium">{memberName(m, myMemberId)}</span>
-                {m.id === payerId && <Check className="size-4 text-positive" aria-label="Selected" />}
+                <span className="flex-1 truncate font-medium">{memberName(m, myMemberId, tc("you"))}</span>
+                {m.id === payerId && <Check className="size-4 text-positive" aria-label={t("selected")} />}
               </button>
             )}
           </li>
@@ -667,13 +683,12 @@ function PaidByPanel({
       </ul>
       {multi && (
         <p className={cn("text-center text-sm", paidSum === total ? "text-positive" : "text-warning")}>
-          {paidSum === total ? (
-            "Adds up to the total"
-          ) : (
-            <>
-              <Money minor={Math.abs(total - paidSum)} currency={currency} /> {paidSum < total ? "left to assign" : "too much"}
-            </>
-          )}
+          {paidSum === total
+            ? t("addsUp")
+            : t.rich("remaining", {
+                state: paidSum < total ? "left" : "over",
+                amount: () => <Money minor={Math.abs(total - paidSum)} currency={currency} />,
+              })}
         </p>
       )}
     </div>
@@ -715,19 +730,21 @@ function SplitPanel({
   const setValue = (id: string, v: string) => onDraft({ ...draft, values: { ...draft.values, [id]: v } });
   const usesToggle = draft.method === "equal" || draft.method === "adjustment";
   const allIncluded = draft.included.length === members.length;
+  const t = useTranslations("split");
+  const tc = useTranslations("common");
 
   const methodPicker = (
     <Segmented<EditableMethod>
-      label="Split method"
+      label={t("methodLabel")}
       size="sm"
       value={draft.method}
       onChange={(method) => onDraft({ ...draft, method, included: draft.included.length ? draft.included : members.map((m) => m.id) })}
-      options={(Object.keys(METHOD_LABEL) as EditableMethod[])
+      options={EDITABLE_METHODS
         // "Items" appears once a receipt has supplied them.
         .filter((m) => m !== "itemized" || Boolean(draft.items?.length))
         .map((m) => ({
           value: m,
-          label: <span className="sr-only min-[400px]:not-sr-only">{METHOD_LABEL[m]}</span>,
+          label: <span className="sr-only min-[400px]:not-sr-only">{t(`method.${m}`)}</span>,
           icon: METHOD_ICONS[m],
         }))}
     />
@@ -736,12 +753,12 @@ function SplitPanel({
   if (draft.method === "itemized") {
     return (
       <div className="space-y-4">
-        <h3 className="font-display text-lg font-semibold">Who had what</h3>
+        <h3 className="font-display text-lg font-semibold">{t("whoHadWhat")}</h3>
         {methodPicker}
         <ItemsEditor members={members} myMemberId={myMemberId} currency={currency} draft={draft} onDraft={onDraft} preview={preview} />
         {preview.problem && (
           <p role="alert" className="text-center text-sm text-warning">
-            {preview.problem}
+            {t(`problem.${preview.problem}`)}
           </p>
         )}
       </div>
@@ -750,14 +767,10 @@ function SplitPanel({
 
   return (
     <div className="space-y-4">
-      <h3 className="font-display text-lg font-semibold">How to split</h3>
+      <h3 className="font-display text-lg font-semibold">{t("howToSplit")}</h3>
       {methodPicker}
       <p className="text-sm text-fg-muted">
-        {draft.method === "equal" && "Everyone ticked pays the same."}
-        {draft.method === "exact" && "Type what each person owes."}
-        {draft.method === "percent" && "Give each person a percentage."}
-        {draft.method === "shares" && "E.g. a couple counts as 2 shares."}
-        {draft.method === "adjustment" && "Split equally, then add extra for someone (e.g. their drinks)."}
+        {t(`help.${draft.method}`)}
       </p>
       {usesToggle && (
         <button
@@ -765,7 +778,7 @@ function SplitPanel({
           onClick={() => onDraft({ ...draft, included: allIncluded ? [] : members.map((m) => m.id) })}
           className="text-sm font-medium text-positive"
         >
-          {allIncluded ? "Clear all" : "Select everyone"}
+          {allIncluded ? t("clearAll") : t("selectEveryone")}
         </button>
       )}
       <ul className="space-y-1">
@@ -791,19 +804,19 @@ function SplitPanel({
                     {included && <Check className="size-4" strokeWidth={3} aria-hidden />}
                   </span>
                   <Avatar id={m.id} name={m.displayName} image={m.image} size="sm" pending={!m.claimed} />
-                  <span className="truncate font-medium">{memberName(m, myMemberId)}</span>
+                  <span className="truncate font-medium">{memberName(m, myMemberId, tc("you"))}</span>
                 </button>
               ) : (
                 <span className="flex min-w-0 flex-1 items-center gap-3">
                   <Avatar id={m.id} name={m.displayName} image={m.image} size="sm" pending={!m.claimed} />
-                  <span className="truncate font-medium">{memberName(m, myMemberId)}</span>
+                  <span className="truncate font-medium">{memberName(m, myMemberId, tc("you"))}</span>
                 </span>
               )}
               {draft.method !== "equal" && (draft.method !== "adjustment" || included) && (
                 <span className="relative">
                   <input
                     inputMode="decimal"
-                    aria-label={`${METHOD_LABEL[draft.method]} for ${m.displayName}`}
+                    aria-label={t("valueFor", { method: t(`method.${draft.method}`), name: m.displayName })}
                     value={draft.values[m.id] ?? ""}
                     onChange={(e) => setValue(m.id, e.target.value)}
                     placeholder={draft.method === "adjustment" ? "+0" : "0"}
@@ -825,20 +838,20 @@ function SplitPanel({
         {preview.problem ? (
           <span className="text-warning">
             {draft.method === "exact" && preview.remaining !== undefined ? (
-              <>
-                <Money minor={Math.abs(preview.remaining)} currency={currency} />{" "}
-                {preview.remaining > 0 ? "left to assign" : "more than the total"}
-              </>
+              t.rich("remaining", {
+                state: preview.remaining > 0 ? "left" : "over",
+                amount: () => <Money minor={Math.abs(preview.remaining!)} currency={currency} />,
+              })
             ) : draft.method === "percent" && preview.percentTotal !== undefined ? (
-              `Adds up to ${preview.percentTotal}% of 100%`
+              t("percentTotal", { total: preview.percentTotal })
             ) : (
-              preview.problem
+              t(`problem.${preview.problem}`)
             )}
           </span>
         ) : total > 0 ? (
-          <span className="text-positive">Adds up exactly to <Money minor={total} currency={currency} /></span>
+          <span className="text-positive">{t.rich("addsUpExactly", { amount: () => <Money minor={total} currency={currency} /> })}</span>
         ) : (
-          <span className="text-fg-muted">Enter an amount to see each share</span>
+          <span className="text-fg-muted">{t("enterAmount")}</span>
         )}
       </div>
     </div>

@@ -15,6 +15,8 @@ export interface AppConfig {
   geminiApiKey?: string;
   /** Receipt scans per person per month (bounds AI cost). */
   aiScansPerMonth: number;
+  /** Sign-in rate limits. Always on in production; browser tests switch them off locally. */
+  authRateLimit?: boolean;
   /** Web Push keys (npx web-push generate-vapid-keys). Notifications are off without them. */
   vapid?: { publicKey: string; privateKey: string; subject: string };
 }
@@ -44,6 +46,7 @@ export function configFromEnv(env: NodeJS.ProcessEnv = process.env): AppConfig {
     cookieDomain: env.COOKIE_DOMAIN || undefined,
     geminiApiKey: env.GEMINI_API_KEY || undefined,
     aiScansPerMonth: Number(env.AI_SCANS_PER_MONTH) > 0 ? Number(env.AI_SCANS_PER_MONTH) : 30,
+    authRateLimit: mode === "production" || env.AUTH_RATE_LIMIT !== "off",
     vapid:
       env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY
         ? {

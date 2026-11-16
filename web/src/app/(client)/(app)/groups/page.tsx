@@ -2,6 +2,7 @@
 
 import { Archive, FileUp, Plus, Users } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "use-intl";
 import { Suspense, useState } from "react";
 import { GroupRow } from "@/features/groups/group-row";
 import { ImportSheet } from "@/features/groups/import-sheet";
@@ -20,6 +21,7 @@ function Groups() {
   const [creating, setCreating] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const t = useTranslations("groups");
   // "?new=1" (from the add-expense sheet) opens the new-group sheet.
   const open = creating || params.get("new") === "1";
   const setOpen = (o: boolean) => {
@@ -33,11 +35,11 @@ function Groups() {
   return (
     <>
       <PageHeader
-        title="Groups"
+        title={t("title")}
         actions={
           <>
           <SearchButton />
-          <IconButton label="New group" variant="solid" onClick={() => setOpen(true)}>
+          <IconButton label={t("newGroup")} variant="solid" onClick={() => setOpen(true)}>
             <Plus className="size-5" />
           </IconButton>
           </>
@@ -56,11 +58,11 @@ function Groups() {
           <Card>
             <EmptyState
               icon={<Users />}
-              title="No groups yet"
-              body="A group is any set of people who share costs: a trip, a flat, a couple."
+              title={t("emptyTitle")}
+              body={t("emptyBody")}
               action={
                 <Button leading={<Plus className="size-4" />} onClick={() => setOpen(true)}>
-                  Create a group
+                  {t("create")}
                 </Button>
               }
             />
@@ -77,10 +79,10 @@ function Groups() {
             {archived.length > 0 && (
               <section>
                 <SectionHeader
-                  title={`Archived (${archived.length})`}
+                  title={t("archived", { count: archived.length })}
                   action={
                     <Button size="sm" variant="ghost" leading={<Archive className="size-4" />} onClick={() => setShowArchived((s) => !s)}>
-                      {showArchived ? "Hide" : "Show"}
+                      {showArchived ? t("hide") : t("show")}
                     </Button>
                   }
                 />
@@ -96,7 +98,7 @@ function Groups() {
           </>
         )}
         <Button variant="ghost" block leading={<FileUp className="size-4" />} onClick={() => setImportOpen(true)}>
-          Import a group from Splitwise
+          {t("import")}
         </Button>
       </PageBody>
       <NewGroupSheet open={open} onOpenChange={setOpen} />

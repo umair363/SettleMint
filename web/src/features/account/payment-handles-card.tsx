@@ -4,7 +4,6 @@ import {
   ApiError,
   normalizePaymentHandle,
   PAYMENT_KIND_VALUES,
-  PAYMENT_KINDS,
   type PaymentKind,
 } from "@settlemint/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,6 +14,8 @@ import { api } from "@/lib/api";
 import { Button, IconButton } from "@/ui/button";
 import { Skeleton } from "@/ui/feedback";
 import { Card } from "@/ui/surface";
+import { useTranslations } from "use-intl";
+import { usePaymentKindText } from "./payment-kind";
 
 interface Row {
   key: string;
@@ -32,6 +33,9 @@ export function PaymentHandlesCard() {
   const [draft, setDraft] = useState<Row[] | null>(null);
   const rows: Row[] = draft ?? (saved.data ?? []).map((h) => ({ key: h.id, kind: h.kind, value: h.value }));
   const dirty = draft !== null;
+  const t = useTranslations("payments");
+  const tc = useTranslations("common");
+  const kindText = usePaymentKindText();
 
   const save = useMutation({
     meta: { handlesErrors: true },
@@ -41,9 +45,9 @@ export function PaymentHandlesCard() {
       qc.setQueryData(["payment-handles"], handles);
       void qc.invalidateQueries({ queryKey: ["group"] });
       setDraft(null);
-      toast.success("Payment methods saved");
+      toast.success(t("saved"));
     },
-    onError: (err) => toast.error(err instanceof ApiError ? err.message : "Couldn't save"),
+    onError: (err) => toast.error(err instanceof ApiError && err.code === "VALIDATION_ERROR" ? t("invalidSave") : t("saveFailed")),
   });
 
   const update = (key: string, patch: Partial<Row>) =>
@@ -54,10 +58,8 @@ export function PaymentHandlesCard() {
   return (
     <Card className="space-y-4 p-5">
       <div>
-        <p className="font-semibold">How people pay you</p>
-        <p className="text-sm text-fg-muted">
-          Shown only to people in your groups. When they settle up, SettleMint opens your app with the amount filled in.
-        </p>
+        <p className="font-semibold">{t("title")}</p>
+        <p className="text-sm text-fg-muted">{t("body")}</p>
       </div>
 
       {saved.isPending ? (
@@ -67,29 +69,29 @@ export function PaymentHandlesCard() {
           {rows.map((r) => (
             <li key={r.key} className="flex gap-2">
               <select
-                aria-label="Payment method"
+                aria-label={t("method")}
                 value={r.kind}
                 onChange={(e) => update(r.key, { kind: e.target.value as PaymentKind })}
                 className="h-12 w-32 shrink-0 rounded-[var(--radius-md)] border border-line bg-surface-2 px-2.5 text-sm font-medium text-fg focus:border-accent focus:outline-none"
               >
                 {PAYMENT_KIND_VALUES.map((k) => (
                   <option key={k} value={k}>
-                    {PAYMENT_KINDS[k].label}
+                    {kindText.label(k)}
                   </option>
                 ))}
               </select>
               <div className="min-w-0 flex-1">
                 <input
-                  aria-label={`${PAYMENT_KINDS[r.kind].label} details`}
+                  aria-label={t("details", { method: kindText.label(r.kind) })}
                   aria-invalid={invalid(r) || undefined}
                   value={r.value}
-                  placeholder={PAYMENT_KINDS[r.kind].placeholder}
+                  placeholder={kindText.placeholder(r.kind)}
                   onChange={(e) => update(r.key, { value: e.target.value })}
                   className="h-12 w-full rounded-[var(--radius-md)] border border-line bg-surface-2 px-3 text-[15px] text-fg placeholder:text-fg-subtle focus:border-accent focus:outline-none aria-[invalid=true]:border-negative"
                 />
-                {invalid(r) && <p className="mt-1 text-[13px] text-negative">That doesn&apos;t look like a valid {PAYMENT_KINDS[r.kind].label}.</p>}
+                {invalid(r) && <p className="mt-1 text-[13px] text-negative">{t("invalid", { method: kindText.label(r.kind) })}</p>}
               </div>
-              <IconButton label="Remove" onClick={() => setDraft(rows.filter((x) => x.key !== r.key))} className="mt-0.5">
+              <IconButton label={t("remove")} onClick={() => setDraft(rows.filter((x) => x.key !== r.key))} className="mt-0.5">
                 <Trash2 className="size-4" />
               </IconButton>
             </li>
@@ -105,11 +107,11 @@ export function PaymentHandlesCard() {
           disabled={rows.length >= 10}
           onClick={() => setDraft([...rows, { key: newKey(), kind: "paypal", value: "" }])}
         >
-          Add a method
+          {t("add")}
         </Button>
         {dirty && (
           <Button size="sm" loading={save.isPending} disabled={anyInvalid} onClick={() => save.mutate()}>
-            Save
+            {tc("save")}
           </Button>
         )}
       </div>
