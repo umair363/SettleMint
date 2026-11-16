@@ -5,6 +5,7 @@ import type { FastifyInstance } from "fastify";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { requireUser } from "./app";
 import { groups, members } from "./db/schema";
+import type { ActivityNotice } from "./services/push";
 
 /**
  * Live updates. Every write records an activity event; the groups it touched
@@ -17,7 +18,7 @@ import { groups, members } from "./db/schema";
 const bus = new EventEmitter();
 bus.setMaxListeners(0);
 
-const changed = new AsyncLocalStorage<Set<string>>();
+const changed = new AsyncLocalStorage<{ groups: Set<string>; notices: ActivityNotice[] }>();
 
 /** For background work (no request): tell watchers a group changed. */
 export function announceGroupChanged(groupId: string) {
@@ -25,18 +26,24 @@ export function announceGroupChanged(groupId: string) {
 }
 
 /** Called by recordActivity: remember that this request changed a group. */
-export function markGroupChanged(groupId: string) {
-  changed.getStore()?.add(groupId);
+export function markGroupChanged(notice: ActivityNotice) {
+  const store = changed.getStore();
+  store?.groups.add(notice.groupId);
+  store?.notices.push(notice);
 }
 
 export function registerLiveUpdates(app: FastifyInstance) {
   app.addHook("onRequest", (_req, _reply, done) => {
-    changed.run(new Set(), done);
+    changed.run({ groups: new Set(), notices: [] }, done);
   });
   app.addHook("onResponse", async (req, reply) => {
-    const groupIds = changed.getStore();
-    if (!groupIds?.size || reply.statusCode >= 400) return;
-    for (const groupId of groupIds) bus.emit("group", { groupId, actorUserId: req.authUser?.id ?? null });
+    const store = changed.getStore();
+    if (!store?.groups.size || reply.statusCode >= 400) return;
+    for (const groupId of store.groups) bus.emit("group", { groupId, actorUserId: req.authUser?.id ?? null });
+    // Push notifications go out after the commit too, without delaying anyone.
+    if (app.notifier && store.notices.length) {
+      void app.notifier.dispatch(store.notices, req.log);
+    }
   });
 }
 

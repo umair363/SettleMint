@@ -17,6 +17,7 @@ export type ApiErrorCode =
   | "AI_UNAVAILABLE"
   | "AI_QUOTA"
   | "AI_FAILED"
+  | "PUSH_UNAVAILABLE"
   | "INTERNAL"
   // Money engine codes (see MoneyErrorCode)
   | "INVALID_AMOUNT"

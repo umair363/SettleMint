@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { persister } from "@/lib/persist";
+import { disablePush } from "@/lib/push";
 import { Button } from "@/ui/button";
 import { TextField } from "@/ui/field";
 import { Sheet } from "@/ui/sheet";
@@ -44,6 +45,7 @@ export function YourDataCard() {
     setDeleting(true);
     try {
       await api.me.delete();
+      await disablePush(); // the server already forgot it; drop the browser's side too
       await authClient.signOut().catch(() => {});
       qc.clear();
       await persister.removeClient();

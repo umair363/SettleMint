@@ -122,6 +122,13 @@ export function createApiClient(opts: ApiClientOptions) {
       post<ReceiptScanDto>("/ai/receipt", body),
     importSplitwise: (body: { csv: string; groupName: string; meIndex: number }) =>
       post<ImportResultDto>("/import/splitwise", body),
+    push: {
+      /** The server's public VAPID key, or null when notifications are off. */
+      key: () => get<{ publicKey: string | null }>("/push/key"),
+      subscribe: (sub: { endpoint: string; keys: { p256dh: string; auth: string } }) =>
+        request<void>("POST", "/push/subscribe", sub),
+      unsubscribe: (endpoint: string) => request<void>("DELETE", "/push/subscribe", { endpoint }),
+    },
     groups: {
       list: () => get<GroupSummaryDto[]>("/groups"),
       get: (id: string) => get<GroupDetailDto>(`/groups/${id}`),

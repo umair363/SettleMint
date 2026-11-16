@@ -18,6 +18,11 @@ export default function PrivacyPage() {
         When you scan a receipt, the photo is sent to Google&apos;s Gemini AI to read it. SettleMint doesn&apos;t keep the
         photo. Google may use content sent through its free service to improve its products.
       </p>
+      <p className="text-fg-muted">
+        If you turn on notifications, your browser gives us an address at its push service (run by Google, Apple, Mozilla
+        or Microsoft, depending on the browser). Notifications are encrypted so the push service can&apos;t read them. Turning
+        notifications off or signing out removes the address.
+      </p>
     </main>
   );
 }

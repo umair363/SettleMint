@@ -746,6 +746,118 @@ describe("receipt scanning", () => {
   });
 });
 
+describe("push notifications", () => {
+  const keys = { p256dh: "BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM", auth: "tBHItJI5svbpez7KI4CCXg" };
+  const endpoint = (who: string) => `https://push.example.com/${who}-${Math.random().toString(36).slice(2)}`;
+  const sentTo = (ep: string) => t.pushSender.sent.filter((s) => s.endpoint === ep);
+
+  async function groupWithBen() {
+    const trip = await tripWithFriends();
+    const link = (await trip.ana.post(`/v1/groups/${trip.group.id}/invite`)).body.token;
+    const ben = client();
+    await ben.signUp("Ben");
+    await ben.post(`/v1/invites/${link}/join`, { memberId: trip.benId });
+    return { ...trip, ben };
+  }
+
+  it("publishes the public key and only lets signed-in people subscribe", async () => {
+    expect((await client().get("/v1/push/key")).body).toEqual({ publicKey: "test-public-key" });
+    expect((await client().post("/v1/push/subscribe", { endpoint: endpoint("x"), keys })).status).toBe(401);
+    const ana = client();
+    await ana.signUp("Ana");
+    expect((await ana.post("/v1/push/subscribe", { endpoint: "http://insecure.example/x", keys })).status).toBe(400);
+  });
+
+  it("tells the other members, never the person who acted or outsiders", async () => {
+    const { ana, ben, group, anaId, benId } = await groupWithBen();
+    const outsider = client();
+    await outsider.signUp("Olly");
+    const [anaEp, benEp, ollyEp] = [endpoint("ana"), endpoint("ben"), endpoint("olly")];
+    for (const [c, ep] of [[ana, anaEp], [ben, benEp], [outsider, ollyEp]] as const) {
+      expect((await c.post("/v1/push/subscribe", { endpoint: ep, keys })).status).toBe(204);
+    }
+
+    await ana.post(`/v1/groups/${group.id}/expenses`, {
+      description: "Pastéis",
+      amount: 1250,
+      currency: "USD",
+      date: today,
+      payers: [{ memberId: anaId, amount: 1250 }],
+      split: { method: "equal", memberIds: [anaId, benId] },
+    });
+    await t.app.notifier!.idle();
+
+    expect(sentTo(anaEp)).toEqual([]);
+    expect(sentTo(ollyEp)).toEqual([]);
+    expect(sentTo(benEp).map((s) => s.payload)).toEqual([
+      {
+        title: "Lisbon trip",
+        body: "Ana added “Pastéis” · $12.50",
+        url: `http://localhost:3000/group?id=${group.id}`,
+        tag: group.id,
+      },
+    ]);
+  });
+
+  it("sends payments only to the two people involved", async () => {
+    const { ana, ben, group, anaId, benId, cyId } = await groupWithBen();
+    const cy = client();
+    await cy.signUp("Cy");
+    const link = (await ana.post(`/v1/groups/${group.id}/invite`)).body.token;
+    await cy.post(`/v1/invites/${link}/join`, { memberId: cyId });
+    const [benEp, cyEp] = [endpoint("ben"), endpoint("cy")];
+    await ben.post("/v1/push/subscribe", { endpoint: benEp, keys });
+    await cy.post("/v1/push/subscribe", { endpoint: cyEp, keys });
+
+    const res = await ana.post(`/v1/groups/${group.id}/settlements`, {
+      fromMemberId: anaId,
+      toMemberId: benId,
+      amount: 500,
+      currency: "USD",
+      date: today,
+    });
+    expect(res.status).toBe(201);
+    await t.app.notifier!.idle();
+
+    expect(sentTo(benEp).map((s) => s.payload.body)).toEqual(["Ana paid you $5.00"]);
+    expect(sentTo(cyEp)).toEqual([]);
+  });
+
+  it("forgets browsers that unsubscribed, and lets people turn it off", async () => {
+    const { ana, ben, group, anaId, benId } = await groupWithBen();
+    const [old, current] = [endpoint("ben-old"), endpoint("ben-new")];
+    await ben.post("/v1/push/subscribe", { endpoint: old, keys });
+    await ben.post("/v1/push/subscribe", { endpoint: current, keys });
+    t.pushSender.gone.add(old);
+
+    const add = (description: string) =>
+      ana.post(`/v1/groups/${group.id}/expenses`, {
+        description,
+        amount: 300,
+        currency: "USD",
+        date: today,
+        payers: [{ memberId: anaId, amount: 300 }],
+        split: { method: "equal", memberIds: [anaId, benId] },
+      });
+    await add("Coffee");
+    await t.app.notifier!.idle();
+    expect(sentTo(current)).toHaveLength(1);
+
+    // Someone else can't remove Ben's subscription; Ben can.
+    await ana.request("DELETE", "/v1/push/subscribe", { endpoint: current });
+    await add("Tea");
+    await t.app.notifier!.idle();
+    expect(sentTo(current)).toHaveLength(2);
+
+    expect((await ben.request("DELETE", "/v1/push/subscribe", { endpoint: current })).status).toBe(204);
+    t.pushSender.gone.delete(old); // would deliver again if it had been kept
+    await add("Cake");
+    await t.app.notifier!.idle();
+    expect(sentTo(current)).toHaveLength(2);
+    expect(sentTo(old)).toEqual([]);
+  });
+});
+
 describe("Splitwise import", () => {
   const SAMPLE = `Date,Description,Category,Cost,Currency,Ana Souza,Bilal Khan,Chen
 2024-03-01,Hotel,Hotels,300.00,EUR,200.00,-100.00,-100.00

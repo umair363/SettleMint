@@ -18,6 +18,8 @@ import { inviteRoutes } from "./routes/invites";
 import { meRoutes } from "./routes/me";
 import { memberRoutes } from "./routes/members";
 import { aiRoutes } from "./routes/ai";
+import { pushRoutes } from "./routes/push";
+import { createNotifier, webPushSender, type PushSender } from "./services/push";
 import { importRoutes } from "./routes/import";
 import { geminiReceiptReader, type ReceiptReader } from "./services/receipts";
 import { recurringRoutes } from "./routes/recurring";
@@ -55,9 +57,11 @@ export interface BuildAppOptions {
   logger?: boolean;
   /** Override the receipt reader (tests); defaults to Gemini when a key is set. */
   receiptReader?: ReceiptReader | null;
+  /** Override push delivery (tests); defaults to Web Push when VAPID keys are set. */
+  pushSender?: PushSender | null;
 }
 
-export async function buildApp({ db, config, mailer, logger = true, receiptReader }: BuildAppOptions): Promise<FastifyInstance> {
+export async function buildApp({ db, config, mailer, logger = true, receiptReader, pushSender }: BuildAppOptions): Promise<FastifyInstance> {
   const app = Fastify({
     logger: logger
       ? {
@@ -82,6 +86,9 @@ export async function buildApp({ db, config, mailer, logger = true, receiptReade
     receiptReader !== undefined ? receiptReader : config.geminiApiKey ? geminiReceiptReader(config.geminiApiKey) : null,
   );
   app.decorateRequest("authUser", null);
+  const sender = pushSender !== undefined ? pushSender : config.vapid ? webPushSender(config.vapid) : null;
+  app.decorate("notifier", sender ? createNotifier(db, sender, config.webUrl) : null);
+  app.addHook("onClose", async () => app.notifier?.idle());
 
   await app.register(helmet, { contentSecurityPolicy: false }); // JSON API: no HTML to protect
   await app.register(cors, {
@@ -171,6 +178,7 @@ export async function buildApp({ db, config, mailer, logger = true, receiptReade
       await v1.register(recurringRoutes);
       await v1.register(importRoutes);
       await v1.register(aiRoutes);
+      await v1.register(pushRoutes);
     },
     { prefix: "/v1" },
   );

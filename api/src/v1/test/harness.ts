@@ -24,6 +24,21 @@ export function createFakeReceiptReader() {
   return fake;
 }
 
+/** Stand-in for Web Push: records what would be delivered. */
+export function createFakePushSender() {
+  const fake = {
+    sent: [] as { endpoint: string; payload: { title: string; body: string; url: string; tag: string } }[],
+    /** Endpoints the "browser" has unsubscribed. */
+    gone: new Set<string>(),
+    async send(target: { endpoint: string }, payload: string) {
+      if (fake.gone.has(target.endpoint)) return { gone: true };
+      fake.sent.push({ endpoint: target.endpoint, payload: JSON.parse(payload) });
+      return { gone: false };
+    },
+  };
+  return fake;
+}
+
 /** A fresh API on an in-memory Postgres (PGlite), with migrations applied. */
 export async function createTestApp() {
   const client = new PGlite();
@@ -37,14 +52,17 @@ export async function createTestApp() {
     webUrl: WEB_ORIGIN,
     authSecret: "test-secret-0123456789-0123456789-0123456789",
     aiScansPerMonth: 3,
+    vapid: { publicKey: "test-public-key", privateKey: "test-private-key", subject: "mailto:test@example.com" },
   };
   const receiptReader = createFakeReceiptReader();
-  const app = await buildApp({ db, config, mailer, logger: false, receiptReader });
+  const pushSender = createFakePushSender();
+  const app = await buildApp({ db, config, mailer, logger: false, receiptReader, pushSender });
   return {
     app,
     db,
     mailer,
     receiptReader,
+    pushSender,
     async close() {
       await app.close();
       await client.close();

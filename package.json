@@ -21,5 +21,8 @@
     "ci": "npm run typecheck && npm test",
     "dev:v1": "npm run build:shared && npm run dev:v1 -w api",
     "dev:web": "npm run build:shared && npm run dev -w web"
+  },
+  "dependencies": {
+    "postgres": "^3.4.9"
   }
 }

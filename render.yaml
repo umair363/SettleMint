@@ -38,3 +38,13 @@ services:
         sync: false
       - key: GOOGLE_CLIENT_SECRET
         sync: false
+      # Receipt scanning; off when empty.
+      - key: GEMINI_API_KEY
+        sync: false
+      # Push notifications: `npx web-push generate-vapid-keys`, once. Never rotate casually.
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        value: mailto:support@settlemint.online
