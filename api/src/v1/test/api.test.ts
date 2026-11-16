@@ -671,6 +671,81 @@ describe("recurring expenses", () => {
   });
 });
 
+describe("receipt scanning", () => {
+  const image = "A".repeat(200); // the fake reader doesn't look at it
+
+  it("turns the AI's reading into exact amounts with tax and tip as extras", async () => {
+    const ana = client();
+    await ana.signUp("Ana");
+    t.receiptReader.next = {
+      merchant: "  Time Out   Market ",
+      date: "2026-11-14",
+      currency: "eur",
+      total: "42.40",
+      tax: 3.4,
+      items: [
+        { name: "Bifana", quantity: 2, price: 9 },
+        { name: "Pastel de nata", price: "6.50" },
+        { name: "Vinho verde", price: 23.5 },
+        { name: "Free water", price: 0 },
+      ],
+    };
+    const res = await ana.post("/v1/ai/receipt", { image, mimeType: "image/jpeg" });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      merchant: "Time Out Market",
+      date: "2026-11-14",
+      currency: "EUR",
+      total: 4240,
+      items: [
+        { label: "Bifana", amount: 900 },
+        { label: "Pastel de nata", amount: 650 },
+        { label: "Vinho verde", amount: 2350 },
+      ],
+      extras: 340,
+      scansLeft: 2,
+    });
+  });
+
+  it("falls back to the person's currency and drops a future date", async () => {
+    const ana = client();
+    await ana.signUp("Ana");
+    await ana.patch("/v1/me", { defaultCurrency: "JPY" });
+    t.receiptReader.next = { total: 1500.4, date: "2999-01-01", items: [] };
+    const res = await ana.post("/v1/ai/receipt", { image, mimeType: "image/png" });
+    expect(res.body).toMatchObject({ currency: "JPY", total: 1500, date: null, items: [], extras: 0 });
+  });
+
+  it("refunds failed reads and enforces the monthly limit", async () => {
+    const ana = client();
+    await ana.signUp("Ana");
+    t.receiptReader.next = { items: [] }; // nothing usable
+    const bad = await ana.post("/v1/ai/receipt", { image, mimeType: "image/jpeg" });
+    expect(bad.status).toBe(422);
+    expect(bad.body.error.code).toBe("AI_FAILED");
+
+    t.receiptReader.next = { total: 10, items: [] };
+    for (let i = 0; i < 3; i++) expect((await ana.post("/v1/ai/receipt", { image, mimeType: "image/jpeg" })).status).toBe(200);
+    const over = await ana.post("/v1/ai/receipt", { image, mimeType: "image/jpeg" });
+    expect(over.status).toBe(429);
+    expect(over.body.error.code).toBe("AI_QUOTA");
+  });
+
+  it("says when scanning isn't switched on", async () => {
+    const ana = client();
+    await ana.signUp("Ana");
+    const saved = t.app.receiptReader;
+    t.app.receiptReader = null;
+    try {
+      const res = await ana.post("/v1/ai/receipt", { image, mimeType: "image/jpeg" });
+      expect(res.status).toBe(503);
+      expect(res.body.error.code).toBe("AI_UNAVAILABLE");
+    } finally {
+      t.app.receiptReader = saved;
+    }
+  });
+});
+
 describe("Splitwise import", () => {
   const SAMPLE = `Date,Description,Category,Cost,Currency,Ana Souza,Bilal Khan,Chen
 2024-03-01,Hotel,Hotels,300.00,EUR,200.00,-100.00,-100.00

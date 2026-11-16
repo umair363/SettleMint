@@ -11,6 +11,10 @@ export interface AppConfig {
   cookieDomain?: string;
   google?: { clientId: string; clientSecret: string };
   apple?: { clientId: string; clientSecret: string; appBundleIdentifier?: string };
+  /** Receipt scanning is off without it. */
+  geminiApiKey?: string;
+  /** Receipt scans per person per month (bounds AI cost). */
+  aiScansPerMonth: number;
 }
 
 function required(name: string, value: string | undefined): string {
@@ -36,6 +40,8 @@ export function configFromEnv(env: NodeJS.ProcessEnv = process.env): AppConfig {
     webUrl: webOrigins[0],
     authSecret: required("AUTH_SECRET", secret),
     cookieDomain: env.COOKIE_DOMAIN || undefined,
+    geminiApiKey: env.GEMINI_API_KEY || undefined,
+    aiScansPerMonth: Number(env.AI_SCANS_PER_MONTH) > 0 ? Number(env.AI_SCANS_PER_MONTH) : 30,
     google:
       env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
         ? { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET }

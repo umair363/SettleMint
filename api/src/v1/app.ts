@@ -17,7 +17,9 @@ import { groupRoutes } from "./routes/groups";
 import { inviteRoutes } from "./routes/invites";
 import { meRoutes } from "./routes/me";
 import { memberRoutes } from "./routes/members";
+import { aiRoutes } from "./routes/ai";
 import { importRoutes } from "./routes/import";
+import { geminiReceiptReader, type ReceiptReader } from "./services/receipts";
 import { recurringRoutes } from "./routes/recurring";
 import { settlementRoutes } from "./routes/settlements";
 
@@ -51,9 +53,11 @@ export interface BuildAppOptions {
   config: AppConfig;
   mailer: Mailer;
   logger?: boolean;
+  /** Override the receipt reader (tests); defaults to Gemini when a key is set. */
+  receiptReader?: ReceiptReader | null;
 }
 
-export async function buildApp({ db, config, mailer, logger = true }: BuildAppOptions): Promise<FastifyInstance> {
+export async function buildApp({ db, config, mailer, logger = true, receiptReader }: BuildAppOptions): Promise<FastifyInstance> {
   const app = Fastify({
     logger: logger
       ? {
@@ -73,6 +77,10 @@ export async function buildApp({ db, config, mailer, logger = true }: BuildAppOp
   app.decorate("db", db);
   app.decorate("auth", auth);
   app.decorate("config", config);
+  app.decorate(
+    "receiptReader",
+    receiptReader !== undefined ? receiptReader : config.geminiApiKey ? geminiReceiptReader(config.geminiApiKey) : null,
+  );
   app.decorateRequest("authUser", null);
 
   await app.register(helmet, { contentSecurityPolicy: false }); // JSON API: no HTML to protect
@@ -162,6 +170,7 @@ export async function buildApp({ db, config, mailer, logger = true }: BuildAppOp
       await v1.register(liveRoutes);
       await v1.register(recurringRoutes);
       await v1.register(importRoutes);
+      await v1.register(aiRoutes);
     },
     { prefix: "/v1" },
   );

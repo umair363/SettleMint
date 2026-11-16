@@ -14,6 +14,10 @@ export default function PrivacyPage() {
         SettleMint stores what you enter (your name, email, groups, expenses and payments) only to run the app. We don&apos;t
         sell your data or show ads. The full privacy policy will be published here before public launch.
       </p>
+      <p className="text-fg-muted">
+        When you scan a receipt, the photo is sent to Google&apos;s Gemini AI to read it. SettleMint doesn&apos;t keep the
+        photo. Google may use content sent through its free service to improve its products.
+      </p>
     </main>
   );
 }

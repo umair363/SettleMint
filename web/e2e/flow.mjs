@@ -146,6 +146,28 @@ try {
     await shot("after-settle");
   });
 
+  await step("scan a receipt", async () => {
+    // Needs the API started with FAKE_RECEIPT_READER=1 (a fixed sample receipt).
+    await page.getByRole("radio", { name: "Expenses" }).click();
+    await page.getByRole("button", { name: "Add expense" }).last().click();
+    // A tiny valid PNG; the sample reader ignores the picture.
+    const png = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+      "base64",
+    );
+    await page.locator('input[type="file"][accept="image/*"]').setInputFiles({ name: "receipt.png", mimeType: "image/png", buffer: png });
+    await page.getByRole("heading", { name: "Who had what" }).waitFor({ timeout: 20000 });
+    // Only Ana had the burger.
+    const burger = page.getByRole("group", { name: "Who had Burger" });
+    await burger.getByRole("button", { name: "Bilal" }).click();
+    await burger.getByRole("button", { name: "Chen" }).click();
+    await shot("receipt-items");
+    await page.getByRole("button", { name: "Done" }).click();
+    await page.getByRole("button", { name: /^Add \$61\.60/ }).click();
+    await page.getByText("Time Out Market").first().waitFor({ timeout: 15000 });
+    await shot("receipt-added");
+  });
+
   await step("repeating bill", async () => {
     await page.getByRole("radio", { name: "Expenses" }).click();
     await page.getByRole("button", { name: "Add expense" }).last().click();

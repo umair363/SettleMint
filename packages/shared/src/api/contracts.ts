@@ -178,6 +178,14 @@ export const putPaymentHandlesBody = z.object({ handles: z.array(zPaymentHandle)
 /** Typed confirmation, so an account can't be deleted by accident. */
 export const deleteAccountBody = z.object({ confirm: z.literal("DELETE") });
 
+/** A receipt photo (base64, no data: prefix), downscaled by the client. */
+export const scanReceiptBody = z.object({
+  image: z.string().min(100).max(4_500_000),
+  mimeType: z.enum(["image/jpeg", "image/png", "image/webp"]),
+  /** Used when the receipt doesn't show its currency. */
+  currency: zCurrency.optional(),
+});
+
 export const searchQuery = z.object({ q: z.string().trim().min(1).max(100) });
 
 export const pageQuery = z.object({
