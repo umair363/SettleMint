@@ -514,6 +514,7 @@ const en = {
     wrongPassword: "Wrong email or password",
     accountExists: "There's already an account with this email. Sign in instead.",
     passwordShort: "Use at least 8 characters.",
+    passwordBreached: "This password has shown up in a data breach. Choose a different one.",
     badEmail: "That email address doesn't look right.",
     sendFailed: "Couldn't send the code",
     createFailed: "Couldn't create the account",

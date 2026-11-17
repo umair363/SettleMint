@@ -17,13 +17,34 @@ export interface AppConfig {
   geminiApiKey?: string;
   /** Receipt scans per person per month (bounds AI cost). */
   aiScansPerMonth: number;
+  /**
+   * Password accounts must confirm their email (a code) before they can sign in,
+   * so nobody can hold an account under someone else's address. Always on in
+   * production; browser tests switch it off locally.
+   */
+  requireEmailVerification: boolean;
   /** Sign-in rate limits. Always on in production; browser tests switch them off locally. */
   authRateLimit?: boolean;
   /** Web Push keys (npx web-push generate-vapid-keys). Notifications are off without them. */
   vapid?: { publicKey: string; privateKey: string; subject: string };
+  /**
+   * Proxies in front of the API that append to X-Forwarded-For (Render: 1;
+   * Render behind Cloudflare's proxy: 2). Only those hops are trusted, so a
+   * client can't fake its address to dodge rate limits.
+   */
+  trustProxyHops: number;
+  /** Hosts browsers' push services use; subscriptions to anything else are refused. */
+  pushHosts: string[];
   /** Only if "enhanced push security" is on for the Expo project. */
   expoAccessToken?: string;
 }
+
+/**
+ * Browser push services (Chrome/Edge/Opera/Samsung via Google, Firefox,
+ * Safari, legacy Edge). A subscription's endpoint must be on one of these, so
+ * the API never sends requests to an address someone made up.
+ */
+export const PUSH_HOSTS = ["googleapis.com", "google.com", "push.services.mozilla.com", "push.apple.com", "notify.windows.com"];
 
 /** The mobile app's URL scheme (mobile/app.json). */
 export const MOBILE_SCHEME = "settlemint";
@@ -60,7 +81,14 @@ export function configFromEnv(env: NodeJS.ProcessEnv = process.env): AppConfig {
     geminiApiKey: env.GEMINI_API_KEY || undefined,
     aiScansPerMonth: Number(env.AI_SCANS_PER_MONTH) > 0 ? Number(env.AI_SCANS_PER_MONTH) : 30,
     authRateLimit: mode === "production" || env.AUTH_RATE_LIMIT !== "off",
+    requireEmailVerification: mode === "production" || env.EMAIL_VERIFICATION !== "off",
     expoAccessToken: env.EXPO_ACCESS_TOKEN || undefined,
+    trustProxyHops: Number.isInteger(Number(env.TRUST_PROXY_HOPS)) && env.TRUST_PROXY_HOPS !== undefined && env.TRUST_PROXY_HOPS !== ""
+      ? Number(env.TRUST_PROXY_HOPS)
+      : mode === "production"
+        ? 1
+        : 0,
+    pushHosts: PUSH_HOSTS,
     vapid:
       env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY
         ? {

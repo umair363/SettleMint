@@ -18,4 +18,16 @@ describe("config", () => {
     expect(prod.trustedOrigins).toEqual(["https://app.example.com", "settlemint://"]);
     expect(configFromEnv({}).trustedOrigins).toContain("exp://**");
   });
+
+  it("never lets production skip email confirmation", () => {
+    expect(configFromEnv({ NODE_ENV: "production", AUTH_SECRET: secret, EMAIL_VERIFICATION: "off" }).requireEmailVerification).toBe(true);
+    expect(configFromEnv({ EMAIL_VERIFICATION: "off" }).requireEmailVerification).toBe(false);
+    expect(configFromEnv({}).requireEmailVerification).toBe(true);
+  });
+
+  it("trusts one proxy hop in production (Render), none locally, or what TRUST_PROXY_HOPS says", () => {
+    expect(configFromEnv({ NODE_ENV: "production", AUTH_SECRET: secret }).trustProxyHops).toBe(1);
+    expect(configFromEnv({}).trustProxyHops).toBe(0);
+    expect(configFromEnv({ NODE_ENV: "production", AUTH_SECRET: secret, TRUST_PROXY_HOPS: "2" }).trustProxyHops).toBe(2);
+  });
 });

@@ -4,6 +4,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { requireUser } from "./app";
+import { AppError } from "./errors";
 import { groups, members } from "./db/schema";
 import type { ActivityNotice } from "./services/push";
 
@@ -16,6 +17,11 @@ import type { ActivityNotice } from "./services/push";
  * several instances this becomes Postgres LISTEN/NOTIFY.
  */
 const bus = new EventEmitter();
+
+const MAX_STREAMS_PER_USER = 6;
+const STREAM_LIFETIME_MS = 30 * 60 * 1000;
+/** Open live streams per user (this instance). */
+const streams = new Map<string, number>();
 bus.setMaxListeners(0);
 
 const changed = new AsyncLocalStorage<{ groups: Set<string>; notices: ActivityNotice[] }>();
@@ -51,8 +57,12 @@ export function registerLiveUpdates(app: FastifyInstance) {
 export const liveRoutes: FastifyPluginAsyncZod = async (app) => {
 
   /** Server-sent events: "this group changed" for groups the viewer is in. */
-  app.get("/events", async (req, reply) => {
+  app.get("/events", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = requireUser(req);
+    // A few tabs or devices per person; more is a runaway client or abuse.
+    const open = streams.get(user.id) ?? 0;
+    if (open >= MAX_STREAMS_PER_USER) throw new AppError(429, "RATE_LIMITED", "Too many live connections");
+    streams.set(user.id, open + 1);
     const isMember = async (groupId: string) => {
       const [row] = await app.db
         .select({ id: members.id })
@@ -85,9 +95,17 @@ export const liveRoutes: FastifyPluginAsyncZod = async (app) => {
     const heartbeat = setInterval(() => res.write(": ping\n\n"), 25_000);
     heartbeat.unref();
 
+    // End long streams so a signed-out session doesn't keep listening; the browser reconnects.
+    const lifetime = setTimeout(() => res.end(), STREAM_LIFETIME_MS);
+    lifetime.unref();
+
     req.raw.on("close", () => {
       clearInterval(heartbeat);
+      clearTimeout(lifetime);
       bus.off("group", onGroup);
+      const left = (streams.get(user.id) ?? 1) - 1;
+      if (left > 0) streams.set(user.id, left);
+      else streams.delete(user.id);
     });
   });
 };

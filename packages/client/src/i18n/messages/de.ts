@@ -510,6 +510,7 @@ const de: Messages = {
     wrongPassword: "E-Mail oder Passwort falsch",
     accountExists: "Mit dieser E-Mail gibt es schon ein Konto. Melde dich stattdessen an.",
     passwordShort: "Verwende mindestens 8 Zeichen.",
+    passwordBreached: "Dieses Passwort ist in einem Datenleck aufgetaucht. Wähle ein anderes.",
     badEmail: "Diese E-Mail-Adresse sieht nicht richtig aus.",
     sendFailed: "Code konnte nicht gesendet werden",
     createFailed: "Konto konnte nicht erstellt werden",

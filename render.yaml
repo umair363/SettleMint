@@ -13,6 +13,10 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Render's proxy is the one hop trusted for client addresses (rate limits).
+      # Set to 2 if you put Cloudflare's proxy in front of the API as well.
+      - key: TRUST_PROXY_HOPS
+        value: "1"
       - key: AUTH_SECRET
         generateValue: true
       # Neon connection string (use the pooled one). Migrations run on start-up.

@@ -45,7 +45,7 @@ export const inviteRoutes: FastifyPluginAsyncZod = async (app) => {
   );
 
   /** Public preview so the join page can show the group before signing in. */
-  app.get("/invites/:token", { schema: { params: tokenParams } }, async (req): Promise<InvitePreviewDto> => {
+  app.get("/invites/:token", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } }, schema: { params: tokenParams } }, async (req): Promise<InvitePreviewDto> => {
     const group = await groupByToken(app.db, req.params.token);
     const people = await app.db
       .select({ id: members.id, displayName: members.displayName, userId: members.userId })
@@ -69,7 +69,7 @@ export const inviteRoutes: FastifyPluginAsyncZod = async (app) => {
    * Either claim a spot someone added by name, inheriting its history, or
    * join as a new person.
    */
-  app.post("/invites/:token/join", { schema: { params: tokenParams, body: joinInviteBody } }, async (req) => {
+  app.post("/invites/:token/join", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } }, schema: { params: tokenParams, body: joinInviteBody } }, async (req) => {
     const user = requireUser(req);
     return app.db.transaction(async (tx) => {
       const group = await groupByToken(tx, req.params.token);

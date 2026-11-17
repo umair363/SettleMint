@@ -86,7 +86,7 @@ export const meRoutes: FastifyPluginAsyncZod = async (app) => {
 
   // ─── Search (only inside my groups) ──────────────────────────────────────
 
-  app.get("/search", { schema: { querystring: searchQuery } }, async (req): Promise<SearchResultDto> => {
+  app.get("/search", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } }, schema: { querystring: searchQuery } }, async (req): Promise<SearchResultDto> => {
     const me = requireUser(req);
     const mine = await app.db
       .select({ id: groups.id })
@@ -126,7 +126,7 @@ export const meRoutes: FastifyPluginAsyncZod = async (app) => {
   // ─── My data ─────────────────────────────────────────────────────────────
 
   /** Everything SettleMint holds that involves me, as one JSON document. */
-  app.get("/me/export", async (req, reply) => {
+  app.get("/me/export", { config: { rateLimit: { max: 5, timeWindow: "1 minute" } }, }, async (req, reply) => {
     const me = requireUser(req);
     const memberships = await app.db
       .select({ group: groups, memberId: members.id })
@@ -176,7 +176,7 @@ export const meRoutes: FastifyPluginAsyncZod = async (app) => {
    * a placeholder (so friends' balances stay right), but nothing links back
    * to me. Group ownership passes to the longest-standing member.
    */
-  app.delete("/me", { schema: { body: deleteAccountBody } }, async (req, reply) => {
+  app.delete("/me", { config: { rateLimit: { max: 5, timeWindow: "1 minute" } }, schema: { body: deleteAccountBody } }, async (req, reply) => {
     const me = requireUser(req);
     await app.db.transaction(async (tx) => {
       const owned = await tx

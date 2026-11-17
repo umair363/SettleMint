@@ -4,7 +4,9 @@ import { expo } from "@better-auth/expo";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { anonymous } from "better-auth/plugins/anonymous";
 import { emailOTP } from "better-auth/plugins/email-otp";
+import { haveIBeenPwned } from "better-auth/plugins/haveibeenpwned";
 import { uuidv7 } from "uuidv7";
+import { CLIENT_IP_HEADER } from "./client-ip";
 import type { AppConfig } from "./config";
 import type { Db } from "./db/client";
 import { account, activityEvents, expenses, members, session, settlements, user, verification } from "./db/schema";
@@ -67,7 +69,11 @@ export function createAuth(db: Db, config: AppConfig, mailer: Mailer) {
       enabled: true,
       minPasswordLength: 8,
       maxPasswordLength: 128,
+      requireEmailVerification: config.requireEmailVerification,
     },
+    // Confirming the email is a 6-digit code (email OTP plugin below); entering it signs you in.
+    // Signing in with a password before that sends a fresh code.
+    emailVerification: { sendOnSignIn: true, autoSignInAfterVerification: true },
     socialProviders: {
       ...(config.google ? { google: { ...config.google, prompt: "select_account" as const } } : {}),
       ...(config.apple ? { apple: config.apple } : {}),
@@ -84,6 +90,8 @@ export function createAuth(db: Db, config: AppConfig, mailer: Mailer) {
     },
     rateLimit: { enabled: config.env !== "test" && config.authRateLimit !== false },
     advanced: {
+      // The address Fastify resolved from trusted proxy hops only (see app.ts).
+      ipAddress: { ipAddressHeaders: [CLIENT_IP_HEADER] },
       database: { generateId: () => uuidv7() },
       useSecureCookies: config.env === "production",
       ...(config.cookieDomain ? { crossSubDomainCookies: { enabled: true, domain: config.cookieDomain } } : {}),
@@ -92,6 +100,9 @@ export function createAuth(db: Db, config: AppConfig, mailer: Mailer) {
       // The mobile app: maps its expo-origin header to an origin and lets
       // social sign-in return to settlemint:// deep links.
       expo(),
+      // Refuse passwords known from data breaches (NIST guidance). Only the first 5 characters of a
+      // SHA-1 hash leave the server. Production only, so tests never depend on an outside service.
+      ...(config.env === "production" ? [haveIBeenPwned()] : []),
       anonymous({
         emailDomainName: GUEST_EMAIL_DOMAIN,
         onLinkAccount: async ({ anonymousUser, newUser }) => {

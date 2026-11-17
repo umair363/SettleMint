@@ -29,10 +29,15 @@ export const pushRoutes: FastifyPluginAsyncZod = async (app) => {
   app.get("/push/key", async () => ({ publicKey: app.config.vapid?.publicKey ?? null }));
 
   /** Remember this browser for the signed-in person (re-subscribing moves it to them). */
-  app.post("/push/subscribe", { schema: { body: subscribeBody } }, async (req, reply) => {
+  app.post("/push/subscribe", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } }, schema: { body: subscribeBody } }, async (req, reply) => {
     const me = requireUser(req);
     if (!app.config.vapid) throw new AppError(503, "PUSH_UNAVAILABLE", "Notifications aren't switched on yet");
     const { endpoint, keys } = req.body;
+    // Only real browser push services: the API must never be pointed at other servers.
+    const host = new URL(endpoint).hostname.toLowerCase();
+    if (!app.config.pushHosts.some((h) => host === h || host.endsWith(`.${h}`))) {
+      throw new AppError(400, "VALIDATION_ERROR", "Not a push service this API sends to");
+    }
     await app.db
       .insert(pushSubscriptions)
       .values({ id: uuidv7(), userId: me.id, kind: "web", endpoint, p256dh: keys.p256dh, auth: keys.auth })
@@ -48,7 +53,7 @@ export const pushRoutes: FastifyPluginAsyncZod = async (app) => {
   });
 
   /** Remember this phone for the signed-in person (the app sends its token on every launch). */
-  app.post("/push/expo", { schema: { body: z.object({ token: expoToken }) } }, async (req, reply) => {
+  app.post("/push/expo", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } }, schema: { body: z.object({ token: expoToken }) } }, async (req, reply) => {
     const me = requireUser(req);
     if (!app.notifier) throw new AppError(503, "PUSH_UNAVAILABLE", "Notifications aren't switched on yet");
     await app.db

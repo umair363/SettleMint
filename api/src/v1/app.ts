@@ -6,6 +6,7 @@ import swagger from "@fastify/swagger";
 import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from "fastify-type-provider-zod";
 import { fromNodeHeaders } from "better-auth/node";
 import { createAuth, type Auth } from "./auth";
+import { CLIENT_IP_HEADER } from "./client-ip";
 import { liveRoutes, registerLiveUpdates } from "./live";
 import type { AppConfig } from "./config";
 import type { Db } from "./db/client";
@@ -50,6 +51,11 @@ export function requireUser(req: FastifyRequest): AuthUser {
   return req.authUser;
 }
 
+function withClientIp(headers: Headers, ip: string) {
+  headers.set(CLIENT_IP_HEADER, ip);
+  return headers;
+}
+
 export interface BuildAppOptions {
   db: Db;
   config: AppConfig;
@@ -70,7 +76,9 @@ export async function buildApp({ db, config, mailer, logger = true, receiptReade
           redact: ["req.headers.cookie", "req.headers.authorization", 'res.headers["set-cookie"]'],
         }
       : false,
-    trustProxy: true,
+    // Only the hosting provider's proxies are trusted for the client address
+    // (X-Forwarded-For is otherwise client-controlled).
+    trustProxy: config.trustProxyHops > 0 ? (_address: string, hop: number) => hop < config.trustProxyHops : false,
     // JSON only. Receipt photos will go straight to object storage via signed URLs.
     bodyLimit: 1024 * 1024,
   });
@@ -128,7 +136,7 @@ export async function buildApp({ db, config, mailer, logger = true, receiptReade
       const response = await auth.handler(
         new Request(url, {
           method: req.method,
-          headers: fromNodeHeaders(req.headers),
+          headers: withClientIp(fromNodeHeaders(req.headers), req.ip),
           body: hasBody ? JSON.stringify(req.body) : undefined,
         }),
       );

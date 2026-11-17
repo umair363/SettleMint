@@ -28,7 +28,7 @@ export const importRoutes: FastifyPluginAsyncZod = async (app) => {
    * Import a Splitwise group export into a new group, in one transaction.
    * Balances come out exactly as in Splitwise.
    */
-  app.post("/import/splitwise", { schema: { body: importBody } }, async (req, reply): Promise<ImportResult> => {
+  app.post("/import/splitwise", { config: { rateLimit: { max: 5, timeWindow: "1 minute" } }, schema: { body: importBody } }, async (req, reply): Promise<ImportResult> => {
     const user = requireUser(req);
     const parsed = parseSplitwiseExport(req.body.csv);
     if (parsed.people.length === 0) {
