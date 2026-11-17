@@ -2,20 +2,18 @@
   "name": "settlemint",
   "private": true,
   "workspaces": [
-    "app",
     "web",
     "api",
     "mobile",
     "packages/*"
   ],
   "scripts": {
-    "dev:app": "npm run dev -w app",
     "dev:api": "npm run dev -w api",
     "dev:mobile": "npm run start -w mobile",
     "db:up": "docker compose -f api/docker-compose.yml up -d",
     "build:shared": "npm run build -w @settlemint/shared",
-    "typecheck": "npm run build:shared && npm run typecheck -w api && npm run typecheck -w app && npm run typecheck -w web",
-    "lint": "npm run lint -w web && npm run lint -w app",
+    "typecheck": "npm run build:shared && npm run typecheck -w api && npm run typecheck -w web",
+    "lint": "npm run lint -w web",
     "test": "npm run build:shared && npm test -w api",
     "test:api": "npm test -w api",
     "ci": "npm run typecheck && npm test",
