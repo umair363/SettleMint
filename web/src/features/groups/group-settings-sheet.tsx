@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import { keys, useMemberActions, useUpdateGroup } from "@/lib/queries";
+import { keys, useMemberActions, useUpdateGroup } from "@settlemint/client/data/queries";
 import { Avatar } from "@/ui/avatar";
 import { Button, IconButton } from "@/ui/button";
 import { Switch } from "@/ui/controls";

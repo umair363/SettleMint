@@ -4,7 +4,7 @@ import { Trash2 } from "lucide-react";
 import { animate, motion, useMotionValue, useTransform, type PanInfo } from "motion/react";
 import { useRef, type ReactNode } from "react";
 import { useLocale, useTranslations } from "use-intl";
-import { dirOf, matchLanguage } from "@/i18n/languages";
+import { dirOf, matchLanguage } from "@settlemint/client/i18n/languages";
 import { haptic } from "./motion";
 
 const REVEAL = 88; // px of the action shown when resting open

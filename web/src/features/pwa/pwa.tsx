@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { springSoft } from "@/ui/motion";
-import { tr } from "@/i18n/runtime";
+import { tr } from "@settlemint/client/i18n/runtime";
 import { useTranslations } from "use-intl";
 
 /** Registers the service worker and offers a reload when a new version is ready. */

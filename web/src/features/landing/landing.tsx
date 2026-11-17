@@ -17,7 +17,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { createTranslator } from "use-intl";
 import { Logo } from "@/features/shell/logo";
-import { LANGUAGES, type Language } from "@/i18n/languages";
+import { LANGUAGES, type Language } from "@settlemint/client/i18n/languages";
 import type { LandingMessages } from "@/i18n/landing/en";
 import { BalanceCard } from "@/ui/balance-card";
 import { cn } from "@/ui/cn";

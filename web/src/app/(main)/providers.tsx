@@ -4,13 +4,14 @@ import { ApiError } from "@settlemint/shared";
 import { MutationCache, onlineManager, QueryCache, QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { OfflineBanner, ServiceWorker } from "@/features/pwa/pwa";
+import "@/lib/api"; // hands the API client to the shared data hooks
 import { CACHE_BUSTER, persister } from "@/lib/persist";
-import { registerMutationDefaults } from "@/lib/queries";
+import { registerMutationDefaults } from "@settlemint/client/data/queries";
 import { useState, type ReactNode } from "react";
 import { Toaster, toast } from "sonner";
 import { I18nProvider } from "@/i18n/provider";
-import { tr } from "@/i18n/runtime";
-import { apiErrorText } from "@/lib/api-error-text";
+import { tr } from "@settlemint/client/i18n/runtime";
+import { apiErrorText } from "@settlemint/client/text/api-error-text";
 import { ThemeProvider, useTheme } from "@/ui/theme";
 
 function ThemedToaster() {

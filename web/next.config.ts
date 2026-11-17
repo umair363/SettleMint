@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   output: "export",
   reactCompiler: true,
   images: { unoptimized: true },
-  transpilePackages: ["@settlemint/shared"],
+  transpilePackages: ["@settlemint/shared", "@settlemint/client"],
 };
 
 export default nextConfig;

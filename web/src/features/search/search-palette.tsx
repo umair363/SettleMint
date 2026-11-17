@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "use-intl";
 import { GroupIcon } from "@/features/groups/group-row";
 import { api } from "@/lib/api";
-import { dayLabel } from "@/lib/dates";
+import { dayLabel } from "@settlemint/client/text/dates";
 import { IconButton } from "@/ui/button";
 import { Spinner } from "@/ui/feedback";
 import { TextField } from "@/ui/field";

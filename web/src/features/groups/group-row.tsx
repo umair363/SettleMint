@@ -2,7 +2,7 @@
 
 import type { GroupSummaryDto } from "@settlemint/shared";
 import { useLocale, useTranslations } from "use-intl";
-import { timeAgo } from "@/lib/dates";
+import { timeAgo } from "@settlemint/client/text/dates";
 import { Money } from "@/ui/money";
 import { ListRow } from "@/ui/surface";
 

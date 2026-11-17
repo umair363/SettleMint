@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { languageScript } from "@/i18n/languages";
+import { languageScript } from "@/i18n/language-script";
 import { themeScript } from "@/ui/theme";
 import { baseMetadata, baseViewport, fontVariables } from "../shell";
 import "../globals.css";

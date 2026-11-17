@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Landing } from "@/features/landing/landing";
 import { landingAlternates, landingMessages, landingPath } from "@/i18n/landing";
-import type { Language } from "@/i18n/languages";
+import type { Language } from "@settlemint/client/i18n/languages";
 
 type Props = { params: Promise<{ lang: string }> };
 

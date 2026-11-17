@@ -1,0 +1,26 @@
+{
+  "name": "@settlemint/client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "What the web and mobile apps share above the API: translations, data hooks and text helpers. Shipped as TypeScript source; each app's bundler compiles it.",
+  "sideEffects": false,
+  "exports": {
+    "./*": "./src/*.ts",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@settlemint/shared": "*",
+    "use-intl": "^4.15.1",
+    "uuidv7": "^1.2.1"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.100.0",
+    "react": "^19.0.0"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}

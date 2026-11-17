@@ -26,6 +26,15 @@ import { uuidv7 } from "uuidv7";
 import type { Page } from "@settlemint/shared";
 import { api } from "./api";
 
+declare module "@tanstack/react-query" {
+  interface Register {
+    mutationMeta: {
+      /** The screen shows its own error message; skip the global toast. */
+      handlesErrors?: boolean;
+    };
+  }
+}
+
 /** Every cache key in one place, so invalidation can't miss a copy. */
 export const keys = {
   me: ["me"] as const,

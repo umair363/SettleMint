@@ -12,7 +12,7 @@ import { useLiveUpdates } from "@/features/pwa/live-updates";
 import { AddExpenseProvider, useAddExpense } from "@/features/expenses/add-expense-context";
 import { AddExpenseSheet } from "@/features/expenses/add-expense-sheet";
 import { SearchPalette } from "@/features/search/search-palette";
-import { useMe } from "@/lib/queries";
+import { useMe } from "@settlemint/client/data/queries";
 import { useHydrated } from "@/lib/use-hydrated";
 import { Avatar } from "@/ui/avatar";
 import { Button } from "@/ui/button";
