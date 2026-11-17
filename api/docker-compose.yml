@@ -1,39 +1,18 @@
-# Local development services only. Production uses managed Postgres.
-# Redis and Typesense are still used by the current API; both are removed in v2
-# (Postgres full-text search and pg-boss replace them).
+# Optional: a local Postgres, for running the API the way production does
+# (set V1_DATABASE_URL=postgres://postgres:postgres@localhost:5432/settlemint_v1).
+# Without it, `npm run dev:v1` uses a built-in PGlite database and needs nothing.
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: settlemint
+      POSTGRES_DB: settlemint_v1
     ports:
       - "5432:5432"
     volumes:
       - settlemint_pgdata:/var/lib/postgresql/data
     restart: unless-stopped
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - settlemint_redisdata:/data
-    restart: unless-stopped
-
-  typesense:
-    image: typesense/typesense:26.0
-    environment:
-      TYPESENSE_DATA_DIR: /data
-      TYPESENSE_API_KEY: ${TYPESENSE_API_KEY:-local_dev_only_key}
-    ports:
-      - "8108:8108"
-    volumes:
-      - settlemint_tsdata:/data
-    restart: unless-stopped
-
 volumes:
   settlemint_pgdata:
-  settlemint_redisdata:
-  settlemint_tsdata:

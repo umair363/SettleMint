@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { startKeepAlive, startKeepAliveFromEnv } from "./keepAlive";
+import { startKeepAlive, startKeepAliveFromEnv } from "./keep-alive";
 
 afterEach(() => {
   vi.useRealTimers();

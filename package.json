@@ -8,7 +8,6 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:api": "npm run dev -w api",
     "dev:mobile": "npm run start -w mobile",
     "db:up": "docker compose -f api/docker-compose.yml up -d",
     "build:shared": "npm run build -w @settlemint/shared",

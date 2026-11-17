@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import * as dotenv from "dotenv";
-import { startKeepAliveFromEnv } from "../utils/keepAlive";
+import { startKeepAliveFromEnv } from "./keep-alive";
 import { buildApp } from "./app";
 import { configFromEnv } from "./config";
 import { connectPostgres, MIGRATIONS_FOLDER, type Db } from "./db/client";
