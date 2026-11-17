@@ -23,18 +23,11 @@ dist/
 *.log
 .vercel
 *.tsbuildinfo
-app/next-env.d.ts
+next-env.d.ts
 
 # Env files
 .env*
 !.env.example
-
-# next-pwa generated service worker (rebuilt on every build)
-app/public/sw.js
-app/public/sw.js.map
-app/public/workbox-*.js
-app/public/workbox-*.js.map
-app/public/fallback-*.js
 
 # Local PGlite database for the v1 API (npm run dev:v1)
 api/.data/
