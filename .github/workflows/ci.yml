@@ -21,7 +21,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Typecheck (shared, api, web)
+      - name: Typecheck (shared, client, api, web, mobile)
         run: npm run typecheck
       - name: Tests (money engine, API integration on in-memory Postgres)
         run: npm test -w api
@@ -91,6 +91,11 @@ jobs:
       - name: Accessibility (axe, WCAG 2.2 AA)
         working-directory: web
         run: node e2e/a11y.mjs out
+      - name: Phone app (its web build: same screens, sign-in to settle-up, Arabic)
+        working-directory: mobile
+        env:
+          EXPO_PUBLIC_API_URL: http://localhost:8001
+        run: npx expo export --platform web --output-dir ../mobile-web && node e2e/smoke.mjs ../mobile-web
       - name: API log
         if: failure()
         run: cat api.log

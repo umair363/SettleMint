@@ -632,6 +632,17 @@ const de: Messages = {
     groupRestored: "{who, select, me {Du hast die Gruppe wiederhergestellt} other {{name} hat die Gruppe wiederhergestellt}}",
     groupUpdated: "{who, select, me {Du hast die Gruppe geändert} other {{name} hat die Gruppe geändert}}",
   },
+  /** Only in the phone app. */
+  mobile: {
+    locked: "SettleMint ist gesperrt",
+    unlock: "Entsperren",
+    unlockPrompt: "SettleMint entsperren",
+    appLock: "App-Sperre",
+    appLockHelp: "Beim Öffnen von SettleMint nach Face ID, Fingerabdruck oder Gerätecode fragen.",
+    notificationsBlocked: "Mitteilungen für SettleMint sind aus. Schalte sie in den Einstellungen deines Telefons ein.",
+    openSettings: "Einstellungen öffnen",
+    restartNote: "SettleMint startet neu, um zu dieser Sprache zu wechseln.",
+  },
 };
 
 export default de;

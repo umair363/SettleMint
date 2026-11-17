@@ -636,6 +636,17 @@ const en = {
     groupRestored: "{who, select, me {You restored the group} other {{name} restored the group}}",
     groupUpdated: "{who, select, me {You updated the group} other {{name} updated the group}}",
   },
+  /** Only in the phone app. */
+  mobile: {
+    locked: "SettleMint is locked",
+    unlock: "Unlock",
+    unlockPrompt: "Unlock SettleMint",
+    appLock: "App lock",
+    appLockHelp: "Ask for Face ID, fingerprint or your phone's passcode when SettleMint opens.",
+    notificationsBlocked: "Notifications are off for SettleMint. Turn them on in your phone's settings.",
+    openSettings: "Open settings",
+    restartNote: "SettleMint restarts to switch to this language.",
+  },
 };
 
 export default en;

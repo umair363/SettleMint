@@ -63,10 +63,12 @@ export function invalidateGroup(qc: QueryClient, groupId: string) {
 
 // ─── Reads ─────────────────────────────────────────────────────────────────
 
-export function useMe() {
+/** My profile. Pass enabled=false while signed out (the phone knows from its saved session). */
+export function useMe(enabled = true) {
   return useQuery({
     queryKey: keys.me,
-    queryFn: api.me.get,
+    queryFn: () => api.me.get(),
+    enabled,
     retry: (count, err) => !(err instanceof ApiError && err.status === 401) && count < 2,
     staleTime: 5 * 60_000,
   });

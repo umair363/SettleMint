@@ -641,6 +641,17 @@ const ar: Messages = {
     groupRestored: "{who, select, me {استعدتَ المجموعة} other {استعاد {name} المجموعة}}",
     groupUpdated: "{who, select, me {عدّلتَ المجموعة} other {عدّل {name} المجموعة}}",
   },
+  /** Only in the phone app. */
+  mobile: {
+    locked: "SettleMint مقفل",
+    unlock: "فتح القفل",
+    unlockPrompt: "فتح قفل SettleMint",
+    appLock: "قفل التطبيق",
+    appLockHelp: "اطلب Face ID أو البصمة أو رمز الهاتف عند فتح SettleMint.",
+    notificationsBlocked: "إشعارات SettleMint متوقفة. فعّلها من إعدادات هاتفك.",
+    openSettings: "فتح الإعدادات",
+    restartNote: "سيُعاد تشغيل SettleMint للتبديل إلى هذه اللغة.",
+  },
 };
 
 export default ar;

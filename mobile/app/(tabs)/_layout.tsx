@@ -1,107 +1,94 @@
-import { useRef } from "react";
-import { View, Pressable, StyleSheet } from "react-native";
-import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
-import { useTheme } from "@/theme/useTheme";
-import AddExpenseSheet, { type AddExpenseSheetRef } from "@/components/AddExpenseSheet";
-import BiometricGate from "@/components/BiometricGate";
+import { router } from "expo-router";
+import { Tabs } from "expo-router/js-tabs";
+import { Pressable, StyleSheet, View } from "react-native";
+import { useTranslations } from "use-intl";
+import { useTheme } from "@/theme/theme";
+import { haptic } from "@/ui/button";
 
+/** Home, Groups, the add button, Activity, Account: the same shape as the web app on a phone. */
 export default function TabsLayout() {
-  const theme = useTheme();
-  const sheetRef = useRef<AddExpenseSheetRef>(null);
-
+  const { c } = useTheme();
+  const t = useTranslations("nav");
   return (
-    <BiometricGate>
-    <View style={{ flex: 1 }}>
-      <Tabs
-        screenOptions={{
-          headerShown: false,
-          tabBarActiveTintColor: theme.mint[400],
-          tabBarInactiveTintColor: theme.colors.textTertiary,
-          tabBarStyle: {
-            backgroundColor: theme.colors.surfaceElevated,
-            borderTopColor: theme.colors.borderSubtle,
-          },
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: c.positive,
+        tabBarInactiveTintColor: c.fgSubtle,
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
+        tabBarStyle: { backgroundColor: c.bgElevated, borderTopColor: c.line },
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: t("home"),
+          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "home" : "home-outline"} size={size} color={color} />,
         }}
-      >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: "Home",
-            tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name="groups"
-          options={{
-            title: "Groups",
-            tabBarIcon: ({ color, size }) => <Ionicons name="people-outline" size={size} color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name="add"
-          options={{
-            title: "",
-            // The center tab is a FAB that opens the Add Expense sheet
-            // rather than navigating — tabBarButton fully replaces the
-            // default touchable so the route itself never mounts.
-            tabBarIcon: () => null,
-            tabBarButton: () => (
-              <View style={styles.fabWrap} pointerEvents="box-none">
-                <Pressable
-                  style={[styles.fab, { backgroundColor: theme.mint[400] }]}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    sheetRef.current?.open();
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Add expense"
-                >
-                  <Ionicons name="add" size={28} color={theme.slate[950]} />
-                </Pressable>
-              </View>
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="budget"
-          options={{
-            title: "Budget",
-            tabBarIcon: ({ color, size }) => <Ionicons name="pie-chart-outline" size={size} color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name="expenses"
-          options={{
-            title: "Expenses",
-            tabBarIcon: ({ color, size }) => <Ionicons name="receipt-outline" size={size} color={color} />,
-          }}
-        />
-      </Tabs>
-
-      <AddExpenseSheet ref={sheetRef} />
-    </View>
-    </BiometricGate>
+      />
+      <Tabs.Screen
+        name="groups"
+        options={{
+          title: t("groups"),
+          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "people" : "people-outline"} size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="add"
+        options={{
+          title: t("addExpense"),
+          tabBarButton: () => (
+            <View style={styles.fabWrap} pointerEvents="box-none">
+              <Pressable
+                testID="add-expense"
+                accessibilityRole="button"
+                accessibilityLabel={t("addExpense")}
+                onPress={() => {
+                  haptic("medium");
+                  router.push("/add-expense");
+                }}
+                style={({ pressed }) => [styles.fab, { backgroundColor: c.accent, transform: [{ scale: pressed ? 0.94 : 1 }] }]}
+              >
+                <Ionicons name="add" size={30} color={c.accentFg} />
+              </Pressable>
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="activity"
+        options={{
+          title: t("activity"),
+          tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? "pulse" : "pulse-outline"} size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="account"
+        options={{
+          title: t("account"),
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "person-circle" : "person-circle-outline"} size={size} color={color} />
+          ),
+        }}
+      />
+    </Tabs>
   );
 }
 
 const styles = StyleSheet.create({
-  fabWrap: {
-    top: -20,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  fabWrap: { flex: 1, alignItems: "center", justifyContent: "center" },
   fab: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    justifyContent: "center",
+    marginTop: -18,
     alignItems: "center",
-    shadowColor: "#3DD68C",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
     elevation: 6,
   },
 });
