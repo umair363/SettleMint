@@ -91,7 +91,7 @@ jobs:
       - name: Accessibility (axe, WCAG 2.2 AA)
         working-directory: web
         run: node e2e/a11y.mjs out
-      - name: Phone app (its web build: same screens, sign-in to settle-up, Arabic)
+      - name: "Phone app (web build of the same screens: sign-in to settle-up, Arabic)"
         working-directory: mobile
         env:
           EXPO_PUBLIC_API_URL: http://localhost:8001
