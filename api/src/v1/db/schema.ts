@@ -370,9 +370,11 @@ export const pushSubscriptions = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    /** "web": a browser's Web Push subscription. "expo": a phone's Expo push token (in endpoint). */
+    kind: text("kind").notNull().default("web"),
     endpoint: text("endpoint").notNull().unique(),
-    p256dh: text("p256dh").notNull(),
-    auth: text("auth").notNull(),
+    p256dh: text("p256dh"),
+    auth: text("auth"),
     createdAt: createdAt(),
   },
   (t) => [index("push_user_idx").on(t.userId)],

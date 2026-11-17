@@ -53,8 +53,8 @@ export interface ApiClientOptions {
   /** API origin, e.g. https://api.settlemint.online */
   baseUrl: string;
   fetch?: typeof fetch;
-  /** Extra headers per request (mobile sends its session token this way). */
-  headers?: () => Record<string, string>;
+  /** Extra headers per request (mobile sends its session cookie this way, read from secure storage). */
+  headers?: () => Record<string, string> | Promise<Record<string, string>>;
   /** "include" for browsers so the session cookie is sent cross-origin. */
   credentials?: "include" | "same-origin" | "omit";
 }
@@ -78,12 +78,13 @@ export function createApiClient(opts: ApiClientOptions) {
   async function request<T>(method: string, path: string, body?: unknown, query?: Query): Promise<T> {
     let res: Response;
     try {
+      const extra = (await opts.headers?.()) ?? {};
       res = await doFetch(`${base}/v1${path}${qs(query)}`, {
         method,
         credentials: opts.credentials ?? "include",
         headers: {
           ...(body !== undefined ? { "content-type": "application/json" } : {}),
-          ...(opts.headers?.() ?? {}),
+          ...extra,
         },
         body: body !== undefined ? JSON.stringify(body) : undefined,
       });
@@ -128,6 +129,9 @@ export function createApiClient(opts: ApiClientOptions) {
       subscribe: (sub: { endpoint: string; keys: { p256dh: string; auth: string } }) =>
         request<void>("POST", "/push/subscribe", sub),
       unsubscribe: (endpoint: string) => request<void>("DELETE", "/push/subscribe", { endpoint }),
+      /** A phone's Expo push token (the app sends it on every launch). */
+      registerPhone: (token: string) => request<void>("POST", "/push/expo", { token }),
+      unregisterPhone: (token: string) => request<void>("DELETE", "/push/expo", { token }),
     },
     groups: {
       list: () => get<GroupSummaryDto[]>("/groups"),

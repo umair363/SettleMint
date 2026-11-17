@@ -21,6 +21,8 @@ export interface AppConfig {
   authRateLimit?: boolean;
   /** Web Push keys (npx web-push generate-vapid-keys). Notifications are off without them. */
   vapid?: { publicKey: string; privateKey: string; subject: string };
+  /** Only if "enhanced push security" is on for the Expo project. */
+  expoAccessToken?: string;
 }
 
 /** The mobile app's URL scheme (mobile/app.json). */
@@ -58,6 +60,7 @@ export function configFromEnv(env: NodeJS.ProcessEnv = process.env): AppConfig {
     geminiApiKey: env.GEMINI_API_KEY || undefined,
     aiScansPerMonth: Number(env.AI_SCANS_PER_MONTH) > 0 ? Number(env.AI_SCANS_PER_MONTH) : 30,
     authRateLimit: mode === "production" || env.AUTH_RATE_LIMIT !== "off",
+    expoAccessToken: env.EXPO_ACCESS_TOKEN || undefined,
     vapid:
       env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY
         ? {

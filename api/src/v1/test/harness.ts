@@ -27,12 +27,12 @@ export function createFakeReceiptReader() {
 /** Stand-in for Web Push: records what would be delivered. */
 export function createFakePushSender() {
   const fake = {
-    sent: [] as { endpoint: string; payload: { title: string; body: string; url: string; tag: string } }[],
+    sent: [] as { kind: string; endpoint: string; payload: { title: string; body: string; url: string; tag: string } }[],
     /** Endpoints the "browser" has unsubscribed. */
     gone: new Set<string>(),
-    async send(target: { endpoint: string }, payload: string) {
+    async send(target: { kind: string; endpoint: string }, payload: string) {
       if (fake.gone.has(target.endpoint)) return { gone: true };
-      fake.sent.push({ endpoint: target.endpoint, payload: JSON.parse(payload) });
+      fake.sent.push({ kind: target.kind, endpoint: target.endpoint, payload: JSON.parse(payload) });
       return { gone: false };
     },
   };

@@ -824,6 +824,30 @@ describe("push notifications", () => {
     ]);
   });
 
+  it("notifies phones through their Expo token", async () => {
+    const { ana, ben, group, anaId, benId } = await groupWithBen();
+    const token = `ExponentPushToken[ben${Math.random().toString(36).slice(2)}]`;
+    expect((await ben.post("/v1/push/expo", { token: "not-a-token" })).status).toBe(400);
+    expect((await client().post("/v1/push/expo", { token })).status).toBe(401);
+    expect((await ben.post("/v1/push/expo", { token })).status).toBe(204);
+    // Sending it again (every app launch) is harmless.
+    expect((await ben.post("/v1/push/expo", { token })).status).toBe(204);
+
+    await ana.post(`/v1/groups/${group.id}/expenses`, {
+      description: "Gelato",
+      amount: 900,
+      currency: "USD",
+      date: today,
+      payers: [{ memberId: anaId, amount: 900 }],
+      split: { method: "equal", memberIds: [anaId, benId] },
+    });
+    await t.app.notifier!.idle();
+    expect(sentTo(token).map((s) => s.payload.body)).toEqual(["Ana added “Gelato” · $9.00"]);
+    expect(t.pushSender.sent.find((s) => s.endpoint === token)?.kind).toBe("expo");
+
+    expect((await ben.request("DELETE", "/v1/push/expo", { token })).status).toBe(204);
+  });
+
   it("writes each notification in the recipient's language", async () => {
     const { ana, ben, group, anaId, benId } = await groupWithBen();
     await ben.patch("/v1/me", { locale: "es-ES" });
