@@ -21,7 +21,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Typecheck (shared, api, old app, web)
+      - name: Typecheck (shared, api, web)
         run: npm run typecheck
       - name: Tests (money engine, API integration on in-memory Postgres)
         run: npm test -w api
@@ -29,10 +29,6 @@ jobs:
         run: npm run lint -w web
       - name: Build web as static files
         run: npm run build -w web
-      - name: Lint (old web app)
-        # The old app has ~100 lint errors and is replaced by web/. Reported, not blocking.
-        continue-on-error: true
-        run: npm run lint -w app
 
   e2e:
     name: Browser tests (flow, offline, accessibility)

@@ -129,7 +129,9 @@ try {
       (v) => typeof v === "string" && v.includes("Gelato"),
       30000,
     );
-    // Depends on Google's service, so a miss is a warning, not a failure.
+    // Depends on Google's service, so a miss is a warning, not a failure. Recent
+    // unbranded Chromium builds (no Google API keys) get subscriptions the push
+    // service rejects as expired; the API log then shows "push subscription gone".
     if (delivered === "Ana added “Gelato” · $9.00") console.log(`PASS real push arrives through the push service`);
     else console.log(`WARN real push didn't arrive within 30 s (${delivered || "none"}); check the API log for "notifications sent"`);
     await page.evaluate(() => navigator.serviceWorker.ready.then((r) => r.getNotifications()).then((l) => l.forEach((n) => n.close())));

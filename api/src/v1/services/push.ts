@@ -13,7 +13,7 @@ export interface PushTarget {
 
 /** Delivers one notification. `gone` means the browser unsubscribed: forget it. */
 export interface PushSender {
-  send(target: PushTarget, payload: string): Promise<{ gone: boolean }>;
+  send(target: PushTarget, payload: string): Promise<{ gone: boolean; detail?: string }>;
 }
 
 export function webPushSender(vapid: { publicKey: string; privateKey: string; subject: string }): PushSender {
@@ -28,7 +28,10 @@ export function webPushSender(vapid: { publicKey: string; privateKey: string; su
         return { gone: false };
       } catch (err) {
         const status = (err as { statusCode?: number }).statusCode;
-        if (status === 404 || status === 410) return { gone: true };
+        if (status === 404 || status === 410) {
+          const body = String((err as { body?: unknown }).body ?? "").slice(0, 200);
+          return { gone: true, detail: `${status} from ${new URL(target.endpoint).host}${body ? `: ${body}` : ""}` };
+        }
         throw err;
       }
     },
@@ -119,6 +122,7 @@ export function createNotifier(db: Db, sender: PushSender, webUrl: string) {
             const result = await sender.send({ endpoint: s.endpoint, p256dh: s.p256dh, auth: s.auth }, payload);
             if (result.gone) {
               gone++;
+              log?.info({ detail: result.detail }, "push subscription gone");
               await db.delete(pushSubscriptions).where(eq(pushSubscriptions.id, s.id));
             } else sent++;
           } catch (err) {

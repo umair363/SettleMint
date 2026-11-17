@@ -59,7 +59,6 @@ api/         Fastify 5 · Drizzle · Postgres · Better Auth           → Rende
 packages/
   shared/    money engine · API contracts (Zod) · typed API client
 mobile/      Expo SDK 57 (to be rebuilt on the shared core)
-app/         legacy web app, replaced by web/ at cut-over
 ```
 
 - **Money** is always integer minor units with an ISO currency code. All
