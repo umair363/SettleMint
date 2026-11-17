@@ -97,6 +97,31 @@ describe("auth", () => {
     expect((await c.patch("/v1/me", { defaultCurrency: "ABC" })).status).toBe(400);
   });
 
+  it("serves the mobile app: no browser origin, session cookie sent by hand", async () => {
+    const signUp = await t.app.inject({
+      method: "POST",
+      url: "/v1/auth/sign-up/email",
+      headers: { "expo-origin": "settlemint://" },
+      payload: { name: "Mo", email: `mo-${Date.now()}@example.com`, password: "correct-horse-battery" },
+    });
+    expect(signUp.statusCode).toBe(200);
+    const raw = signUp.headers["set-cookie"];
+    const cookie = (Array.isArray(raw) ? raw : [raw ?? ""]).map((c) => c.split(";")[0]).join("; ");
+    const me = await t.app.inject({ method: "GET", url: "/v1/me", headers: { cookie } });
+    expect(me.statusCode).toBe(200);
+    expect(me.json().name).toBe("Mo");
+    const write = await t.app.inject({ method: "PATCH", url: "/v1/me", headers: { cookie }, payload: { defaultCurrency: "PKR" } });
+    expect(write.statusCode).toBe(200);
+  });
+
+  it("only redirects after sign-in to the app's own scheme", async () => {
+    // Better Auth skips its origin checks under NODE_ENV=test, so ask it directly.
+    const ctx = await t.app.auth.$context;
+    expect(ctx.isTrustedOrigin("settlemint://home", { allowRelativePaths: false })).toBe(true);
+    expect(ctx.isTrustedOrigin("evilapp://home", { allowRelativePaths: false })).toBe(false);
+    expect(ctx.isTrustedOrigin("exp://192.168.1.5:8081", { allowRelativePaths: false })).toBe(false);
+  });
+
   it("sends a sign-in code by email", async () => {
     const c = client();
     const { email } = await c.signUp("Eli");
