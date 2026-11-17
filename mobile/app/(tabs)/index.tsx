@@ -4,7 +4,7 @@ import { View } from "react-native";
 import { useTranslations } from "use-intl";
 import { ActivityRow, GroupRow } from "@/features/rows";
 import { useTheme } from "@/theme/theme";
-import { Button } from "@/ui/button";
+import { Button, IconButton } from "@/ui/button";
 import { Screen } from "@/ui/screen";
 import { Card, Divider, Empty, Money, SectionHeader } from "@/ui/surface";
 import { Text } from "@/ui/text";
@@ -64,6 +64,7 @@ export default function Home() {
   const activity = useActivity();
   const t = useTranslations("home");
   const tc = useTranslations("common");
+  const ts = useTranslations("search");
   const firstName = me.data?.isGuest ? "" : (me.data?.name.split(" ")[0] ?? "");
   const active = (groups.data ?? []).filter((g) => !g.archived);
   const recent = activity.data?.pages[0]?.items.slice(0, 5) ?? [];
@@ -74,6 +75,7 @@ export default function Home() {
   return (
     <Screen
       title={t("greeting", { part: partOfDay(), name: firstName || "none" })}
+      headerRight={<IconButton icon="search" label={ts("title")} onPress={() => router.push("/search")} />}
       onRefresh={refresh}
       refreshing={groups.isRefetching}
     >
@@ -86,9 +88,12 @@ export default function Home() {
             action={t("createGroup")}
             onAction={() => router.push("/new-group")}
           />
-          <Text variant="sub" tone="muted" center style={{ paddingBottom: 12 }}>
+          <Text variant="sub" tone="muted" center style={{ paddingBottom: 4 }}>
             {t("haveInvite")}
           </Text>
+          <Button variant="ghost" onPress={() => router.push("/import")}>
+            {t("fromSplitwise")}
+          </Button>
         </Card>
       ) : (
         <>

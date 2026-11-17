@@ -40,6 +40,10 @@ export default function Groups() {
         </Card>
       )}
 
+      <Button variant="ghost" icon="cloud-download-outline" onPress={() => router.push("/import")}>
+        {t("import")}
+      </Button>
+
       {archived.length > 0 && (
         <View style={{ gap: 8 }}>
           <Button variant="ghost" icon={showArchived ? "chevron-up" : "chevron-down"} onPress={() => setShowArchived((v) => !v)}>

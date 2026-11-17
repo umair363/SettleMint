@@ -329,6 +329,7 @@ export default function GroupScreen() {
         <IconButton icon="chevron-back" label={t("groups")} onPress={() => (router.canGoBack() ? router.back() : router.replace("/groups"))} />
         <View style={{ flex: 1 }} />
         <IconButton icon="person-add" label={t("invitePeople")} onPress={() => router.push({ pathname: "/invite", params: { groupId: g.id } })} />
+        <IconButton icon="settings-outline" label={t("settings")} onPress={() => router.push({ pathname: "/group-settings", params: { groupId: g.id } })} />
       </View>
 
       <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>

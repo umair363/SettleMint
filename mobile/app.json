@@ -63,6 +63,14 @@
         {
           "color": "#3DD68C"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "SettleMint uses the camera to read receipts, so you don't have to type them in.",
+          "photosPermission": "SettleMint opens your photos so you can pick a receipt to read.",
+          "microphonePermission": false
+        }
       ]
     ],
     "extra": {
