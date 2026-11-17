@@ -12,4 +12,10 @@ describe("config", () => {
     expect(configFromEnv({ AUTH_RATE_LIMIT: "off" }).authRateLimit).toBe(false);
     expect(configFromEnv({}).authRateLimit).toBe(true);
   });
+
+  it("trusts the mobile app's scheme, and Expo dev URLs only in development", () => {
+    const prod = configFromEnv({ NODE_ENV: "production", AUTH_SECRET: secret, WEB_ORIGINS: "https://app.example.com" });
+    expect(prod.trustedOrigins).toEqual(["https://app.example.com", "settlemint://"]);
+    expect(configFromEnv({}).trustedOrigins).toContain("exp://**");
+  });
 });

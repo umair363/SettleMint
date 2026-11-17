@@ -1,5 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { betterAuth } from "better-auth";
+import { expo } from "@better-auth/expo";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { anonymous } from "better-auth/plugins/anonymous";
 import { emailOTP } from "better-auth/plugins/email-otp";
@@ -60,7 +61,7 @@ export function createAuth(db: Db, config: AppConfig, mailer: Mailer) {
     basePath: "/v1/auth",
     secret: config.authSecret,
     database: drizzleAdapter(db, { provider: "pg", schema: { user, session, account, verification } }),
-    trustedOrigins: config.webOrigins,
+    trustedOrigins: config.trustedOrigins,
     telemetry: { enabled: false },
     emailAndPassword: {
       enabled: true,
@@ -88,6 +89,9 @@ export function createAuth(db: Db, config: AppConfig, mailer: Mailer) {
       ...(config.cookieDomain ? { crossSubDomainCookies: { enabled: true, domain: config.cookieDomain } } : {}),
     },
     plugins: [
+      // The mobile app: maps its expo-origin header to an origin and lets
+      // social sign-in return to settlemint:// deep links.
+      expo(),
       anonymous({
         emailDomainName: GUEST_EMAIL_DOMAIN,
         onLinkAccount: async ({ anonymousUser, newUser }) => {

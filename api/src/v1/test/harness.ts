@@ -49,6 +49,7 @@ export async function createTestApp() {
     env: "test",
     apiUrl: "http://localhost:8001",
     webOrigins: [WEB_ORIGIN],
+    trustedOrigins: [WEB_ORIGIN, "settlemint://"],
     webUrl: WEB_ORIGIN,
     authSecret: "test-secret-0123456789-0123456789-0123456789",
     aiScansPerMonth: 3,

@@ -4,6 +4,8 @@ export interface AppConfig {
   apiUrl: string;
   /** Web app origins allowed to call the API with cookies. */
   webOrigins: string[];
+  /** Origins Better Auth accepts: the web origins plus the mobile app's deep-link scheme. */
+  trustedOrigins: string[];
   /** Base URL used in links inside emails. */
   webUrl: string;
   authSecret: string;
@@ -20,6 +22,9 @@ export interface AppConfig {
   /** Web Push keys (npx web-push generate-vapid-keys). Notifications are off without them. */
   vapid?: { publicKey: string; privateKey: string; subject: string };
 }
+
+/** The mobile app's URL scheme (mobile/app.json). */
+export const MOBILE_SCHEME = "settlemint";
 
 function required(name: string, value: string | undefined): string {
   if (!value) throw new Error(`${name} must be set`);
@@ -41,6 +46,12 @@ export function configFromEnv(env: NodeJS.ProcessEnv = process.env): AppConfig {
     env: mode,
     apiUrl: env.API_URL ?? `http://localhost:${env.PORT ?? 8001}`,
     webOrigins,
+    trustedOrigins: [
+      ...webOrigins,
+      `${MOBILE_SCHEME}://`,
+      // Expo Go and dev builds on a local network; never trusted in production.
+      ...(mode === "development" ? ["exp://", "exp://**"] : []),
+    ],
     webUrl: webOrigins[0],
     authSecret: required("AUTH_SECRET", secret),
     cookieDomain: env.COOKIE_DOMAIN || undefined,
