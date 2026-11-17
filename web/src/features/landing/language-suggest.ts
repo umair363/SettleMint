@@ -1,4 +1,4 @@
-import { LANGUAGE_CODES, RTL_LANGUAGES, type Language } from "@/i18n/languages";
+import { LANGUAGE_CODES, RTL_LANGUAGES, type Language } from "@settlemint/client/i18n/languages";
 
 // Classes used by the banner below (kept here so Tailwind generates them).
 const BOX =

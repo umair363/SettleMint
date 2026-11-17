@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { LANGUAGE_CODES } from "@/i18n/languages";
+import { LANGUAGE_CODES } from "@settlemint/client/i18n/languages";
 import { SITE_URL } from "@/lib/env";
 
 export const dynamic = "force-static";

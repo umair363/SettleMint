@@ -6,7 +6,7 @@ import {
   type MemberAmount,
   type SplitSpec,
 } from "@settlemint/shared";
-import { tr } from "@/i18n/runtime";
+import { tr } from "@settlemint/client/i18n/runtime";
 
 export type EditableMethod = "equal" | "exact" | "percent" | "shares" | "adjustment" | "itemized";
 

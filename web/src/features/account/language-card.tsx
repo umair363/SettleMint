@@ -2,9 +2,9 @@
 
 import { Languages } from "lucide-react";
 import { useTranslations } from "use-intl";
-import { formattingLocale, LANGUAGES, matchLanguage, type LanguagePreference } from "@/i18n/languages";
+import { formattingLocale, LANGUAGES, matchLanguage, type LanguagePreference } from "@settlemint/client/i18n/languages";
 import { setLanguagePreference, useLanguagePreference } from "@/i18n/provider";
-import { useUpdateMe } from "@/lib/queries";
+import { useUpdateMe } from "@settlemint/client/data/queries";
 import { Card, SectionHeader } from "@/ui/surface";
 
 /** Interface language for this device; also saved to the profile so notifications match. */

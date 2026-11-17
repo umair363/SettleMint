@@ -1,15 +1,15 @@
 import { parse, TYPE, type MessageFormatElement } from "@formatjs/icu-messageformat-parser";
 import { IntlMessageFormat } from "intl-messageformat";
 import { describe, expect, it } from "vitest";
-import { LANGUAGES, type Language } from "./languages";
-import ar from "./messages/ar";
-import de from "./messages/de";
-import en from "./messages/en";
-import es from "./messages/es";
-import fr from "./messages/fr";
-import hi from "./messages/hi";
-import pt from "./messages/pt";
-import ur from "./messages/ur";
+import { LANGUAGES, type Language } from "@settlemint/client/i18n/languages";
+import ar from "@settlemint/client/i18n/messages/ar";
+import de from "@settlemint/client/i18n/messages/de";
+import en from "@settlemint/client/i18n/messages/en";
+import es from "@settlemint/client/i18n/messages/es";
+import fr from "@settlemint/client/i18n/messages/fr";
+import hi from "@settlemint/client/i18n/messages/hi";
+import pt from "@settlemint/client/i18n/messages/pt";
+import ur from "@settlemint/client/i18n/messages/ur";
 import { landingMessages } from "./landing";
 
 const catalogs: Record<Language, unknown> = { en, es, pt, fr, de, hi, ur, ar };

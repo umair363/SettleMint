@@ -7,7 +7,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useTranslations } from "use-intl";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import { useMemberActions } from "@/lib/queries";
+import { useMemberActions } from "@settlemint/client/data/queries";
 import { Avatar } from "@/ui/avatar";
 import { Button } from "@/ui/button";
 import { Spinner } from "@/ui/feedback";

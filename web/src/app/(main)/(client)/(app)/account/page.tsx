@@ -15,7 +15,7 @@ import { PageBody, PageHeader } from "@/features/shell/page-header";
 import { authClient } from "@/lib/auth-client";
 import { persister } from "@/lib/persist";
 import { disablePush } from "@/lib/push";
-import { useMe, useUpdateMe } from "@/lib/queries";
+import { useMe, useUpdateMe } from "@settlemint/client/data/queries";
 import { Avatar } from "@/ui/avatar";
 import { Button } from "@/ui/button";
 import { Segmented } from "@/ui/controls";

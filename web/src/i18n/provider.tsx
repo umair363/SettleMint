@@ -10,19 +10,19 @@ import {
   matchLanguage,
   type Language,
   type LanguagePreference,
-} from "./languages";
-import en, { type Messages } from "./messages/en";
-import { setActiveMessages } from "./runtime";
+} from "@settlemint/client/i18n/languages";
+import en, { type Messages } from "@settlemint/client/i18n/messages/en";
+import { setActiveMessages } from "@settlemint/client/i18n/runtime";
 
 // Each language is its own chunk: people download only theirs.
 const loaders: Record<Exclude<Language, "en">, () => Promise<{ default: Messages }>> = {
-  es: () => import("./messages/es"),
-  pt: () => import("./messages/pt"),
-  fr: () => import("./messages/fr"),
-  de: () => import("./messages/de"),
-  hi: () => import("./messages/hi"),
-  ur: () => import("./messages/ur"),
-  ar: () => import("./messages/ar"),
+  es: () => import("@settlemint/client/i18n/messages/es"),
+  pt: () => import("@settlemint/client/i18n/messages/pt"),
+  fr: () => import("@settlemint/client/i18n/messages/fr"),
+  de: () => import("@settlemint/client/i18n/messages/de"),
+  hi: () => import("@settlemint/client/i18n/messages/hi"),
+  ur: () => import("@settlemint/client/i18n/messages/ur"),
+  ar: () => import("@settlemint/client/i18n/messages/ar"),
 };
 const cache = new Map<Language, Messages>([["en", en]]);
 

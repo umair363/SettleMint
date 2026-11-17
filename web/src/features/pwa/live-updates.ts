@@ -3,7 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { API_URL } from "@/lib/env";
-import { invalidateGroup } from "@/lib/queries";
+import { invalidateGroup } from "@settlemint/client/data/queries";
 
 /**
  * Listen for changes other people make in your groups and refresh just that

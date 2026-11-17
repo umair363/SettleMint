@@ -1,5 +1,5 @@
 import { buildPayAction, formatMoney, type GroupDetailDto, type TransferDto } from "@settlemint/shared";
-import { tr } from "@/i18n/runtime";
+import { tr } from "@settlemint/client/i18n/runtime";
 import { toast } from "sonner";
 
 /** A friendly nudge with the amount and one-tap ways to pay, via the share sheet. */

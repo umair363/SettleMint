@@ -4,8 +4,8 @@ import { getCategoryMeta, type GroupDetailDto } from "@settlemint/shared";
 import { Repeat } from "lucide-react";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "use-intl";
-import { dayLabel } from "@/lib/dates";
-import { useRecurring, useStopRecurring } from "@/lib/queries";
+import { dayLabel } from "@settlemint/client/text/dates";
+import { useRecurring, useStopRecurring } from "@settlemint/client/data/queries";
 import { Money } from "@/ui/money";
 import { List, SectionHeader } from "@/ui/surface";
 

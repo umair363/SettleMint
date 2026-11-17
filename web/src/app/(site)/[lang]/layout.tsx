@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { dirOf, LANGUAGE_CODES, LANGUAGE_STORAGE_KEY, type Language } from "@/i18n/languages";
+import { dirOf, LANGUAGE_CODES, LANGUAGE_STORAGE_KEY, type Language } from "@settlemint/client/i18n/languages";
 import { themeScript } from "@/ui/theme";
 import { baseMetadata, baseViewport, fontVariables } from "../../shell";
 import "../../globals.css";

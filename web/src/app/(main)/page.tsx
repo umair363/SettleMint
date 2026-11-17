@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Landing } from "@/features/landing/landing";
 import { languageSuggestScript, type SuggestTexts } from "@/features/landing/language-suggest";
 import { landingAlternates, landingMessages } from "@/i18n/landing";
-import { LANGUAGES } from "@/i18n/languages";
+import { LANGUAGES } from "@settlemint/client/i18n/languages";
 
 const en = landingMessages.en;
 

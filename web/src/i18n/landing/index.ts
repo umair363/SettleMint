@@ -1,5 +1,5 @@
-import type { Language } from "../languages";
-import { LANGUAGES } from "../languages";
+import type { Language } from "@settlemint/client/i18n/languages";
+import { LANGUAGES } from "@settlemint/client/i18n/languages";
 import ar from "./ar";
 import de from "./de";
 import en, { type LandingMessages } from "./en";

@@ -4,8 +4,8 @@ import type { ActivityDto } from "@settlemint/shared";
 import { ArrowRightLeft, Receipt, Settings2, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "use-intl";
-import { describeActivity } from "@/lib/activity-text";
-import { timeAgo } from "@/lib/dates";
+import { describeActivity } from "@settlemint/client/text/activity-text";
+import { timeAgo } from "@settlemint/client/text/dates";
 import { cn } from "@/ui/cn";
 import { Money } from "@/ui/money";
 

@@ -11,7 +11,7 @@ import { GroupRow } from "@/features/groups/group-row";
 import { NewGroupSheet } from "@/features/groups/new-group-sheet";
 import { SearchButton } from "@/features/search/search-palette";
 import { PageBody, PageHeader } from "@/features/shell/page-header";
-import { totalsByCurrency, useActivity, useGroups, useMe } from "@/lib/queries";
+import { totalsByCurrency, useActivity, useGroups, useMe } from "@settlemint/client/data/queries";
 import { Button } from "@/ui/button";
 import { EmptyState, ErrorState, PreviewRow, Skeleton, SkeletonRows } from "@/ui/feedback";
 import { Money } from "@/ui/money";

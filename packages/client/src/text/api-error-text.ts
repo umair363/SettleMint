@@ -1,5 +1,5 @@
 import { ApiError } from "@settlemint/shared";
-import { tr } from "@/i18n/runtime";
+import { tr } from "../i18n/runtime";
 
 /** Error codes with their own translated sentence (others fall back to a generic one). */
 const KNOWN = [

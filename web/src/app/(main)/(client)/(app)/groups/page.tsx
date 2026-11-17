@@ -9,7 +9,7 @@ import { ImportSheet } from "@/features/groups/import-sheet";
 import { NewGroupSheet } from "@/features/groups/new-group-sheet";
 import { SearchButton } from "@/features/search/search-palette";
 import { PageBody, PageHeader } from "@/features/shell/page-header";
-import { useGroups } from "@/lib/queries";
+import { useGroups } from "@settlemint/client/data/queries";
 import { Button, IconButton } from "@/ui/button";
 import { EmptyState, ErrorState, SkeletonRows } from "@/ui/feedback";
 import { Card, List, SectionHeader } from "@/ui/surface";

@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { LANGUAGES } from "@/i18n/languages";
+import { LANGUAGES } from "@settlemint/client/i18n/languages";
 import { landingPath } from "@/i18n/landing";
 import { SITE_URL } from "@/lib/env";
 
