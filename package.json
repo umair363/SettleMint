@@ -21,5 +21,9 @@
   },
   "dependencies": {
     "postgres": "^3.4.9"
+  },
+  "devDependencies": {
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
   }
 }

@@ -67,6 +67,9 @@ function Navigator() {
           <Stack.Screen name="settle" options={sheet} />
           <Stack.Screen name="new-group" options={sheet} />
           <Stack.Screen name="invite" options={sheet} />
+          <Stack.Screen name="group-settings" options={sheet} />
+          <Stack.Screen name="search" options={sheet} />
+          <Stack.Screen name="import" options={sheet} />
         </Stack.Protected>
         {/* Invite links work signed in or out (guests can join without an account). */}
         <Stack.Screen name="join" />

@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   draftFromSpec,
   equalDraft,
+  itemizedDraft,
   minorToInputText,
   previewSplit,
   specFromDraft,
@@ -29,9 +30,10 @@ import { useQuery } from "@tanstack/react-query";
 import { getCalendars } from "expo-localization";
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
+import { Modal, Platform, Pressable, ScrollView, TextInput, View } from "react-native";
 import { useLocale, useTranslations } from "use-intl";
 import { uuidv7 } from "uuidv7";
+import { pickReceiptPhoto } from "@/features/receipt";
 import { GroupIcon } from "@/features/rows";
 import { api } from "@/lib/api";
 import { useTheme } from "@/theme/theme";
@@ -157,6 +159,32 @@ function Form({
   );
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [groupOpen, setGroupOpen] = useState(false);
+  const [scanning, setScanning] = useState(false);
+
+  /** Photo of the receipt -> amount, merchant, date and one line per item to share out. */
+  const scan = async (source: "camera" | "library") => {
+    const photo = await pickReceiptPhoto(source).catch(() => null);
+    if (!photo) return;
+    setScanning(true);
+    try {
+      const r = await api.scanReceipt({ image: photo.data, mimeType: photo.mimeType, currency });
+      if (r.merchant) setDescription(r.merchant);
+      setCurrency(r.currency);
+      setAmountText(minorToInputText(r.total, r.currency, locale));
+      if (r.date) setDate(r.date);
+      if (r.items.length) setDraft(itemizedDraft(r.items, r.extras, members.filter((m) => !m.left).map((m) => m.id)));
+      toast.success(r.items.length ? t("scanItems", { count: r.items.length }) : t("scanTotal"), {
+        description: t("scansLeft", { count: r.scansLeft }),
+      });
+    } catch (err) {
+      const code = err instanceof ApiError ? err.code : null;
+      toast.error(code === "AI_UNAVAILABLE" ? t("scanOff") : code === "AI_QUOTA" ? t("scanQuota") : t("scanFailed"), {
+        description: code === "AI_UNAVAILABLE" ? undefined : t("scanByHand"),
+      });
+    } finally {
+      setScanning(false);
+    }
+  };
 
   const total = parseMoneyInput(amountText, currency, locale) ?? 0;
   const category = pickedCategory ?? guessCategory(description) ?? "other";
@@ -281,6 +309,15 @@ function Form({
         </Pressable>
       )}
 
+      {!expense && Platform.OS !== "web" && (
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          <Button variant="secondary" icon="camera-outline" style={{ flex: 1 }} loading={scanning} onPress={() => void scan("camera")}>
+            {scanning ? t("scanning") : t("scan")}
+          </Button>
+          <IconButton icon="images-outline" label={t("scan")} size={46} onPress={() => void scan("library")} />
+        </View>
+      )}
+
       {/* Amount */}
       <View style={{ alignItems: "center", gap: 6, paddingVertical: 8 }}>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, alignSelf: "stretch" }}>
@@ -388,9 +425,64 @@ function Form({
       <View style={{ gap: 10 }}>
         <SectionHeader title={ts("howToSplit")} />
         {itemized ? (
-          <Text variant="sub" tone="muted">
-            {ts("method.itemized")} · {ts("help.itemized")}
-          </Text>
+          <View style={{ gap: 12 }}>
+            <Text variant="caption" tone="subtle">
+              {ts("itemsHelp")}
+            </Text>
+            {(draft.items ?? []).map((item) => (
+              <View key={item.key} style={{ gap: 6 }}>
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                  <Text variant="bodyStrong" style={{ flex: 1 }} numberOfLines={1}>
+                    {item.label}
+                  </Text>
+                  <Money minor={item.amount} currency={currency} variant="bodyStrong" />
+                </View>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }} accessibilityLabel={ts("whoHad", { item: item.label })}>
+                  {members
+                    .filter((m) => !m.left)
+                    .map((m) => (
+                      <Chip
+                        key={m.id}
+                        label={nameOf(m.id)}
+                        selected={item.memberIds.includes(m.id)}
+                        onPress={() =>
+                          setDraft((d) => ({
+                            ...d,
+                            items: (d.items ?? []).map((it) =>
+                              it.key !== item.key
+                                ? it
+                                : { ...it, memberIds: it.memberIds.includes(m.id) ? it.memberIds.filter((x) => x !== m.id) : [...it.memberIds, m.id] },
+                            ),
+                          }))
+                        }
+                      />
+                    ))}
+                </View>
+              </View>
+            ))}
+            {draft.extras ? (
+              <View style={{ flexDirection: "row", gap: 8 }}>
+                <Text variant="sub" tone="muted" style={{ flex: 1 }}>
+                  {ts("extras", { kind: draft.extras > 0 ? "charges" : "discounts" })}
+                </Text>
+                <Money minor={draft.extras} currency={currency} variant="sub" tone="muted" />
+              </View>
+            ) : null}
+            <Text variant="label" tone="muted">
+              {ts("eachPays")}
+            </Text>
+            {members
+              .filter((m) => shareOf(m.id) !== undefined)
+              .map((m) => (
+                <View key={m.id} style={{ flexDirection: "row" }}>
+                  <Text style={{ flex: 1 }}>{nameOf(m.id)}</Text>
+                  <Money minor={shareOf(m.id)!} currency={currency} variant="bodyStrong" />
+                </View>
+              ))}
+            <Button variant="ghost" onPress={() => setDraft(equalDraft(memberIds))}>
+              {ts("method.equal")}
+            </Button>
+          </View>
         ) : (
           <>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} accessibilityLabel={ts("methodLabel")}>

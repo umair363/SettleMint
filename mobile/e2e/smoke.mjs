@@ -91,6 +91,20 @@ try {
   check(await see("Payment recorded"), "payment recorded");
   check(await see("Everyone is settled up"), "everyone settled after the payment");
 
+  // Group settings: rename the group.
+  await page.getByRole("button", { name: "Group settings" }).click();
+  await page.getByLabel("Name").first().fill("Lisbon 2026");
+  await page.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("button", { name: "Close" }).click();
+  check(await see("Lisbon 2026"), "group renamed in settings");
+
+  // Search finds the expense from anywhere.
+  await page.goto(ORIGIN, { waitUntil: "load" });
+  await page.getByRole("button", { name: "Search" }).click();
+  await page.getByLabel("Search expenses and groups").fill("dinner");
+  check(await see("Lisbon 2026 ·"), "search finds the expense");
+  await page.getByRole("button", { name: "Close" }).click();
+
   // Language: Arabic switches the text and the layout direction.
   await page.goto(`${ORIGIN}/account`, { waitUntil: "load" });
   await page.getByRole("button", { name: /Language/ }).click();
