@@ -510,6 +510,7 @@ const hi: Messages = {
     wrongPassword: "ईमेल या पासवर्ड गलत है",
     accountExists: "इस ईमेल से पहले से खाता है। उसमें साइन इन करें।",
     passwordShort: "कम से कम 8 अक्षर रखें।",
+    passwordBreached: "यह पासवर्ड किसी डेटा लीक में सामने आ चुका है। कोई दूसरा चुनें।",
     badEmail: "यह ईमेल पता सही नहीं लगता।",
     sendFailed: "कोड नहीं भेजा जा सका",
     createFailed: "खाता नहीं बन सका",

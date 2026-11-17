@@ -15,7 +15,7 @@ afterAll(async () => {
   await t?.close();
 });
 
-const client = () => new TestClient(t.app);
+const client = () => new TestClient(t.app, t.mailer);
 
 /** Ana creates a group with Ben and Cy added by name. */
 async function tripWithFriends(currency = "USD") {
@@ -98,14 +98,23 @@ describe("auth", () => {
   });
 
   it("serves the mobile app: no browser origin, session cookie sent by hand", async () => {
+    const email = `mo-${Date.now()}@example.com`;
     const signUp = await t.app.inject({
       method: "POST",
       url: "/v1/auth/sign-up/email",
       headers: { "expo-origin": "settlemint://" },
-      payload: { name: "Mo", email: `mo-${Date.now()}@example.com`, password: "correct-horse-battery" },
+      payload: { name: "Mo", email, password: "correct-horse-battery" },
     });
     expect(signUp.statusCode).toBe(200);
-    const raw = signUp.headers["set-cookie"];
+    const otp = await client().lastCode(email);
+    const verified = await t.app.inject({
+      method: "POST",
+      url: "/v1/auth/email-otp/verify-email",
+      headers: { "expo-origin": "settlemint://" },
+      payload: { email, otp },
+    });
+    expect(verified.statusCode).toBe(200);
+    const raw = verified.headers["set-cookie"];
     const cookie = (Array.isArray(raw) ? raw : [raw ?? ""]).map((c) => c.split(";")[0]).join("; ");
     const me = await t.app.inject({ method: "GET", url: "/v1/me", headers: { cookie } });
     expect(me.statusCode).toBe(200);
@@ -120,6 +129,29 @@ describe("auth", () => {
     expect(ctx.isTrustedOrigin("settlemint://home", { allowRelativePaths: false })).toBe(true);
     expect(ctx.isTrustedOrigin("evilapp://home", { allowRelativePaths: false })).toBe(false);
     expect(ctx.isTrustedOrigin("exp://192.168.1.5:8081", { allowRelativePaths: false })).toBe(false);
+  });
+
+  it("won't let a password account sign in until its email is confirmed", async () => {
+    // Someone signs up with an address that isn't theirs: no session, and the password doesn't work.
+    const email = `victim-${Date.now()}@example.com`;
+    const intruder = client();
+    const signUp = await intruder.post("/v1/auth/sign-up/email", { name: "Not Vic", email, password: "intruder-password" });
+    expect(signUp.status).toBe(200);
+    expect(signUp.body.token).toBeNull();
+    expect((await intruder.get("/v1/me")).status).toBe(401);
+    const before = t.mailer.sent.length;
+    const signIn = await intruder.post("/v1/auth/sign-in/email", { email, password: "intruder-password" });
+    expect(signIn.status).toBe(403);
+    expect(signIn.body.code).toBe("EMAIL_NOT_VERIFIED");
+    // A fresh code goes to the real owner, who signs in with it; the intruder's password stops working.
+    const owner = client();
+    await owner.lastCode(email, before);
+    const sent = t.mailer.sent.length;
+    await owner.post("/v1/auth/email-otp/send-verification-otp", { email, type: "sign-in" });
+    const code = await owner.lastCode(email, sent);
+    expect((await owner.post("/v1/auth/sign-in/email-otp", { email, otp: code })).status).toBe(200);
+    expect((await owner.get("/v1/me")).status).toBe(200);
+    expect((await intruder.post("/v1/auth/sign-in/email", { email, password: "intruder-password" })).status).toBe(401);
   });
 
   it("sends a sign-in code by email", async () => {
@@ -791,6 +823,11 @@ describe("push notifications", () => {
     const ana = client();
     await ana.signUp("Ana");
     expect((await ana.post("/v1/push/subscribe", { endpoint: "http://insecure.example/x", keys })).status).toBe(400);
+    // Only real push services: the API must never be made to call other servers.
+    for (const endpoint of ["https://internal.example.net/hook", "https://fcm.googleapis.com.evil.example/x", "https://169.254.169.254/latest"]) {
+      expect((await ana.post("/v1/push/subscribe", { endpoint, keys })).status).toBe(400);
+    }
+    expect((await ana.post("/v1/push/subscribe", { endpoint: "https://fcm.googleapis.com/fcm/send/abc", keys })).status).toBe(204);
   });
 
   it("tells the other members, never the person who acted or outsiders", async () => {

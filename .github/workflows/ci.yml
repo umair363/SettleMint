@@ -63,6 +63,7 @@ jobs:
           FAKE_RECEIPT_READER: "1"
           # The suites sign up many accounts back to back from one address.
           AUTH_RATE_LIMIT: "off"
+          EMAIL_VERIFICATION: "off"
         run: |
           # Throwaway notification keys for this run only.
           eval "$(node -e "const k=require('web-push').generateVAPIDKeys();console.log('export VAPID_PUBLIC_KEY='+k.publicKey+' VAPID_PRIVATE_KEY='+k.privateKey)")"

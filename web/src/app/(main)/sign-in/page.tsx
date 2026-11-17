@@ -34,6 +34,8 @@ function errorText(t: SignInT, err: { code?: string; status?: number } | null | 
       return t("accountExists");
     case "PASSWORD_TOO_SHORT":
       return t("passwordShort");
+    case "PASSWORD_COMPROMISED":
+      return t("passwordBreached");
     case "INVALID_EMAIL":
       return t("badEmail");
     default:
@@ -75,6 +77,8 @@ function SignIn() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
+  // The code confirms a new password account's email (instead of signing in by code).
+  const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(0);
@@ -97,7 +101,10 @@ function SignIn() {
     setError(null);
     acted.current = true;
     setBusy(true);
-    const { error } = await authClient.emailOtp.sendVerificationOtp({ email: email.trim(), type: "sign-in" });
+    const { error } = await authClient.emailOtp.sendVerificationOtp({
+      email: email.trim(),
+      type: confirming ? "email-verification" : "sign-in",
+    });
     setBusy(false);
     if (error) return setError(errorText(t, error, t("sendFailed")));
     setStep("code");
@@ -110,13 +117,15 @@ function SignIn() {
     setError(null);
     acted.current = true;
     setBusy(true);
-    const { error } = await authClient.signIn.emailOtp({ email: email.trim(), otp: value });
+    const { error } = confirming
+      ? await authClient.emailOtp.verifyEmail({ email: email.trim(), otp: value })
+      : await authClient.signIn.emailOtp({ email: email.trim(), otp: value });
     setBusy(false);
     if (error) {
       setCode("");
       return setError(errorText(t, error, t("badCode")));
     }
-    await finish();
+    await finish(confirming && creating);
   };
 
   const withPassword = async (e: FormEvent) => {
@@ -124,10 +133,20 @@ function SignIn() {
     setError(null);
     acted.current = true;
     setBusy(true);
-    const { error } = creating
+    const { data, error } = creating
       ? await authClient.signUp.email({ email: email.trim(), password, name: name.trim() })
       : await authClient.signIn.email({ email: email.trim(), password });
     setBusy(false);
+    // Password accounts confirm their email first; the API has just emailed a code.
+    const needsCode = creating ? !error && !data?.token : error?.code === "EMAIL_NOT_VERIFIED";
+    if (needsCode) {
+      setConfirming(true);
+      setCode("");
+      setStep("code");
+      setResendIn(30);
+      setTimeout(() => codeRef.current?.focus(), 50);
+      return;
+    }
     if (error) return setError(errorText(t, error, creating ? t("createFailed") : t("wrongPassword")));
     await finish(creating);
   };
@@ -252,7 +271,14 @@ function SignIn() {
               {t("continue")}
             </Button>
             <div className="flex items-center justify-between text-sm">
-              <button type="button" onClick={() => setStep("email")} className="text-fg-muted hover:text-fg">
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirming(false);
+                  setStep("email");
+                }}
+                className="text-fg-muted hover:text-fg"
+              >
                 {t("otherEmail")}
               </button>
               <button

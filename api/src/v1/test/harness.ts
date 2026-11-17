@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import type { FastifyInstance } from "fastify";
 import { buildApp } from "../app";
-import type { AppConfig } from "../config";
+import { PUSH_HOSTS, type AppConfig } from "../config";
 import { MIGRATIONS_FOLDER, type Db } from "../db/client";
 import * as schema from "../db/schema";
 import { createMemoryMailer } from "../mailer";
@@ -50,6 +50,9 @@ export async function createTestApp() {
     apiUrl: "http://localhost:8001",
     webOrigins: [WEB_ORIGIN],
     trustedOrigins: [WEB_ORIGIN, "settlemint://"],
+    trustProxyHops: 0,
+    requireEmailVerification: true,
+    pushHosts: [...PUSH_HOSTS, "push.example.com"],
     webUrl: WEB_ORIGIN,
     authSecret: "test-secret-0123456789-0123456789-0123456789",
     aiScansPerMonth: 3,
@@ -80,7 +83,10 @@ export interface Res<T = any> {
 export class TestClient {
   private cookies = new Map<string, string>();
 
-  constructor(private app: FastifyInstance) {}
+  constructor(
+    private app: FastifyInstance,
+    private mailer?: { sent: { to: string; subject: string; text: string }[] },
+  ) {}
 
   /** The session cookie header this client would send (for replay tests). */
   cookieHeader(): string {
@@ -124,7 +130,22 @@ export class TestClient {
   async signUp(name: string, email = `${name.toLowerCase().replace(/\W/g, "")}-${Math.random().toString(36).slice(2, 8)}@example.com`) {
     const res = await this.post("/v1/auth/sign-up/email", { name, email, password: "correct-horse-battery" });
     if (res.status !== 200) throw new Error(`sign-up failed: ${res.status} ${JSON.stringify(res.body)}`);
-    return { email, ...res };
+    // Like a real person: read the code from the email and confirm, which signs in.
+    const otp = await this.lastCode(email);
+    const verified = await this.post("/v1/auth/email-otp/verify-email", { email, otp });
+    if (verified.status !== 200) throw new Error(`verify failed: ${verified.status} ${JSON.stringify(verified.body)}`);
+    return { email, ...verified };
+  }
+
+  /** The newest 6-digit code emailed to this address (emails go out in the background, so wait a little). */
+  async lastCode(email: string, after = 0): Promise<string> {
+    for (let i = 0; i < 100; i++) {
+      const mails = (this.mailer?.sent ?? []).slice(after).filter((m) => m.to === email);
+      const found = mails.at(-1)?.text.match(/(\d{6})/)?.[1];
+      if (found) return found;
+      await new Promise((r) => setTimeout(r, 20));
+    }
+    throw new Error(`no code emailed to ${email}`);
   }
 
   async signInAsGuest() {

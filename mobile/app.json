@@ -23,7 +23,8 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "permissions": []
+      "permissions": [],
+      "allowBackup": false
     },
     "web": {
       "favicon": "./assets/favicon.png"

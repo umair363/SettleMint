@@ -511,6 +511,7 @@ const fr: Messages = {
     wrongPassword: "E-mail ou mot de passe incorrect",
     accountExists: "Un compte existe déjà avec cet e-mail. Connectez-vous plutôt.",
     passwordShort: "Utilisez au moins 8 caractères.",
+    passwordBreached: "Ce mot de passe est apparu dans une fuite de données. Choisissez-en un autre.",
     badEmail: "Cette adresse e-mail semble incorrecte.",
     sendFailed: "Impossible d’envoyer le code",
     createFailed: "Impossible de créer le compte",
