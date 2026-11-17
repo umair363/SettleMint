@@ -5,11 +5,10 @@ import type { Db } from "../db/client";
 import { groups, members, pushSubscriptions, user } from "../db/schema";
 import { noticeText } from "./notification-text";
 
-export interface PushTarget {
-  endpoint: string;
-  p256dh: string;
-  auth: string;
-}
+export type PushTarget =
+  | { kind: "web"; endpoint: string; p256dh: string; auth: string }
+  /** A phone: endpoint is its Expo push token. */
+  | { kind: "expo"; endpoint: string };
 
 /** Delivers one notification. `gone` means the browser unsubscribed: forget it. */
 export interface PushSender {
@@ -19,6 +18,7 @@ export interface PushSender {
 export function webPushSender(vapid: { publicKey: string; privateKey: string; subject: string }): PushSender {
   return {
     async send(target, payload) {
+      if (target.kind !== "web") throw new Error("not a web push target");
       try {
         await sendNotification(
           { endpoint: target.endpoint, keys: { p256dh: target.p256dh, auth: target.auth } },
@@ -34,6 +34,58 @@ export function webPushSender(vapid: { publicKey: string; privateKey: string; su
         }
         throw err;
       }
+    },
+  };
+}
+
+export const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
+
+/**
+ * Phones, through Expo's push service (free; it hands notifications to Apple
+ * and Google). An access token is only needed if "enhanced security" is
+ * switched on for the Expo project.
+ */
+export function expoPushSender(opts: { accessToken?: string; fetch?: typeof fetch } = {}): PushSender {
+  const doFetch = opts.fetch ?? fetch;
+  return {
+    async send(target, payload) {
+      const p = JSON.parse(payload) as { title: string; body: string; url: string; tag: string };
+      const res = await doFetch(EXPO_PUSH_URL, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json",
+          ...(opts.accessToken ? { authorization: `Bearer ${opts.accessToken}` } : {}),
+        },
+        body: JSON.stringify({
+          to: target.endpoint,
+          title: p.title,
+          body: p.body,
+          sound: "default",
+          channelId: "activity",
+          // The app opens the group when the notification is tapped.
+          data: { groupId: p.tag },
+        }),
+      });
+      if (!res.ok) throw new Error(`Expo push service answered ${res.status}`);
+      const json = (await res.json()) as { data?: { status: string; message?: string; details?: { error?: string } } };
+      const ticket = json.data;
+      if (ticket?.status === "error") {
+        if (ticket.details?.error === "DeviceNotRegistered") return { gone: true, detail: "DeviceNotRegistered from Expo" };
+        throw new Error(`Expo push failed: ${ticket.details?.error ?? ticket.message ?? "unknown"}`);
+      }
+      return { gone: false };
+    },
+  };
+}
+
+/** Routes each device to its service; browsers only when Web Push keys are set. */
+export function combinedSender(web: PushSender | null, expo: PushSender): PushSender {
+  return {
+    send(target, payload) {
+      if (target.kind === "expo") return expo.send(target, payload);
+      if (!web) return Promise.resolve({ gone: false });
+      return web.send(target, payload);
     },
   };
 }
@@ -119,7 +171,11 @@ export function createNotifier(db: Db, sender: PushSender, webUrl: string) {
             tag: n.groupId,
           });
           try {
-            const result = await sender.send({ endpoint: s.endpoint, p256dh: s.p256dh, auth: s.auth }, payload);
+            const target: PushTarget =
+              s.kind === "expo"
+                ? { kind: "expo", endpoint: s.endpoint }
+                : { kind: "web", endpoint: s.endpoint, p256dh: s.p256dh ?? "", auth: s.auth ?? "" };
+            const result = await sender.send(target, payload);
             if (result.gone) {
               gone++;
               log?.info({ detail: result.detail }, "push subscription gone");

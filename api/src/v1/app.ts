@@ -19,7 +19,7 @@ import { meRoutes } from "./routes/me";
 import { memberRoutes } from "./routes/members";
 import { aiRoutes } from "./routes/ai";
 import { pushRoutes } from "./routes/push";
-import { createNotifier, webPushSender, type PushSender } from "./services/push";
+import { combinedSender, createNotifier, expoPushSender, webPushSender, type PushSender } from "./services/push";
 import { importRoutes } from "./routes/import";
 import { geminiReceiptReader, type ReceiptReader } from "./services/receipts";
 import { recurringRoutes } from "./routes/recurring";
@@ -86,7 +86,11 @@ export async function buildApp({ db, config, mailer, logger = true, receiptReade
     receiptReader !== undefined ? receiptReader : config.geminiApiKey ? geminiReceiptReader(config.geminiApiKey) : null,
   );
   app.decorateRequest("authUser", null);
-  const sender = pushSender !== undefined ? pushSender : config.vapid ? webPushSender(config.vapid) : null;
+  // Phones always get notifications (Expo's service needs no keys); browsers need Web Push keys.
+  const sender =
+    pushSender !== undefined
+      ? pushSender
+      : combinedSender(config.vapid ? webPushSender(config.vapid) : null, expoPushSender({ accessToken: config.expoAccessToken }));
   app.decorate("notifier", sender ? createNotifier(db, sender, config.webUrl) : null);
   app.addHook("onClose", async () => app.notifier?.idle());
 
