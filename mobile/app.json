@@ -22,7 +22,8 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": []
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -38,7 +39,31 @@
           "imageWidth": 200
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-web-browser",
+      "expo-sharing",
+      [
+        "expo-localization",
+        {
+          "supportsRTL": true,
+          "supportedLocales": [
+            "en",
+            "es",
+            "pt",
+            "fr",
+            "de",
+            "hi",
+            "ur",
+            "ar"
+          ]
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#3DD68C"
+        }
+      ]
     ],
     "extra": {
       "router": {},

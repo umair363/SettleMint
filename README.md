@@ -13,8 +13,8 @@ Split expenses, not friendships.
 <br />
 
 SettleMint keeps track of who paid what and who owes whom, in any currency,
-fair to the cent. It's an installable web app (PWA) that works offline, built
-on a shared money engine the mobile app will reuse.
+fair to the cent. It's an installable web app (PWA) that works offline, and
+an iPhone and Android app, both built on one shared money engine.
 
 ## Features
 
@@ -56,14 +56,16 @@ on a shared money engine the mobile app will reuse.
 ```
 web/         Next.js 16 static PWA · Tailwind v4 · Radix · Motion   → Cloudflare Pages
 api/         Fastify 5 · Drizzle · Postgres · Better Auth           → Render (src/v1)
+mobile/      Expo SDK 57 · Expo Router · React Native                 → App Store / Play (EAS)
 packages/
   shared/    money engine · API contracts (Zod) · typed API client
-mobile/      Expo SDK 57 (to be rebuilt on the shared core)
+  client/    what web and mobile share above the API: translations
+             (8 languages), data hooks (React Query), text helpers
 ```
 
 - **Money** is always integer minor units with an ISO currency code. All
   splitting, conversion and balancing lives in `packages/shared` and runs
-  identically on the server, the web app and (later) mobile, so a preview is
+  identically on the server, the web app and the phone app, so a preview is
   exactly what gets saved. Property tests run thousands of random cases.
 - **The API** (`api/src/v1`) has one membership gate on every group route
   (outsiders get 404), client-generated ids so offline retries never
@@ -87,17 +89,27 @@ Copy `api/.env.example` to `api/.env` and `web/.env.example` to
 `web/.env.local` to change settings. Without `RESEND_API_KEY`, sign-in codes
 are printed in the API's console.
 
+**Phone app:** copy `mobile/.env.example` to `mobile/.env` and set
+`EXPO_PUBLIC_API_URL` to your computer's network address (a phone can't reach
+`localhost`), e.g. `http://192.168.1.20:8001`. (For the browser preview,
+`npx expo start --web`, add its address, e.g. `http://localhost:8081`, to the
+API's `WEB_ORIGINS`.) Then `npm run build:shared && npm run dev:mobile` and scan the QR code with a
+development build (`eas build --profile development`). Notifications, the app
+lock and the share sheet need a real phone.
+
 ## Quality checks
 
 ```bash
-npm run typecheck     # shared, api, web
+npm run typecheck     # shared, client, api, web, mobile
 npm test              # money engine + API integration tests (in-memory Postgres)
 npm run lint -w web
 ```
 
 Browser tests (Playwright) live in `web/e2e`: the main flow, offline sync,
 and an axe-core accessibility audit of every screen in both themes. See
-`web/e2e/README.md`. CI runs all of the above on every push.
+`web/e2e/README.md`. `mobile/e2e/smoke.mjs` drives the phone app's web build
+(the same screens) from sign-in to settling up, in English and Arabic. CI runs
+all of the above on every push.
 
 ## Deploy (free tier)
 
@@ -119,6 +131,11 @@ and an axe-core accessibility audit of every screen in both themes. See
    once and set `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` on the API. Keep the
    pair: replacing it disconnects every subscribed device.
 7. **Receipt scanning (optional):** set `GEMINI_API_KEY` from Google AI Studio.
+8. **Phone app:** `cd mobile && eas build` (free tier: a limited number of
+   builds a month) with `EXPO_PUBLIC_API_URL` set to the API's URL in
+   `eas.json` or the EAS dashboard. Phone notifications go through Expo's free
+   push service and need no keys. Publishing needs a Google Play developer
+   account (one-off fee) and, for iPhone, an Apple developer account (yearly).
 
 <br />
 

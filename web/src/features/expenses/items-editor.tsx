@@ -6,7 +6,7 @@ import { Avatar } from "@/ui/avatar";
 import { cn } from "@/ui/cn";
 import { haptic } from "@/ui/motion";
 import { Money } from "@/ui/money";
-import type { DraftItem, SplitDraft, SplitPreview } from "./split-model";
+import type { DraftItem, SplitDraft, SplitPreview } from "@settlemint/client/data/split-model";
 
 /**
  * Receipt lines and who had each. Tap people to share a line between them;

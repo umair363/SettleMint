@@ -632,6 +632,17 @@ const ur: Messages = {
     groupRestored: "{who, select, me {آپ نے گروپ بحال کیا} other {{name} نے گروپ بحال کیا}}",
     groupUpdated: "{who, select, me {آپ نے گروپ میں تبدیلی کی} other {{name} نے گروپ میں تبدیلی کی}}",
   },
+  /** Only in the phone app. */
+  mobile: {
+    locked: "SettleMint لاک ہے",
+    unlock: "اَن لاک کریں",
+    unlockPrompt: "SettleMint اَن لاک کریں",
+    appLock: "ایپ لاک",
+    appLockHelp: "SettleMint کھولتے وقت Face ID، فنگر پرنٹ یا فون کا پاس کوڈ مانگیں۔",
+    notificationsBlocked: "SettleMint کی اطلاعات بند ہیں۔ انہیں اپنے فون کی سیٹنگز میں آن کریں۔",
+    openSettings: "سیٹنگز کھولیں",
+    restartNote: "اس زبان پر جانے کے لیے SettleMint دوبارہ شروع ہوگی۔",
+  },
 };
 
 export default ur;

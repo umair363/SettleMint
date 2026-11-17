@@ -632,6 +632,17 @@ const hi: Messages = {
     groupRestored: "{who, select, me {आपने ग्रुप वापस लाया} other {{name} ने ग्रुप वापस लाया}}",
     groupUpdated: "{who, select, me {आपने ग्रुप बदला} other {{name} ने ग्रुप बदला}}",
   },
+  /** Only in the phone app. */
+  mobile: {
+    locked: "SettleMint लॉक है",
+    unlock: "अनलॉक करें",
+    unlockPrompt: "SettleMint अनलॉक करें",
+    appLock: "ऐप लॉक",
+    appLockHelp: "SettleMint खोलते समय Face ID, फ़िंगरप्रिंट या फ़ोन का पासकोड माँगें।",
+    notificationsBlocked: "SettleMint की सूचनाएँ बंद हैं। इन्हें अपने फ़ोन की सेटिंग में चालू करें।",
+    openSettings: "सेटिंग खोलें",
+    restartNote: "इस भाषा पर जाने के लिए SettleMint फिर से शुरू होगा।",
+  },
 };
 
 export default hi;

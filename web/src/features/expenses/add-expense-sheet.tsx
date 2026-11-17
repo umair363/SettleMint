@@ -49,7 +49,7 @@ import {
   specFromDraft,
   type EditableMethod,
   type SplitDraft,
-} from "./split-model";
+} from "@settlemint/client/data/split-model";
 
 const LAST_GROUP_KEY = "sm-last-group";
 
