@@ -510,7 +510,7 @@ const es: Messages = {
     wrongPassword: "Correo o contraseña incorrectos",
     accountExists: "Ya hay una cuenta con este correo. Inicia sesión.",
     passwordShort: "Usa al menos 8 caracteres.",
-    passwordBreached: "Esta contraseña ha aparecido en una filtración de datos. Elige otra.",
+    passwordBreached: "Esta contraseña ha aparecido en una filtración de datos. Puedes usarla, pero otra sería más segura.",
     badEmail: "Esa dirección de correo no parece correcta.",
     sendFailed: "No se pudo enviar el código",
     createFailed: "No se pudo crear la cuenta",

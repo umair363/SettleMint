@@ -4,7 +4,6 @@ import { expo } from "@better-auth/expo";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { anonymous } from "better-auth/plugins/anonymous";
 import { emailOTP } from "better-auth/plugins/email-otp";
-import { haveIBeenPwned } from "better-auth/plugins/haveibeenpwned";
 import { uuidv7 } from "uuidv7";
 import { CLIENT_IP_HEADER } from "./client-ip";
 import type { AppConfig } from "./config";
@@ -100,9 +99,6 @@ export function createAuth(db: Db, config: AppConfig, mailer: Mailer) {
       // The mobile app: maps its expo-origin header to an origin and lets
       // social sign-in return to settlemint:// deep links.
       expo(),
-      // Refuse passwords known from data breaches (NIST guidance). Only the first 5 characters of a
-      // SHA-1 hash leave the server. Production only, so tests never depend on an outside service.
-      ...(config.env === "production" ? [haveIBeenPwned()] : []),
       anonymous({
         emailDomainName: GUEST_EMAIL_DOMAIN,
         onLinkAccount: async ({ anonymousUser, newUser }) => {
