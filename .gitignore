@@ -34,3 +34,6 @@ api/.data/
 
 # Local end-to-end screenshots
 .e2e-shots/
+
+# Exported environment files (secrets): never commit
+*.env
