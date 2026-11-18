@@ -56,7 +56,6 @@ const shot = async (name) => {
 
 try {
   await page.goto("http://localhost:4555/sign-in", { waitUntil: "load" });
-  await page.getByRole("button", { name: "Use a password" }).click();
   await page.getByRole("button", { name: "Create account" }).click();
   await page.getByLabel("Your name").fill("Olu Offline");
   await page.getByLabel("Email").fill(`olu-${Date.now()}@example.com`);

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, KeyRound, Mail, Sparkles } from "@/ui/icons";
+import { Mail, Sparkles } from "@/ui/icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
@@ -14,7 +14,14 @@ import { persister } from "@/lib/persist";
 import { Button } from "@/ui/button";
 import { TextField } from "@/ui/field";
 
-type Step = "email" | "code" | "password";
+/**
+ * Sign in the way every app does it: email and password first. Creating an
+ * account asks for a name, email and password, then confirms the email with a
+ * code (so nobody can register with someone else's address). "Forgot
+ * password" sends a code and sets a new one. An emailed sign-in code and a
+ * guest session stay available as quieter options.
+ */
+type Step = "signin" | "signup" | "forgot" | "reset" | "verify" | "code";
 
 type SignInT = ReturnType<typeof useTranslations<"signIn">>;
 
@@ -57,31 +64,66 @@ export default function SignInPage() {
   );
 }
 
+function CodeBox({
+  value,
+  onChange,
+  onComplete,
+  disabled,
+  error,
+  label,
+  inputRef,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onComplete?: (v: string) => void;
+  disabled?: boolean;
+  error: boolean;
+  label: string;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+}) {
+  return (
+    <input
+      ref={inputRef}
+      value={value}
+      onChange={(e) => {
+        const v = e.target.value.replace(/\D/g, "").slice(0, 6);
+        onChange(v);
+        if (v.length === 6) onComplete?.(v);
+      }}
+      inputMode="numeric"
+      autoComplete="one-time-code"
+      aria-label={label}
+      aria-invalid={error ? true : undefined}
+      disabled={disabled}
+      placeholder="••••••"
+      className="tabular h-16 w-full rounded-[var(--radius-lg)] bg-surface-2 text-center font-wide text-3xl font-[620] tracking-[0.5em] text-fg shadow-[inset_0_0_0_1px_var(--line)] placeholder:text-fg-subtle focus:outline-none focus:shadow-[inset_0_0_0_2px_var(--focus)]"
+    />
+  );
+}
+
 function SignIn() {
   const router = useRouter();
   const t = useTranslations("signIn");
-  // Already signed in (e.g. tapped "Get started" again): go straight on. Better Auth's
-  // session endpoint answers "no session" with a 200, so a signed-out visit logs no error.
+  // Already signed in (e.g. tapped "Get started" again): go straight on.
   const session = authClient.useSession();
   const signedIn = Boolean(session.data?.user);
-  // Only for a session that existed when the page opened; a session created by
-  // signing in or up here is routed by that action (e.g. new accounts go to onboarding).
+  // Only for a session that existed when the page opened; a session created here
+  // is routed by that action (new accounts go to onboarding).
   const acted = useRef(false);
   useEffect(() => {
     if (signedIn && !acted.current) router.replace(nextPath());
   }, [signedIn, router]);
 
-  const [step, setStep] = useState<Step>("email");
+  const [step, setStep] = useState<Step>("signin");
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [creating, setCreating] = useState(false);
-  // The code confirms a new password account's email (instead of signing in by code).
-  const [confirming, setConfirming] = useState(false);
+  const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(0);
+  // The emailed-code screen asks for the address first, then for the code.
+  const [codeSent, setCodeSent] = useState(false);
   const codeRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -90,74 +132,109 @@ function SignIn() {
     return () => clearTimeout(timer);
   }, [resendIn]);
 
+  const go = (next: Step) => {
+    setError(null);
+    setCode("");
+    setCodeSent(false);
+    setStep(next);
+  };
+  const askForCode = (next: Step) => {
+    go(next);
+    setCodeSent(true);
+    setResendIn(30);
+    setTimeout(() => codeRef.current?.focus(), 60);
+  };
+
   const finish = async (isNewAccount = false) => {
     // Never show a previous account's saved data to whoever signs in next.
     await persister.removeClient();
     router.replace(isNewAccount ? `/welcome?next=${encodeURIComponent(nextPath())}` : nextPath());
   };
 
-  const sendCode = async (e?: FormEvent) => {
-    e?.preventDefault();
+  /** Run one auth call with the busy and error handling every button needs. */
+  const run = async (fallback: string, call: () => Promise<{ error?: { code?: string; status?: number } | null } | { data?: unknown; error?: unknown }>) => {
     setError(null);
     acted.current = true;
     setBusy(true);
-    const { error } = await authClient.emailOtp.sendVerificationOtp({
-      email: email.trim(),
-      type: confirming ? "email-verification" : "sign-in",
-    });
-    setBusy(false);
-    if (error) return setError(errorText(t, error, t("sendFailed")));
-    setStep("code");
-    setResendIn(30);
-    setTimeout(() => codeRef.current?.focus(), 50);
-  };
-
-  const verify = async (value: string) => {
-    if (value.length !== 6) return;
-    setError(null);
-    acted.current = true;
-    setBusy(true);
-    const { error } = confirming
-      ? await authClient.emailOtp.verifyEmail({ email: email.trim(), otp: value })
-      : await authClient.signIn.emailOtp({ email: email.trim(), otp: value });
-    setBusy(false);
-    if (error) {
-      setCode("");
-      return setError(errorText(t, error, t("badCode")));
+    try {
+      const res = (await call()) as { error?: { code?: string; status?: number } | null };
+      if (res.error) {
+        setError(errorText(t, res.error, fallback));
+        return null;
+      }
+      return res;
+    } catch {
+      setError(fallback);
+      return null;
+    } finally {
+      setBusy(false);
     }
-    await finish(confirming && creating);
   };
 
-  const withPassword = async (e: FormEvent) => {
+  const signIn = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     acted.current = true;
     setBusy(true);
-    const { data, error } = creating
-      ? await authClient.signUp.email({ email: email.trim(), password, name: name.trim() })
-      : await authClient.signIn.email({ email: email.trim(), password });
+    const { error: err } = await authClient.signIn.email({ email: email.trim(), password });
     setBusy(false);
-    // Password accounts confirm their email first; the API has just emailed a code.
-    const needsCode = creating ? !error && !data?.token : error?.code === "EMAIL_NOT_VERIFIED";
-    if (needsCode) {
-      setConfirming(true);
-      setCode("");
-      setStep("code");
-      setResendIn(30);
-      setTimeout(() => codeRef.current?.focus(), 50);
-      return;
-    }
-    if (error) return setError(errorText(t, error, creating ? t("createFailed") : t("wrongPassword")));
-    await finish(creating);
+    // The account exists but its email isn't confirmed yet: the API just sent a code.
+    if (err?.code === "EMAIL_NOT_VERIFIED") return askForCode("verify");
+    if (err) return setError(errorText(t, err, t("wrongPassword")));
+    await finish();
+  };
+
+  const signUp = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    acted.current = true;
+    setBusy(true);
+    const { data, error: err } = await authClient.signUp.email({ email: email.trim(), password, name: name.trim() });
+    setBusy(false);
+    if (err) return setError(errorText(t, err, t("createFailed")));
+    // Production confirms the email first (no session yet); local testing signs straight in.
+    if (!data?.token) return askForCode("verify");
+    await finish(true);
+  };
+
+  const verifyEmail = async (value: string) => {
+    if (value.length !== 6) return;
+    const res = await run(t("badCode"), () => authClient.emailOtp.verifyEmail({ email: email.trim(), otp: value }));
+    if (!res) return setCode("");
+    await finish(true);
+  };
+
+  const sendReset = async (e?: FormEvent) => {
+    e?.preventDefault();
+    const res = await run(t("sendFailed"), () => authClient.emailOtp.requestPasswordReset({ email: email.trim() }));
+    if (res) askForCode("reset");
+  };
+
+  const resetPassword = async (e: FormEvent) => {
+    e.preventDefault();
+    const res = await run(t("badCode"), () => authClient.emailOtp.resetPassword({ email: email.trim(), otp: code, password }));
+    if (!res) return;
+    // Their new password works straight away.
+    const signedIn = await run(t("wrongPassword"), () => authClient.signIn.email({ email: email.trim(), password }));
+    if (signedIn) await finish();
+  };
+
+  const sendLoginCode = async (e?: FormEvent) => {
+    e?.preventDefault();
+    const res = await run(t("sendFailed"), () => authClient.emailOtp.sendVerificationOtp({ email: email.trim(), type: "sign-in" }));
+    if (res) askForCode("code");
+  };
+
+  const loginWithCode = async (value: string) => {
+    if (value.length !== 6) return;
+    const res = await run(t("badCode"), () => authClient.signIn.emailOtp({ email: email.trim(), otp: value }));
+    if (!res) return setCode("");
+    await finish();
   };
 
   const asGuest = async () => {
-    acted.current = true;
-    setBusy(true);
-    const { error } = await authClient.signIn.anonymous();
-    setBusy(false);
-    if (error) return setError(errorText(t, error, t("guestFailed")));
-    await finish();
+    const res = await run(t("guestFailed"), () => authClient.signIn.anonymous());
+    if (res) await finish();
   };
 
   const google = async () => {
@@ -168,168 +245,230 @@ function SignIn() {
     });
   };
 
+  const heading = (title: string, sub?: string) => (
+    <div className="space-y-2 text-center">
+      <h1 className="font-wide text-[30px] font-[640] leading-[1.1] tracking-[-0.025em] text-balance">{title}</h1>
+      {sub && <p className="text-[16px] leading-snug text-fg-muted">{sub}</p>}
+    </div>
+  );
+  const linkButton = (label: string, onClick: () => void, strong = false) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className={strong ? "font-[600] text-positive hover:underline" : "text-fg-muted hover:text-fg"}
+    >
+      {label}
+    </button>
+  );
+  const emailField = (autoFocus = false) => (
+    <TextField
+      type="email"
+      label={t("email")}
+      autoComplete="email"
+      inputMode="email"
+      required
+      autoFocus={autoFocus}
+      value={email}
+      onChange={(e) => setEmail(e.target.value)}
+      placeholder={t("emailPlaceholder")}
+    />
+  );
+  const googleButton = GOOGLE_SIGN_IN && (
+    <Button variant="secondary" block size="lg" onClick={google}>
+      <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
+        <path fill="#4285F4" d="M22.6 12.2c0-.8-.1-1.4-.2-2.1H12v4h6c-.1 1-.8 2.5-2.3 3.5v2.8h3.7c2.1-2 3.2-4.9 3.2-8.2Z" />
+        <path fill="#34A853" d="M12 23c3 0 5.5-1 7.4-2.7l-3.7-2.8c-1 .7-2.3 1.2-3.7 1.2-2.9 0-5.3-1.9-6.2-4.5H2v2.9A11 11 0 0 0 12 23Z" />
+        <path fill="#FBBC05" d="M5.8 14.2A6.6 6.6 0 0 1 5.4 12c0-.8.1-1.5.4-2.2V6.9H2A11 11 0 0 0 1 12c0 1.8.4 3.4 1 4.9l3.8-2.7Z" />
+        <path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.2-3.2A11 11 0 0 0 2 6.9l3.8 2.9C6.7 7.3 9.1 5.4 12 5.4Z" />
+      </svg>
+      {t("google")}
+    </Button>
+  );
+
   return (
     <AuthLayout
-      footer={
-        <>
-          {t.rich("agree", {
-            terms: (chunks) => (
-              <Link href="/terms" className="underline">
-                {chunks}
-              </Link>
-            ),
-            privacy: (chunks) => (
-              <Link href="/privacy" className="underline">
-                {chunks}
-              </Link>
-            ),
-          })}
-        </>
-      }
+      footer={t.rich("agree", {
+        terms: (chunks) => (
+          <Link href="/terms" className="underline">
+            {chunks}
+          </Link>
+        ),
+        privacy: (chunks) => (
+          <Link href="/privacy" className="underline">
+            {chunks}
+          </Link>
+        ),
+      })}
     >
-        {step === "email" && (
-          <form
-            key="email"
-            onSubmit={sendCode}
-            className="animate-enter space-y-5"
-          >
-            <div className="space-y-1.5 text-center">
-              <h1 className="font-display text-3xl font-semibold tracking-tight">{t("title")}</h1>
-              <p className="text-fg-muted">{t("subtitle")}</p>
-            </div>
-            <TextField
-              type="email"
-              label={t("email")}
-              autoComplete="email"
-              inputMode="email"
-              required
-              autoFocus
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t("emailPlaceholder")}
-              leading={<Mail className="size-4" />}
-              error={error}
-            />
-            <Button type="submit" block size="lg" loading={busy} trailing={<ArrowRight className="size-4 rtl:rotate-180" />}>
-              {t("emailCode")}
-            </Button>
-            {GOOGLE_SIGN_IN && (
-              <Button variant="secondary" block size="lg" onClick={google}>
-                <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
-                  <path fill="#4285F4" d="M22.6 12.2c0-.8-.1-1.4-.2-2.1H12v4h6c-.1 1-.8 2.5-2.3 3.5v2.8h3.7c2.1-2 3.2-4.9 3.2-8.2Z" />
-                  <path fill="#34A853" d="M12 23c3 0 5.5-1 7.4-2.7l-3.7-2.8c-1 .7-2.3 1.2-3.7 1.2-2.9 0-5.3-1.9-6.2-4.5H2v2.9A11 11 0 0 0 12 23Z" />
-                  <path fill="#FBBC05" d="M5.8 14.2A6.6 6.6 0 0 1 5.4 12c0-.8.1-1.5.4-2.2V6.9H2A11 11 0 0 0 1 12c0 1.8.4 3.4 1 4.9l3.8-2.7Z" />
-                  <path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.2-3.2A11 11 0 0 0 2 6.9l3.8 2.9C6.7 7.3 9.1 5.4 12 5.4Z" />
-                </svg>
-                {t("google")}
-              </Button>
-            )}
-            <div className="flex items-center justify-between text-sm">
-              <button type="button" onClick={() => setStep("password")} className="inline-flex items-center gap-1.5 text-fg-muted hover:text-fg">
-                <KeyRound className="size-4" /> {t("usePassword")}
-              </button>
-              <button type="button" onClick={asGuest} disabled={busy} className="inline-flex items-center gap-1.5 text-fg-muted hover:text-fg">
-                <Sparkles className="size-4" /> {t("guest")}
-              </button>
-            </div>
-          </form>
-        )}
-
-        {step === "code" && (
-          <div
-            key="code"
-            className="animate-enter space-y-5 text-center"
-          >
-            <div className="space-y-1.5">
-              <h1 className="font-display text-3xl font-semibold tracking-tight">{t("checkEmail")}</h1>
-              <p className="text-fg-muted">
-                {t.rich("codeSent", { email, b: (chunks) => <span className="font-medium text-fg">{chunks}</span> })}
-              </p>
-            </div>
-            <input
-              ref={codeRef}
-              value={code}
-              onChange={(e) => {
-                const v = e.target.value.replace(/\D/g, "").slice(0, 6);
-                setCode(v);
-                if (v.length === 6) void verify(v);
-              }}
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              aria-label={t("codeLabel")}
-              aria-invalid={error ? true : undefined}
-              disabled={busy}
-              placeholder="••••••"
-              className="tabular h-16 w-full rounded-[var(--radius-lg)] border border-line bg-surface-2 text-center font-display text-3xl font-semibold tracking-[0.5em] text-fg placeholder:text-fg-subtle focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent-soft"
-            />
-            {error && (
-              <p role="alert" className="text-sm text-negative">
-                {error}
-              </p>
-            )}
-            <Button block size="lg" loading={busy} disabled={code.length !== 6} onClick={() => verify(code)}>
-              {t("continue")}
-            </Button>
-            <div className="flex items-center justify-between text-sm">
-              <button
-                type="button"
-                onClick={() => {
-                  setConfirming(false);
-                  setStep("email");
-                }}
-                className="text-fg-muted hover:text-fg"
-              >
-                {t("otherEmail")}
-              </button>
-              <button
-                type="button"
-                disabled={resendIn > 0 || busy}
-                onClick={() => sendCode()}
-                className="text-fg-muted hover:text-fg disabled:opacity-50"
-              >
-                {resendIn > 0 ? t("resendIn", { seconds: resendIn }) : t("resend")}
-              </button>
-            </div>
+      {step === "signin" && (
+        <form key="signin" onSubmit={signIn} className="animate-enter space-y-5">
+          {heading(t("welcomeBack"), t("signInSubtitle"))}
+          {emailField(true)}
+          <TextField
+            label={t("password")}
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            error={error}
+          />
+          <Button type="submit" block size="lg" loading={busy}>
+            {t("signIn")}
+          </Button>
+          <div className="flex items-center justify-between text-[15px]">
+            {linkButton(t("forgot"), () => go("forgot"))}
+            {linkButton(t("createAccount"), () => go("signup"), true)}
           </div>
-        )}
+          {googleButton}
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-line pt-4 text-[14px]">
+            <button type="button" onClick={() => (email.includes("@") ? sendLoginCode() : go("code"))} className="inline-flex items-center gap-1.5 text-fg-muted hover:text-fg">
+              <Mail className="size-4" /> {t("useCode")}
+            </button>
+            <button type="button" onClick={asGuest} disabled={busy} className="inline-flex items-center gap-1.5 text-fg-muted hover:text-fg">
+              <Sparkles className="size-4" /> {t("guest")}
+            </button>
+          </div>
+        </form>
+      )}
 
-        {step === "password" && (
-          <form
-            key="password"
-            onSubmit={withPassword}
-            className="animate-enter space-y-4"
-          >
-            <h1 className="text-center font-display text-3xl font-semibold tracking-tight">
-              {creating ? t("createTitle") : t("welcomeBack")}
-            </h1>
-            {creating && (
-              <TextField label={t("yourName")} autoComplete="name" required value={name} onChange={(e) => setName(e.target.value)} />
-            )}
-            <TextField label={t("email")} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-            <TextField
-              label={t("password")}
-              type="password"
-              autoComplete={creating ? "new-password" : "current-password"}
-              required
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              hint={creating ? t("passwordHint") : undefined}
-              error={error}
-            />
-            <Button type="submit" block size="lg" loading={busy}>
-              {creating ? t("createAccount") : t("signIn")}
-            </Button>
-            <div className="flex items-center justify-between text-sm">
-              <button type="button" onClick={() => setStep("email")} className="text-fg-muted hover:text-fg">
-                {t("useCode")}
-              </button>
-              <button type="button" onClick={() => setCreating((c) => !c)} className="font-medium text-positive">
-                {creating ? t("haveAccount") : t("createAccount")}
-              </button>
-            </div>
-          </form>
-        )}
+      {step === "signup" && (
+        <form key="signup" onSubmit={signUp} className="animate-enter space-y-5">
+          {heading(t("createTitle"), t("createSubtitle"))}
+          <TextField label={t("yourName")} autoComplete="name" required autoFocus value={name} onChange={(e) => setName(e.target.value)} />
+          {emailField()}
+          <TextField
+            label={t("password")}
+            type="password"
+            autoComplete="new-password"
+            required
+            minLength={8}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            hint={t("passwordHint")}
+            error={error}
+          />
+          <Button type="submit" block size="lg" loading={busy}>
+            {t("createAccount")}
+          </Button>
+          {googleButton}
+          <p className="text-center text-[15px]">{linkButton(t("haveAccount"), () => go("signin"), true)}</p>
+        </form>
+      )}
+
+      {step === "verify" && (
+        <div key="verify" className="animate-enter space-y-5 text-center">
+          {heading(t("confirmEmail"), undefined)}
+          <p className="text-[16px] leading-snug text-fg-muted">
+            {t.rich("codeSent", { email, b: (chunks) => <span className="font-[600] text-fg">{chunks}</span> })}
+          </p>
+          <CodeBox value={code} onChange={setCode} onComplete={verifyEmail} disabled={busy} error={Boolean(error)} label={t("codeLabel")} inputRef={codeRef} />
+          {error && (
+            <p role="alert" className="text-sm text-negative">
+              {error}
+            </p>
+          )}
+          <Button block size="lg" loading={busy} disabled={code.length !== 6} onClick={() => verifyEmail(code)}>
+            {t("continue")}
+          </Button>
+          <div className="flex items-center justify-between text-[15px]">
+            {linkButton(t("otherEmail"), () => go("signup"))}
+            <button
+              type="button"
+              disabled={resendIn > 0 || busy}
+              onClick={async () => {
+                const res = await run(t("sendFailed"), () => authClient.emailOtp.sendVerificationOtp({ email: email.trim(), type: "email-verification" }));
+                if (res) setResendIn(30);
+              }}
+              className="text-fg-muted hover:text-fg disabled:opacity-50"
+            >
+              {resendIn > 0 ? t("resendIn", { seconds: resendIn }) : t("resend")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === "forgot" && (
+        <form key="forgot" onSubmit={sendReset} className="animate-enter space-y-5">
+          {heading(t("resetTitle"), t("resetBody"))}
+          {emailField(true)}
+          {error && (
+            <p role="alert" className="text-sm text-negative">
+              {error}
+            </p>
+          )}
+          <Button type="submit" block size="lg" loading={busy} disabled={!email.includes("@")}>
+            {t("sendResetCode")}
+          </Button>
+          <p className="text-center text-[15px]">{linkButton(t("backToSignIn"), () => go("signin"))}</p>
+        </form>
+      )}
+
+      {step === "reset" && (
+        <form key="reset" onSubmit={resetPassword} className="animate-enter space-y-5">
+          {heading(t("resetTitle"), undefined)}
+          <p className="text-center text-[16px] leading-snug text-fg-muted">
+            {t.rich("codeSent", { email, b: (chunks) => <span className="font-[600] text-fg">{chunks}</span> })}
+          </p>
+          <CodeBox value={code} onChange={setCode} disabled={busy} error={Boolean(error)} label={t("codeLabel")} inputRef={codeRef} />
+          <TextField
+            label={t("newPassword")}
+            type="password"
+            autoComplete="new-password"
+            required
+            minLength={8}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            hint={t("passwordHint")}
+            error={error}
+          />
+          <Button type="submit" block size="lg" loading={busy} disabled={code.length !== 6 || password.length < 8}>
+            {t("setNewPassword")}
+          </Button>
+          <div className="flex items-center justify-between text-[15px]">
+            {linkButton(t("backToSignIn"), () => go("signin"))}
+            <button type="button" disabled={resendIn > 0 || busy} onClick={() => void sendReset().then(() => setResendIn(30))} className="text-fg-muted hover:text-fg disabled:opacity-50">
+              {resendIn > 0 ? t("resendIn", { seconds: resendIn }) : t("resend")}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {step === "code" && (
+        <form key="code" onSubmit={sendLoginCode} className="animate-enter space-y-5">
+          {codeSent ? (
+            <>
+              {heading(t("checkEmail"), undefined)}
+              <p className="text-center text-[16px] leading-snug text-fg-muted">
+                {t.rich("codeSent", { email, b: (chunks) => <span className="font-[600] text-fg">{chunks}</span> })}
+              </p>
+              <CodeBox value={code} onChange={setCode} onComplete={loginWithCode} disabled={busy} error={Boolean(error)} label={t("codeLabel")} inputRef={codeRef} />
+              {error && (
+                <p role="alert" className="text-center text-sm text-negative">
+                  {error}
+                </p>
+              )}
+              <Button type="button" block size="lg" loading={busy} disabled={code.length !== 6} onClick={() => loginWithCode(code)}>
+                {t("continue")}
+              </Button>
+            </>
+          ) : (
+            <>
+              {heading(t("useCode"), undefined)}
+              {emailField(true)}
+              {error && (
+                <p role="alert" className="text-sm text-negative">
+                  {error}
+                </p>
+              )}
+              <Button type="submit" block size="lg" loading={busy} disabled={!email.includes("@")}>
+                {t("emailCode")}
+              </Button>
+            </>
+          )}
+          <p className="text-center text-[15px]">{linkButton(t("backToSignIn"), () => go("signin"))}</p>
+        </form>
+      )}
     </AuthLayout>
   );
 }

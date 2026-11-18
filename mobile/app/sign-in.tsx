@@ -12,8 +12,9 @@ import { Button } from "@/ui/button";
 import { Field } from "@/ui/field";
 import { Text } from "@/ui/text";
 
-type Step = "email" | "code" | "password";
+type Step = "signin" | "signup" | "forgot" | "reset" | "verify" | "code";
 type SignInT = ReturnType<typeof useTranslations<"signIn">>;
+type AuthResult = { data?: unknown; error?: { code?: string; status?: number } | null };
 
 /** Better Auth's messages are English; known codes get a translated sentence. */
 function errorText(t: SignInT, err: { code?: string; status?: number } | null | undefined, fallback: string) {
@@ -40,22 +41,25 @@ function errorText(t: SignInT, err: { code?: string; status?: number } | null | 
   }
 }
 
+/**
+ * Email and password first, like every app: sign in, create an account (then
+ * confirm the email with a code), forgot password (code, then a new password).
+ * An emailed sign-in code and a guest session stay as quieter options.
+ */
 export default function SignIn() {
   const t = useTranslations("signIn");
   const { c, radius } = useTheme();
   const insets = useSafeAreaInsets();
   const qc = useQueryClient();
-  const [step, setStep] = useState<Step>("email");
+  const [step, setStep] = useState<Step>("signin");
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [creating, setCreating] = useState(false);
-  // The code confirms a new password account's email (instead of signing in by code).
-  const [confirming, setConfirming] = useState(false);
+  const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(0);
+  const [codeSent, setCodeSent] = useState(false);
   const codeRef = useRef<TextInput>(null);
 
   useEffect(() => {
@@ -64,75 +68,165 @@ export default function SignIn() {
     return () => clearTimeout(timer);
   }, [resendIn]);
 
-  // Signing in flips the session; the root layout then shows the app (or onboarding).
-  const before = () => {
+  const go = (next: Step) => {
     setError(null);
-    setBusy(true);
-    return startFresh(qc);
+    setCode("");
+    setCodeSent(false);
+    setStep(next);
   };
-
-  const sendCode = async () => {
-    setError(null);
-    setBusy(true);
-    const { error } = await authClient.emailOtp.sendVerificationOtp({
-      email: email.trim(),
-      type: confirming ? "email-verification" : "sign-in",
-    });
-    setBusy(false);
-    if (error) return setError(errorText(t, error, t("sendFailed")));
-    setStep("code");
+  const askForCode = (next: Step) => {
+    go(next);
+    setCodeSent(true);
     setResendIn(30);
-    setTimeout(() => codeRef.current?.focus(), 100);
+    setTimeout(() => codeRef.current?.focus(), 120);
   };
 
-  const verify = async (value: string) => {
+  /** One auth call with the busy and error handling every button needs; null when it failed. */
+  const run = async (fallback: string, call: () => Promise<AuthResult>, opts: { fresh?: boolean } = {}) => {
+    setError(null);
+    setBusy(true);
+    try {
+      // Never show a previous account's saved data to whoever signs in next.
+      if (opts.fresh) await startFresh(qc);
+      const res = await call();
+      if (res.error) {
+        setError(errorText(t, res.error, fallback));
+        return null;
+      }
+      return res;
+    } catch {
+      setError(fallback);
+      return null;
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Signing in flips the session; the root layout then shows the app (or onboarding).
+  const signIn = async () => {
+    setError(null);
+    setBusy(true);
+    await startFresh(qc);
+    const { error: err } = await authClient.signIn.email({ email: email.trim(), password });
+    setBusy(false);
+    // Account exists but its email isn't confirmed: the API just sent a code.
+    if (err?.code === "EMAIL_NOT_VERIFIED") return askForCode("verify");
+    if (err) setError(errorText(t, err, t("wrongPassword")));
+  };
+
+  const signUp = async () => {
+    setError(null);
+    setBusy(true);
+    await startFresh(qc);
+    const { data, error: err } = await authClient.signUp.email({ email: email.trim(), password, name: name.trim() });
+    setBusy(false);
+    if (err) return setError(errorText(t, err, t("createFailed")));
+    if (!data?.token) askForCode("verify");
+  };
+
+  const verifyEmail = async (value: string) => {
     if (value.length !== 6) return;
-    await before();
-    const { error } = confirming
-      ? await authClient.emailOtp.verifyEmail({ email: email.trim(), otp: value })
-      : await authClient.signIn.emailOtp({ email: email.trim(), otp: value });
-    setBusy(false);
-    if (error) {
-      setCode("");
-      setError(errorText(t, error, t("badCode")));
-    }
+    const res = await run(t("badCode"), () => authClient.emailOtp.verifyEmail({ email: email.trim(), otp: value }), { fresh: true });
+    if (!res) setCode("");
   };
 
-  const withPassword = async () => {
-    await before();
-    const { data, error } = creating
-      ? await authClient.signUp.email({ email: email.trim(), password, name: name.trim() })
-      : await authClient.signIn.email({ email: email.trim(), password });
-    setBusy(false);
-    // Password accounts confirm their email first; the API has just emailed a code.
-    const needsCode = creating ? !error && !data?.token : error?.code === "EMAIL_NOT_VERIFIED";
-    if (needsCode) {
-      setConfirming(true);
-      setCode("");
-      setError(null);
-      setStep("code");
-      setResendIn(30);
-      setTimeout(() => codeRef.current?.focus(), 100);
-      return;
-    }
-    if (error) setError(errorText(t, error, creating ? t("createFailed") : t("wrongPassword")));
+  const sendReset = async () => {
+    const res = await run(t("sendFailed"), () => authClient.emailOtp.requestPasswordReset({ email: email.trim() }));
+    if (res) askForCode("reset");
   };
 
-  const asGuest = async () => {
-    await before();
-    const { error } = await authClient.signIn.anonymous();
-    setBusy(false);
-    if (error) setError(errorText(t, error, t("guestFailed")));
+  const resetPassword = async () => {
+    const res = await run(t("badCode"), () => authClient.emailOtp.resetPassword({ email: email.trim(), otp: code, password }));
+    if (res) await run(t("wrongPassword"), () => authClient.signIn.email({ email: email.trim(), password }), { fresh: true });
   };
 
-  const google = async () => {
-    await before();
-    const { error } = await authClient.signIn.social({ provider: "google", callbackURL: "/" });
-    setBusy(false);
-    if (error) setError(errorText(t, error, t("sendFailed")));
+  const sendLoginCode = async () => {
+    const res = await run(t("sendFailed"), () => authClient.emailOtp.sendVerificationOtp({ email: email.trim(), type: "sign-in" }));
+    if (res) askForCode("code");
   };
 
+  const loginWithCode = async (value: string) => {
+    if (value.length !== 6) return;
+    const res = await run(t("badCode"), () => authClient.signIn.emailOtp({ email: email.trim(), otp: value }), { fresh: true });
+    if (!res) setCode("");
+  };
+
+  const asGuest = () => run(t("guestFailed"), () => authClient.signIn.anonymous(), { fresh: true });
+  const google = () => run(t("sendFailed"), () => authClient.signIn.social({ provider: "google", callbackURL: "/" }), { fresh: true });
   const link = (path: string) => () => void WebBrowser.openBrowserAsync(`${WEB_URL}${path}`);
+
+  const heading = (title: string, sub?: string) => (
+    <View style={{ gap: 6 }}>
+      <Text variant="title" center accessibilityRole="header">
+        {title}
+      </Text>
+      {sub ? (
+        <Text tone="muted" center>
+          {sub}
+        </Text>
+      ) : null}
+    </View>
+  );
+  const emailField = (autoFocus = false) => (
+    <Field
+      label={t("email")}
+      value={email}
+      onChangeText={setEmail}
+      placeholder={t("emailPlaceholder")}
+      keyboardType="email-address"
+      autoCapitalize="none"
+      autoComplete="email"
+      textContentType="emailAddress"
+      autoFocus={autoFocus}
+      testID="email"
+    />
+  );
+  const codeInput = (onComplete?: (v: string) => void) => (
+    <TextInput
+      ref={codeRef}
+      value={code}
+      onChangeText={(v) => {
+        const digits = v.replace(/\D/g, "").slice(0, 6);
+        setCode(digits);
+        if (digits.length === 6) onComplete?.(digits);
+      }}
+      keyboardType="number-pad"
+      autoComplete="one-time-code"
+      textContentType="oneTimeCode"
+      accessibilityLabel={t("codeLabel")}
+      editable={!busy}
+      placeholder="••••••"
+      placeholderTextColor={c.fgSubtle}
+      style={{
+        height: 68,
+        borderRadius: radius.lg,
+        borderWidth: 1,
+        borderColor: error ? c.negative : c.line,
+        backgroundColor: c.surface2,
+        textAlign: "center",
+        fontSize: 32,
+        fontWeight: "700",
+        letterSpacing: 12,
+        color: c.fg,
+        fontVariant: ["tabular-nums"],
+      }}
+    />
+  );
+  const errorLine = error ? (
+    <Text tone="negative" center accessibilityLiveRegion="polite">
+      {error}
+    </Text>
+  ) : null;
+  const resend = (onPress: () => void) => (
+    <Button variant="ghost" disabled={resendIn > 0 || busy} onPress={onPress}>
+      {resendIn > 0 ? t("resendIn", { seconds: resendIn }) : t("resend")}
+    </Button>
+  );
+  const back = (
+    <Button variant="ghost" onPress={() => go("signin")}>
+      {t("backToSignIn")}
+    </Button>
+  );
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -153,42 +247,40 @@ export default function SignIn() {
           </View>
         </View>
 
-        {step === "email" && (
+        {step === "signin" && (
           <View style={{ gap: 16 }}>
-            <View style={{ gap: 6 }}>
-              <Text variant="title" center accessibilityRole="header">
-                {t("title")}
-              </Text>
-              <Text tone="muted" center>
-                {t("subtitle")}
-              </Text>
-            </View>
+            {heading(t("welcomeBack"), t("signInSubtitle"))}
+            {emailField(true)}
             <Field
-              label={t("email")}
-              value={email}
-              onChangeText={setEmail}
-              placeholder={t("emailPlaceholder")}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-              textContentType="emailAddress"
-              autoFocus
-              returnKeyType="send"
-              onSubmitEditing={sendCode}
+              label={t("password")}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoComplete="current-password"
+              textContentType="password"
               error={error}
-              testID="email"
+              returnKeyType="go"
+              onSubmitEditing={signIn}
             />
-            <Button size="lg" block loading={busy} disabled={!email.includes("@")} onPress={sendCode} icon="mail">
-              {t("emailCode")}
+            <Button size="lg" block loading={busy} disabled={!email.includes("@") || !password} onPress={signIn}>
+              {t("signIn")}
             </Button>
+            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+              <Button variant="ghost" onPress={() => go("forgot")}>
+                {t("forgot")}
+              </Button>
+              <Button variant="ghost" onPress={() => go("signup")}>
+                {t("createAccount")}
+              </Button>
+            </View>
             {GOOGLE_SIGN_IN && (
               <Button size="lg" block variant="secondary" icon="logo-google" onPress={google}>
                 {t("google")}
               </Button>
             )}
             <View style={{ flexDirection: "row", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-              <Button variant="ghost" icon="key" onPress={() => setStep("password")}>
-                {t("usePassword")}
+              <Button variant="ghost" icon="mail" onPress={() => go("code")}>
+                {t("useCode")}
               </Button>
               <Button variant="ghost" icon="sparkles" onPress={asGuest} disabled={busy} testID="guest">
                 {t("guest")}
@@ -197,108 +289,118 @@ export default function SignIn() {
           </View>
         )}
 
-        {step === "code" && (
-          <View style={{ gap: 16 }}>
-            <View style={{ gap: 6 }}>
-              <Text variant="title" center accessibilityRole="header">
-                {t("checkEmail")}
-              </Text>
-              <Text tone="muted" center>
-                {t.rich("codeSent", { email, b: (chunks) => <Text variant="bodyStrong">{chunks}</Text> })}
-              </Text>
-            </View>
-            <TextInput
-              ref={codeRef}
-              value={code}
-              onChangeText={(v) => {
-                const digits = v.replace(/\D/g, "").slice(0, 6);
-                setCode(digits);
-                if (digits.length === 6) void verify(digits);
-              }}
-              keyboardType="number-pad"
-              autoComplete="one-time-code"
-              textContentType="oneTimeCode"
-              accessibilityLabel={t("codeLabel")}
-              editable={!busy}
-              placeholder="••••••"
-              placeholderTextColor={c.fgSubtle}
-              style={{
-                height: 68,
-                borderRadius: radius.lg,
-                borderWidth: 1,
-                borderColor: error ? c.negative : c.line,
-                backgroundColor: c.surface2,
-                textAlign: "center",
-                fontSize: 32,
-                fontWeight: "700",
-                letterSpacing: 12,
-                color: c.fg,
-                fontVariant: ["tabular-nums"],
-              }}
-            />
-            {error ? (
-              <Text tone="negative" center accessibilityLiveRegion="polite">
-                {error}
-              </Text>
-            ) : null}
-            <Button size="lg" block loading={busy} disabled={code.length !== 6} onPress={() => verify(code)}>
-              {t("continue")}
-            </Button>
-            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-              <Button
-                variant="ghost"
-                onPress={() => {
-                  setConfirming(false);
-                  setStep("email");
-                }}
-              >
-                {t("otherEmail")}
-              </Button>
-              <Button variant="ghost" disabled={resendIn > 0 || busy} onPress={sendCode}>
-                {resendIn > 0 ? t("resendIn", { seconds: resendIn }) : t("resend")}
-              </Button>
-            </View>
-          </View>
-        )}
-
-        {step === "password" && (
+        {step === "signup" && (
           <View style={{ gap: 14 }}>
-            <Text variant="title" center accessibilityRole="header">
-              {creating ? t("createTitle") : t("welcomeBack")}
-            </Text>
-            {creating && <Field label={t("yourName")} value={name} onChangeText={setName} autoComplete="name" textContentType="name" />}
-            <Field
-              label={t("email")}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-              textContentType="emailAddress"
-            />
+            {heading(t("createTitle"), t("createSubtitle"))}
+            <Field label={t("yourName")} value={name} onChangeText={setName} autoComplete="name" textContentType="name" autoFocus />
+            {emailField()}
             <Field
               label={t("password")}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
-              autoComplete={creating ? "new-password" : "current-password"}
-              textContentType={creating ? "newPassword" : "password"}
-              hint={creating ? t("passwordHint") : undefined}
+              autoComplete="new-password"
+              textContentType="newPassword"
+              hint={t("passwordHint")}
               error={error}
-              returnKeyType="go"
-              onSubmitEditing={withPassword}
             />
-            <Button size="lg" block loading={busy} onPress={withPassword} disabled={!email || password.length < 8 || (creating && !name.trim())}>
-              {creating ? t("createAccount") : t("signIn")}
+            <Button size="lg" block loading={busy} disabled={!email.includes("@") || password.length < 8 || !name.trim()} onPress={signUp}>
+              {t("createAccount")}
             </Button>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", flexWrap: "wrap" }}>
-              <Button variant="ghost" onPress={() => setStep("email")}>
-                {t("useCode")}
+            <Button variant="ghost" onPress={() => go("signin")}>
+              {t("haveAccount")}
+            </Button>
+          </View>
+        )}
+
+        {step === "verify" && (
+          <View style={{ gap: 16 }}>
+            {heading(t("confirmEmail"))}
+            <Text tone="muted" center>
+              {t.rich("codeSent", { email, b: (chunks) => <Text variant="bodyStrong">{chunks}</Text> })}
+            </Text>
+            {codeInput(verifyEmail)}
+            {errorLine}
+            <Button size="lg" block loading={busy} disabled={code.length !== 6} onPress={() => verifyEmail(code)}>
+              {t("continue")}
+            </Button>
+            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+              <Button variant="ghost" onPress={() => go("signup")}>
+                {t("otherEmail")}
               </Button>
-              <Button variant="ghost" onPress={() => setCreating((v) => !v)}>
-                {creating ? t("haveAccount") : t("createAccount")}
-              </Button>
+              {resend(async () => {
+                const res = await run(t("sendFailed"), () => authClient.emailOtp.sendVerificationOtp({ email: email.trim(), type: "email-verification" }));
+                if (res) setResendIn(30);
+              })}
             </View>
+          </View>
+        )}
+
+        {step === "forgot" && (
+          <View style={{ gap: 16 }}>
+            {heading(t("resetTitle"), t("resetBody"))}
+            {emailField(true)}
+            {errorLine}
+            <Button size="lg" block loading={busy} disabled={!email.includes("@")} onPress={sendReset}>
+              {t("sendResetCode")}
+            </Button>
+            {back}
+          </View>
+        )}
+
+        {step === "reset" && (
+          <View style={{ gap: 14 }}>
+            {heading(t("resetTitle"))}
+            <Text tone="muted" center>
+              {t.rich("codeSent", { email, b: (chunks) => <Text variant="bodyStrong">{chunks}</Text> })}
+            </Text>
+            {codeInput()}
+            <Field
+              label={t("newPassword")}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoComplete="new-password"
+              textContentType="newPassword"
+              hint={t("passwordHint")}
+              error={error}
+            />
+            <Button size="lg" block loading={busy} disabled={code.length !== 6 || password.length < 8} onPress={resetPassword}>
+              {t("setNewPassword")}
+            </Button>
+            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+              {back}
+              {resend(sendReset)}
+            </View>
+          </View>
+        )}
+
+        {step === "code" && (
+          <View style={{ gap: 16 }}>
+            {codeSent ? (
+              <>
+                {heading(t("checkEmail"))}
+                <Text tone="muted" center>
+                  {t.rich("codeSent", { email, b: (chunks) => <Text variant="bodyStrong">{chunks}</Text> })}
+                </Text>
+                {codeInput(loginWithCode)}
+                {errorLine}
+                <Button size="lg" block loading={busy} disabled={code.length !== 6} onPress={() => loginWithCode(code)}>
+                  {t("continue")}
+                </Button>
+                {resend(sendLoginCode)}
+              </>
+            ) : (
+              <>
+                {heading(t("useCode"))}
+                {emailField(true)}
+                {errorLine}
+                <Button size="lg" block loading={busy} disabled={!email.includes("@")} onPress={sendLoginCode}>
+                  {t("emailCode")}
+                </Button>
+              </>
+            )}
+            {back}
           </View>
         )}
 
@@ -320,4 +422,3 @@ export default function SignIn() {
     </KeyboardAvoidingView>
   );
 }
-
