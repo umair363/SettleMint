@@ -87,7 +87,6 @@ try {
   });
 
   await step("sign up", async () => {
-    await page.getByRole("button", { name: "Use a password" }).click();
     await page.getByRole("button", { name: "Create account" }).click();
     await page.getByLabel("Your name").fill("Ana Souza");
     await page.getByLabel("Email").fill(`ana-${Date.now()}@example.com`);

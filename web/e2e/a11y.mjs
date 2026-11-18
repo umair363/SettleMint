@@ -60,7 +60,6 @@ for (const theme of ["dark", "light"]) {
   await page.goto("http://localhost:4555/sign-in", { waitUntil: "load" });
   await audit(page, at("sign-in"));
 
-  await page.getByRole("button", { name: "Use a password" }).click();
   await page.getByRole("button", { name: "Create account" }).click();
   await page.getByLabel("Your name").fill("Ava Access");
   await page.getByLabel("Email").fill(`ava-${theme}-${Date.now()}@example.com`);

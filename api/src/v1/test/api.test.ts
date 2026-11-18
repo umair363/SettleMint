@@ -154,6 +154,26 @@ describe("auth", () => {
     expect((await intruder.post("/v1/auth/sign-in/email", { email, password: "intruder-password" })).status).toBe(401);
   });
 
+  it("lets someone who forgot their password set a new one with an emailed code", async () => {
+    const owner = client();
+    const { email } = await owner.signUp("Fiona");
+    // Forgot password: a code goes to the inbox...
+    const before = t.mailer.sent.length;
+    const ask = await owner.post("/v1/auth/email-otp/request-password-reset", { email });
+    expect(ask.status).toBe(200);
+    const code = await owner.lastCode(email, before);
+    // ...a wrong code does nothing...
+    const wrong = await owner.post("/v1/auth/email-otp/reset-password", { email, otp: code === "000000" ? "111111" : "000000", password: "brand-new-password-1" });
+    expect(wrong.status).toBe(400);
+    // ...the right one sets the new password; the old one stops working, the new one signs in.
+    const done = await owner.post("/v1/auth/email-otp/reset-password", { email, otp: code, password: "brand-new-password-1" });
+    expect(done.status).toBe(200);
+    const fresh = client();
+    expect((await fresh.post("/v1/auth/sign-in/email", { email, password: "correct-horse-battery" })).status).toBe(401);
+    expect((await fresh.post("/v1/auth/sign-in/email", { email, password: "brand-new-password-1" })).status).toBe(200);
+    expect((await fresh.get("/v1/me")).status).toBe(200);
+  });
+
   it("sends a sign-in code by email", async () => {
     const c = client();
     const { email } = await c.signUp("Eli");

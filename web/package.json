@@ -12,6 +12,7 @@
     "predev": "node scripts/build-tokens.mjs"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.20.17",
     "@phosphor-icons/react": "^2.1.10",
     "@settlemint/shared": "*",
     "@tanstack/query-async-storage-persister": "^5.107.1",
@@ -45,6 +46,7 @@
     "intl-messageformat": "^12.1.5",
     "playwright": "^1.65.1",
     "tailwindcss": "^4.3.5",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.164.0"
   }
 }

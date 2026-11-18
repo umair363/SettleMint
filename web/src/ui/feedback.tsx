@@ -79,7 +79,7 @@ export function EmptyState({
       {preview && (
         <div
           aria-hidden
-          className="inset-list pointer-events-none mb-7 select-none overflow-hidden rounded-[var(--radius-md)] bg-surface-2/60 opacity-80 [--inset:4.25rem] [mask-image:linear-gradient(to_bottom,black_45%,transparent)]"
+          className="inset-list pointer-events-none mb-7 select-none overflow-hidden rounded-[var(--radius-md)] bg-surface-2/60 [--inset:4.25rem] [mask-image:linear-gradient(to_bottom,black_45%,transparent)]"
         >
           {preview}
         </div>
