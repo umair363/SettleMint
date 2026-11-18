@@ -13,9 +13,11 @@ within three working days.
 - Password accounts must confirm their email with a code before they can sign
   in, so nobody can hold an account under someone else's address. When the real
   owner signs in by code, any password or session set up by someone else is removed.
-- Passwords: 8–128 characters, stored as slow salted hashes; in production,
-  passwords known from data breaches are refused (Have I Been Pwned range
-  lookup: only 5 characters of a hash leave the server).
+- Passwords: 8–128 characters, stored as slow salted hashes. Nobody is forced
+  to change a password: if one has appeared in a known data breach, the web
+  sign-up screen says so and lets them keep it (a Have I Been Pwned range
+  lookup sends only the first 5 characters of a hash; the password itself
+  never leaves the device).
 - Sessions are httpOnly, Secure, SameSite cookies on the web, and in the
   phone's keychain / keystore (SecureStore) in the app. Never in localStorage.
 - Codes expire after 10 minutes and allow 5 attempts.

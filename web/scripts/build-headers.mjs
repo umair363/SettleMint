@@ -15,7 +15,7 @@ export const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self'",
-  `connect-src 'self' ${apiOrigin}`,
+  `connect-src 'self' ${apiOrigin} https://api.pwnedpasswords.com`,
   "manifest-src 'self'",
   "worker-src 'self'",
   "frame-ancestors 'none'",

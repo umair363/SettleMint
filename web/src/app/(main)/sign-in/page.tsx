@@ -11,6 +11,7 @@ import { safeNext } from "@/features/auth/safe-next";
 import { authClient } from "@/lib/auth-client";
 import { GOOGLE_SIGN_IN } from "@/lib/env";
 import { persister } from "@/lib/persist";
+import { isPasswordBreached } from "@/lib/pwned";
 import { Button } from "@/ui/button";
 import { TextField } from "@/ui/field";
 
@@ -41,8 +42,6 @@ function errorText(t: SignInT, err: { code?: string; status?: number } | null | 
       return t("accountExists");
     case "PASSWORD_TOO_SHORT":
       return t("passwordShort");
-    case "PASSWORD_COMPROMISED":
-      return t("passwordBreached");
     case "INVALID_EMAIL":
       return t("badEmail");
     default:
@@ -124,7 +123,23 @@ function SignIn() {
   const [resendIn, setResendIn] = useState(0);
   // The emailed-code screen asks for the address first, then for the code.
   const [codeSent, setCodeSent] = useState(false);
+  // Advice only: a password seen in a breach gets a note, never a refusal.
+  const [checked, setChecked] = useState<{ password: string; breached: boolean } | null>(null);
+  const breached = (step === "signup" || step === "reset") && checked?.password === password && checked.breached;
   const codeRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if ((step !== "signup" && step !== "reset") || password.length < 8) return;
+    const abort = new AbortController();
+    const timer = setTimeout(
+      () => void isPasswordBreached(password, abort.signal).then((b) => !abort.signal.aborted && setChecked({ password, breached: b })),
+      600,
+    );
+    return () => {
+      clearTimeout(timer);
+      abort.abort();
+    };
+  }, [password, step]);
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -345,7 +360,7 @@ function SignIn() {
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            hint={t("passwordHint")}
+            hint={breached ? t("passwordBreached") : t("passwordHint")}
             error={error}
           />
           <Button type="submit" block size="lg" loading={busy}>
@@ -419,7 +434,7 @@ function SignIn() {
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            hint={t("passwordHint")}
+            hint={breached ? t("passwordBreached") : t("passwordHint")}
             error={error}
           />
           <Button type="submit" block size="lg" loading={busy} disabled={code.length !== 6 || password.length < 8}>

@@ -510,7 +510,7 @@ const pt: Messages = {
     wrongPassword: "E-mail ou senha incorretos",
     accountExists: "Já existe uma conta com este e-mail. Entre nela.",
     passwordShort: "Use pelo menos 8 caracteres.",
-    passwordBreached: "Esta senha apareceu em um vazamento de dados. Escolha outra.",
+    passwordBreached: "Esta senha apareceu em um vazamento de dados. Você pode usá-la, mas outra é mais segura.",
     badEmail: "Esse e-mail não parece certo.",
     sendFailed: "Não foi possível enviar o código",
     createFailed: "Não foi possível criar a conta",

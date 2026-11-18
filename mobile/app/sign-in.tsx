@@ -32,8 +32,6 @@ function errorText(t: SignInT, err: { code?: string; status?: number } | null | 
       return t("accountExists");
     case "PASSWORD_TOO_SHORT":
       return t("passwordShort");
-    case "PASSWORD_COMPROMISED":
-      return t("passwordBreached");
     case "INVALID_EMAIL":
       return t("badEmail");
     default:
