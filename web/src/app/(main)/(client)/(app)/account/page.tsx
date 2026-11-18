@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { Download, LogOut, Monitor, Moon, Share, ShieldCheck, Sun } from "lucide-react";
+import { Download, LogOut, Monitor, Moon, Share, ShieldCheck, Sun } from "@/ui/icons";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";

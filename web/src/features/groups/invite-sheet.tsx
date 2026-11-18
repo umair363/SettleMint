@@ -2,7 +2,7 @@
 
 import type { GroupDetailDto } from "@settlemint/shared";
 import { useMutation } from "@tanstack/react-query";
-import { Check, Copy, RefreshCw, Share2, UserPlus } from "lucide-react";
+import { Check, Copy, RefreshCw, Share2, UserPlus } from "@/ui/icons";
 import { useEffect, useState, type FormEvent } from "react";
 import { useTranslations } from "use-intl";
 import { toast } from "sonner";

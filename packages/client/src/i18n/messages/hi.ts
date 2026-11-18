@@ -41,6 +41,7 @@ const hi: Messages = {
     yourBalance: "आपका बैलेंस",
     allSettled: "सारा हिसाब बराबर",
     nobodyOwes: "किसी पर किसी का कुछ बकाया नहीं। बढ़िया।",
+    acrossGroups: "{count, plural, one {# ग्रुप में} other {# ग्रुप्स में}}",
     overall: "{state, select, owed {कुल मिलाकर, आपको मिलने हैं} owe {कुल मिलाकर, आपको देने हैं} other {कुल मिलाकर, हिसाब बराबर है}}",
     owedAndOwe: "<owed></owed> आपको मिलने हैं · <owe></owe> आपको देने हैं",
     sampleTrip: "लिस्बन ट्रिप",

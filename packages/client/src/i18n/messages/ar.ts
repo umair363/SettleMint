@@ -44,6 +44,7 @@ const ar: Messages = {
     yourBalance: "رصيدك",
     allSettled: "كل الحسابات مسوّاة",
     nobodyOwes: "لا أحد مدين لأحد. رائع.",
+    acrossGroups: "{count, plural, zero {في # مجموعة} one {في مجموعة واحدة} two {في مجموعتين} few {في # مجموعات} many {في # مجموعة} other {في # مجموعة}}",
     overall: "{state, select, owed {إجمالًا، لك مستحقات} owe {إجمالًا، عليك دين} other {إجمالًا، حسابك متعادل}}",
     owedAndOwe: "لك <owed></owed> · عليك <owe></owe>",
     sampleTrip: "رحلة لشبونة",

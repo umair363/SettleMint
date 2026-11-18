@@ -13,7 +13,7 @@ import {
   Sparkles,
   Sun,
   Trash2,
-} from "lucide-react";
+} from "@/ui/icons";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { evaluateAmount, AmountDisplay, AmountPad } from "@/ui/amount-pad";

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, KeyRound, Mail, Sparkles } from "lucide-react";
+import { ArrowRight, KeyRound, Mail, Sparkles } from "@/ui/icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";

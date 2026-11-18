@@ -58,8 +58,9 @@ export async function computeLines(tx: DbOrTx, group: GroupRow, body: ExpenseInp
   };
 }
 
-export const expenseSummary = (e: { description: string; amount: number; currency: string }) => ({
+export const expenseSummary = (e: { description: string; amount: number; currency: string; category?: string | null }) => ({
   description: e.description,
   amount: e.amount,
   currency: e.currency,
+  ...(e.category ? { category: e.category } : {}),
 });

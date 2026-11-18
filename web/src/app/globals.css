@@ -1,83 +1,15 @@
 @import "tailwindcss";
+@import "./tokens.css";
 
 /*
- * Liquid Mint design tokens.
- * Colours are semantic CSS variables, redefined per theme, then exposed to
- * Tailwind as utilities (bg-surface, text-fg-muted, border-line, ...).
- * Dark is the default; light is a complete theme, not an afterthought.
+ * SettleMint, Liquid Glass.
+ * Colour roles come from tokens.css (generated from packages/client/src/design/tokens.ts),
+ * redefined per theme and exposed to Tailwind as utilities (bg-surface, text-fg-muted…).
+ * Light is the default. Glass is reserved for the floating layer that content scrolls
+ * under; content itself sits on solid surfaces.
  */
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
-
-:root,
-[data-theme="dark"] {
-  color-scheme: dark;
-  --bg: #0b0f14;
-  --bg-elevated: #10151c;
-  --surface: #141a22;
-  --surface-2: #1a212b;
-  --surface-3: #222a36;
-  --line: rgb(255 255 255 / 0.07);
-  --line-strong: rgb(255 255 255 / 0.13);
-
-  --fg: #f1f4f6;
-  --fg-muted: #a1abb8;
-  --fg-subtle: #8a95a3;
-
-  --accent: #3dd68c;
-  --accent-hover: #52e09b;
-  --accent-fg: #03200f;
-  --accent-soft: rgb(61 214 140 / 0.14);
-
-  --positive: #3dd68c;
-  --positive-soft: rgb(61 214 140 / 0.12);
-  --negative: #ff7a70;
-  --negative-soft: rgb(255 122 112 / 0.12);
-  --warning: #ffbd5a;
-  --warning-soft: rgb(255 189 90 / 0.12);
-  --info: #7aa7ff;
-  --info-soft: rgb(122 167 255 / 0.12);
-
-  --glass: rgb(16 21 28 / 0.72);
-  --glass-line: rgb(255 255 255 / 0.09);
-  --scrim: rgb(3 6 10 / 0.6);
-  --shadow-color: 0 0% 0%;
-}
-
-[data-theme="light"] {
-  color-scheme: light;
-  --bg: #f5f7f6;
-  --bg-elevated: #ffffff;
-  --surface: #ffffff;
-  --surface-2: #f0f3f2;
-  --surface-3: #e5eae8;
-  --line: rgb(12 24 18 / 0.08);
-  --line-strong: rgb(12 24 18 / 0.15);
-
-  --fg: #0c1511;
-  --fg-muted: #4a5751;
-  --fg-subtle: #5a6862;
-
-  --accent: #3dd68c;
-  --accent-hover: #2fc77e;
-  --accent-fg: #03200f;
-  --accent-soft: rgb(31 170 104 / 0.12);
-
-  /* Darker greens/reds so text stays readable (WCAG AA) on white. */
-  --positive: #0b7a48;
-  --positive-soft: rgb(11 122 72 / 0.09);
-  --negative: #c93a32;
-  --negative-soft: rgb(201 58 50 / 0.08);
-  --warning: #9a5a00;
-  --warning-soft: rgb(154 90 0 / 0.09);
-  --info: #2a5fd0;
-  --info-soft: rgb(42 95 208 / 0.08);
-
-  --glass: rgb(255 255 255 / 0.74);
-  --glass-line: rgb(12 24 18 / 0.08);
-  --scrim: rgb(10 20 15 / 0.35);
-  --shadow-color: 150 20% 20%;
-}
 
 @theme inline {
   --color-bg: var(--bg);
@@ -98,6 +30,8 @@
   --color-positive-soft: var(--positive-soft);
   --color-negative: var(--negative);
   --color-negative-soft: var(--negative-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
   --color-info: var(--info);
@@ -105,31 +39,33 @@
   --color-glass: var(--glass);
   --color-glass-line: var(--glass-line);
   --color-scrim: var(--scrim);
+  --color-focus: var(--focus);
 
-  --font-sans: var(--font-bricolage), var(--font-arabic), var(--font-devanagari), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-bricolage), var(--font-arabic), var(--font-devanagari), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-mona), var(--font-arabic), var(--font-devanagari), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-mona), var(--font-arabic), var(--font-devanagari), ui-sans-serif, system-ui, sans-serif;
 
-  --radius-sm: 0.625rem;
-  --radius-md: 0.875rem;
+  /* Concentric radii: inner = outer − padding. */
+  --radius-sm: 0.75rem;
+  --radius-md: 1rem;
   --radius-lg: 1.25rem;
-  --radius-xl: 1.75rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
 
-  --shadow-soft: 0 1px 2px hsl(var(--shadow-color) / 0.06), 0 4px 16px -4px hsl(var(--shadow-color) / 0.12);
-  --shadow-float: 0 2px 4px hsl(var(--shadow-color) / 0.08), 0 16px 48px -12px hsl(var(--shadow-color) / 0.35);
-  /* Lifted action (the add button): neutral elevation, no coloured glow. */
-  --shadow-lift: 0 1px 0 rgb(255 255 255 / 0.25) inset, 0 6px 16px -4px hsl(var(--shadow-color) / 0.45), 0 2px 4px hsl(var(--shadow-color) / 0.2);
+  /* Depth: content uses hairlines; only floating things cast shadows. */
+  --shadow-soft: 0 1px 2px oklch(21.5% 0.014 170 / 0.05);
+  --shadow-float: 0 12px 32px -12px oklch(21.5% 0.014 170 / 0.22), 0 2px 6px -2px oklch(21.5% 0.014 170 / 0.08);
+  --shadow-lift: 0 10px 24px -10px oklch(50% 0.105 166 / 0.45), 0 2px 4px -1px oklch(21.5% 0.014 170 / 0.12);
+  --shadow-overlay: 0 24px 64px -12px oklch(21.5% 0.014 170 / 0.28);
 
-  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
-  /* Confident arrival: fast start, gentle settle. */
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: var(--ease-enter);
+  --ease-out-expo: var(--ease-focal);
 
   --animate-shimmer: shimmer 1.6s linear infinite;
-  /* Entrance for lightweight screens: content is visible by default if CSS animation is off. */
-  --animate-enter: enter 0.24s var(--ease-out-expo) both;
+  --animate-enter: enter var(--dur-state) var(--ease-enter) both;
   @keyframes enter {
     from {
       opacity: 0;
-      transform: translateY(6px);
+      transform: translateY(4px);
     }
   }
   @keyframes shimmer {
@@ -146,33 +82,35 @@
   html {
     -webkit-tap-highlight-color: transparent;
     text-size-adjust: 100%;
+    background: var(--bg);
   }
   body {
     background: var(--bg);
     color: var(--fg);
     font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.45;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     min-height: 100dvh;
     font-optical-sizing: auto;
+    font-kerning: normal;
   }
   /* Waiting for this language's text (a few ms from the offline cache): hide, don't flash English. */
   html[data-i18n-pending] [data-i18n-root] {
     visibility: hidden;
   }
-  /* Arabic script and Devanagari need more room above and below than Latin. */
+  /* Arabic script and Devanagari: a little larger, more line height, no tracking
+     (letter-spacing pulls joined Arabic letters apart). */
   html:lang(ar),
   html:lang(ur),
   html:lang(hi) {
     line-height: 1.6;
   }
-  /* Arabic script is joined: any letter-spacing pulls words apart ("الفو اتير").
-     Important in the base layer outranks the tracking-* utilities. */
   html:lang(ar) *,
   html:lang(ur) * {
     letter-spacing: normal !important;
   }
-  /* Readable wrapping: balanced headings, no lonely last words in paragraphs. */
   h1,
   h2,
   h3 {
@@ -181,13 +119,26 @@
   p {
     text-wrap: pretty;
   }
+  /* The parts of the browser nobody draws still carry the design. */
   :focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--focus);
     outline-offset: 2px;
-    border-radius: 6px;
   }
   ::selection {
     background: var(--accent-soft);
+    color: var(--fg);
+  }
+  input,
+  textarea {
+    caret-color: var(--positive);
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+  }
+  a {
+    text-underline-offset: 0.18em;
+    text-decoration-thickness: 1px;
   }
   /* iOS zooms into inputs under 16px; keep inputs at 16px on touch screens. */
   @media (pointer: coarse) {
@@ -199,18 +150,37 @@
   }
 }
 
-/* Custom utilities (declared with @utility so variants and ! work in Tailwind v4). */
-/* Money and any figures that should line up in columns. */
+/* Money and figures that line up in columns. */
 @utility tabular {
   font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum" 1, "ss01" 1;
+  font-feature-settings: "tnum" 1;
 }
-/* Floating chrome only (nav bars, sheets, toasts, the add button): never content cards. */
+/* Mona Sans' expanded widths: titles and every amount. */
+@utility font-wide {
+  font-stretch: 112.5%;
+}
+@utility font-wider {
+  font-stretch: 118%;
+}
+/* Floating chrome only: tab bar, compact header, toasts, search frame, landing header. */
 @utility glass {
   background: var(--glass);
-  -webkit-backdrop-filter: blur(20px) saturate(170%);
-  backdrop-filter: blur(20px) saturate(170%);
-  border: 1px solid var(--glass-line);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow:
+    inset 0 0 0 0.5px var(--glass-line),
+    inset 0 1px 0 0 var(--glass-highlight),
+    0 10px 30px -10px oklch(21.5% 0.014 170 / 0.18);
+}
+/* The one tinted glass: the add button. */
+@utility glass-tint {
+  background: color-mix(in oklch, var(--accent) 88%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
+  box-shadow:
+    inset 0 1px 0 0 oklch(100% 0 0 / 0.55),
+    inset 0 0 0 0.5px oklch(25% 0.06 165 / 0.18),
+    0 10px 24px -10px oklch(50% 0.105 166 / 0.55);
 }
 @utility safe-bottom {
   padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);
@@ -223,6 +193,78 @@
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* Inset grouped lists: the hairline starts where the row's text starts. */
+.inset-list > * + * {
+  position: relative;
+}
+.inset-list > * + *::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  inset-inline: var(--inset, 1rem) 0;
+  height: 1px;
+  background: var(--line);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Landing hero: the live glass lens fades in over its CSS stand-in. */
+.lens-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  animation: lens-in 700ms var(--ease-focal) 120ms forwards;
+}
+@keyframes lens-in {
+  to {
+    opacity: 1;
+  }
+}
+[data-lens="on"] [data-lens-fallback] {
+  opacity: 0;
+}
+
+/* Identity colours for people and groups (hue per id, see tokens.ts IDENTITY_HUES). */
+.identity {
+  background: oklch(92% 0.045 var(--id-h, 255));
+  color: oklch(40% 0.09 var(--id-h, 255));
+}
+[data-theme="dark"] .identity {
+  background: oklch(33% 0.055 var(--id-h, 255));
+  color: oklch(90% 0.06 var(--id-h, 255));
+}
+
+/* Glass falls back to solid where translucency hurts: by request, without blur support, or on low-power devices. */
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .glass-tint {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .glass {
+    background: var(--bg-elevated);
+  }
+  .glass-tint {
+    background: var(--accent);
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background: var(--bg-elevated);
+  }
+  .glass-tint {
+    background: var(--accent);
+  }
+}
+html[data-lowpower] .glass {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: var(--bg-elevated);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Languages } from "lucide-react";
+import { Languages } from "@/ui/icons";
 import { useTranslations } from "use-intl";
 import { formattingLocale, LANGUAGES, matchLanguage, type LanguagePreference } from "@settlemint/client/i18n/languages";
 import { setLanguagePreference, useLanguagePreference } from "@/i18n/provider";

@@ -1,7 +1,7 @@
 "use client";
 
 import { buildPayAction, type MemberDto } from "@settlemint/shared";
-import { Check, Copy, ExternalLink } from "lucide-react";
+import { Check, Copy, ExternalLink } from "@/ui/icons";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
 import { toast } from "sonner";

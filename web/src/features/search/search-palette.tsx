@@ -2,7 +2,7 @@
 
 import { getCategoryMeta } from "@settlemint/shared";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { Search } from "lucide-react";
+import { Search } from "@/ui/icons";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "use-intl";

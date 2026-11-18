@@ -1,14 +1,6 @@
+import { identityHue } from "@settlemint/client/design/tokens";
+import type { CSSProperties } from "react";
 import { cn } from "./cn";
-
-// Hues picked to be distinct from each other and readable with white text
-// on both themes. Chosen by id, so a person keeps their colour everywhere.
-const HUES = [152, 205, 262, 330, 24, 45, 188, 290, 352, 98];
-
-function hash(s: string) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
 
 export function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -20,10 +12,10 @@ export function initials(name: string) {
 
 const sizes = {
   xs: "size-6 text-[10px]",
-  sm: "size-8 text-xs",
-  md: "size-10 text-sm",
-  lg: "size-14 text-lg",
-  xl: "size-20 text-2xl",
+  sm: "size-8 text-[12px]",
+  md: "size-10 text-[14px]",
+  lg: "size-14 text-[19px]",
+  xl: "size-20 text-[26px]",
 } as const;
 
 export interface AvatarProps {
@@ -36,26 +28,28 @@ export interface AvatarProps {
   className?: string;
 }
 
+/**
+ * A monogram on the person's own colour: one of eight quiet hues chosen by id,
+ * flat (no gradient), kept clear of the mint and ember used for balances.
+ */
 export function Avatar({ id, name, image, size = "md", pending, className }: AvatarProps) {
-  const hue = HUES[hash(id) % HUES.length];
   return (
     <span
       className={cn(
-        "relative inline-flex shrink-0 select-none items-center justify-center overflow-hidden rounded-full font-semibold text-white",
+        "identity relative inline-flex shrink-0 select-none items-center justify-center overflow-hidden rounded-full font-wide font-[640] tracking-[0.01em]",
         sizes[size],
-        pending && "outline-2 outline-offset-1 outline-dashed outline-line-strong",
+        pending && "outline-[1.5px] outline-offset-2 outline-dashed outline-line-strong",
         className,
       )}
-      // OKLCH keeps every hue at the same perceived lightness, so white
-      // initials stay above 4.5:1 contrast for all of them (HSL yellows didn't).
-      style={{ background: `linear-gradient(135deg, oklch(0.52 0.13 ${hue}), oklch(0.43 0.12 ${(hue + 28) % 360}))` }}
+      style={{ "--id-h": identityHue(id) } as CSSProperties}
       aria-hidden
     >
       {image ? (
         // eslint-disable-next-line @next/next/no-img-element -- static export: no image optimisation
         <img src={image} alt="" className="size-full object-cover" referrerPolicy="no-referrer" />
       ) : (
-        initials(name)
+        // Small sizes carry one letter; two would crowd the circle.
+        size === "xs" || size === "sm" ? Array.from(initials(name))[0] : initials(name)
       )}
     </span>
   );
@@ -73,14 +67,14 @@ export function AvatarStack({
   const shown = people.slice(0, max);
   const rest = people.length - shown.length;
   return (
-    <span className="flex items-center -space-x-2">
+    <span className="flex items-center -space-x-1.5 rtl:space-x-reverse">
       {shown.map((p) => (
         <Avatar key={p.id} {...p} size={size} className="ring-2 ring-bg" />
       ))}
       {rest > 0 && (
         <span
           className={cn(
-            "inline-flex items-center justify-center rounded-full bg-surface-3 font-semibold text-fg-muted ring-2 ring-bg",
+            "inline-flex items-center justify-center rounded-full bg-surface-2 font-[600] text-fg-muted ring-2 ring-bg",
             sizes[size],
           )}
         >

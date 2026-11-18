@@ -1,6 +1,6 @@
 "use client";
 
-import { CloudOff } from "lucide-react";
+import { CloudOff } from "@/ui/icons";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useSyncExternalStore } from "react";
 import { toast } from "sonner";

@@ -2,7 +2,7 @@
 
 import { ApiError, type GroupDetailDto } from "@settlemint/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { LogOut, Pencil, Trash2, UserMinus } from "lucide-react";
+import { LogOut, Pencil, Trash2, UserMinus } from "@/ui/icons";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";

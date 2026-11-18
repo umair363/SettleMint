@@ -1,19 +1,18 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Noto_Sans_Arabic, Noto_Sans_Devanagari } from "next/font/google";
+import { Mona_Sans, Noto_Sans_Arabic, Noto_Sans_Devanagari } from "next/font/google";
 import { SITE_URL } from "@/lib/env";
 
 // Shared by both root layouts: (main) for the app, (site)/[lang] for the
 // translated public pages.
 
-// One family, chosen by rendering money-heavy samples of 14 typefaces side by
-// side: Bricolage Grotesque has true tabular figures, characterful numerals
-// for big amounts, and an optical-size axis that gives small text its own
-// readable cut. It avoids the overused Inter/Geist/Instrument look.
-const bricolage = Bricolage_Grotesque({
+// Mona Sans (GitHub, OFL): one variable file with a width axis. Normal width
+// for reading, expanded widths for titles and every amount, so money reads
+// like a confident statement rather than a form field.
+const mona = Mona_Sans({
   subsets: ["latin", "latin-ext"],
-  variable: "--font-bricolage",
+  variable: "--font-mona",
   display: "swap",
-  axes: ["opsz"],
+  axes: ["wdth"],
 });
 
 // Arabic/Urdu and Hindi letters fall back to these. Not preloaded, and split by
@@ -22,7 +21,7 @@ const bricolage = Bricolage_Grotesque({
 const arabic = Noto_Sans_Arabic({ subsets: ["arabic"], variable: "--font-arabic", display: "swap", preload: false });
 const devanagari = Noto_Sans_Devanagari({ subsets: ["devanagari"], variable: "--font-devanagari", display: "swap", preload: false });
 
-export const fontVariables = `${bricolage.variable} ${arabic.variable} ${devanagari.variable}`;
+export const fontVariables = `${mona.variable} ${arabic.variable} ${devanagari.variable}`;
 
 export const baseMetadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -44,7 +43,7 @@ export const baseViewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0b0f14" },
-    { media: "(prefers-color-scheme: light)", color: "#f5f7f6" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0e0c" },
+    { media: "(prefers-color-scheme: light)", color: "#f7faf8" },
   ],
 };

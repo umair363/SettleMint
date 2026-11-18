@@ -1,7 +1,6 @@
 import { formatMoney } from "@settlemint/shared";
 import {
   ArrowRight,
-  ArrowRightLeft,
   Bell,
   Check,
   ChevronDown,
@@ -9,18 +8,17 @@ import {
   ExternalLink,
   History,
   Link2,
-  Plus,
   Repeat,
   Route,
-} from "lucide-react";
+} from "@/ui/icons";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { createTranslator } from "use-intl";
 import { Logo } from "@/features/shell/logo";
 import { LANGUAGES, type Language } from "@settlemint/client/i18n/languages";
 import type { LandingMessages } from "@/i18n/landing/en";
-import { BalanceCard } from "@/ui/balance-card";
 import { cn } from "@/ui/cn";
+import { landingMotionScript } from "./motion-loader";
 
 /**
  * The public landing page, rendered at build time for each language. Plain
@@ -44,12 +42,12 @@ export function Landing({ lang, messages }: { lang: Language; messages: LandingM
         {t("nav.skip")}
       </a>
 
-      <header className="glass safe-top sticky top-0 z-40 border-x-0 border-t-0">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-6">
+      <header className="safe-top sticky top-0 z-40 px-3 pt-3">
+        <div className="glass mx-auto flex h-14 max-w-5xl items-center gap-6 rounded-full pe-2 ps-5">
           <Link href={home} aria-label="SettleMint">
             <Logo />
           </Link>
-          <nav aria-label={t("nav.features")} className="ms-auto hidden items-center gap-6 text-[15px] text-fg-muted md:flex">
+          <nav aria-label={t("nav.features")} className="ms-auto hidden items-center gap-7 text-[15px] font-[520] text-fg-muted md:flex">
             <a href="#features" className="hover:text-fg">
               {t("nav.features")}
             </a>
@@ -62,7 +60,7 @@ export function Landing({ lang, messages }: { lang: Language; messages: LandingM
           </nav>
           <Link
             {...appLink}
-            className="ms-auto inline-flex h-10 items-center rounded-full bg-accent px-4 text-sm font-semibold text-accent-fg transition-colors hover:bg-accent-hover md:ms-0"
+            className="ms-auto inline-flex h-10 items-center rounded-full bg-accent px-4 text-[15px] font-[600] text-accent-fg transition-colors hover:bg-accent-hover md:ms-0"
           >
             {t("nav.open")}
           </Link>
@@ -70,32 +68,31 @@ export function Landing({ lang, messages }: { lang: Language; messages: LandingM
       </header>
 
       <main id="main">
-        {/* ─── Hero ─────────────────────────────────────────────────────── */}
-        <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-12 sm:px-6 lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:pb-24 lg:pt-20">
-          <div className="space-y-7">
-            <p className="text-sm font-semibold tracking-wide text-positive">{t("hero.eyebrow")}</p>
-            <h1 className="font-display text-[clamp(2.6rem,7vw,4.6rem)] font-semibold leading-[1.02] tracking-tight">
+        {/* ─── Hero: the headline, and a real balance under live glass ─────── */}
+        <section className="mx-auto grid max-w-6xl items-center gap-10 px-5 pb-16 pt-10 sm:px-6 lg:grid-cols-12 lg:gap-10 lg:pb-28 lg:pt-20">
+          <div className="lg:col-span-6">
+            <h1 className="font-wider text-[clamp(3rem,6.4vw,5.25rem)] font-[650] leading-[0.98] tracking-[-0.035em] text-balance">
               {t("hero.title")}
             </h1>
-            <p className="max-w-xl text-lg leading-relaxed text-fg-muted sm:text-xl">{t("hero.lead")}</p>
-            <div className="flex flex-wrap items-center gap-3">
+            <p className="mt-6 max-w-[34rem] text-[19px] leading-relaxed text-fg-muted">{t("hero.lead")}</p>
+            <div className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
               <Link
                 {...appLink}
-                className="inline-flex h-14 items-center gap-2 rounded-[var(--radius-lg)] bg-accent px-7 text-base font-semibold text-accent-fg transition-colors hover:bg-accent-hover"
+                className="inline-flex h-14 items-center gap-2 rounded-full bg-accent px-7 text-[17px] font-[600] text-accent-fg transition-colors hover:bg-accent-hover"
               >
-                {t("hero.cta")} <ArrowRight className="size-4 rtl:rotate-180" aria-hidden />
+                {t("hero.cta")} <ArrowRight className="size-[18px] rtl:rotate-180" aria-hidden />
               </Link>
-              <a
-                href="#how"
-                className="inline-flex h-14 items-center rounded-[var(--radius-lg)] border border-line px-6 text-base font-medium text-fg hover:bg-surface-2"
-              >
+              <a href="#how" className="text-[17px] font-[560] text-fg underline decoration-line-strong underline-offset-[6px] hover:decoration-fg">
                 {t("hero.secondary")}
               </a>
             </div>
-            <p className="text-sm text-fg-subtle">{t("hero.note")}</p>
+            <p className="mt-6 text-[14px] text-fg-subtle">{t("hero.note")}</p>
           </div>
-          <PhoneMock t={t} money={money} />
+          <div className="lg:col-span-6">
+            <HeroStage t={t} money={money} />
+          </div>
         </section>
+        <script dangerouslySetInnerHTML={{ __html: landingMotionScript() }} />
 
         {/* ─── Facts ────────────────────────────────────────────────────── */}
         <section aria-label={t("facts.label")} className="border-y border-line bg-surface">
@@ -295,66 +292,60 @@ function Initial({ name, tone }: { name: string; tone: string }) {
 }
 
 /** A group screen, drawn from the app's own pieces. */
-function PhoneMock({ t, money }: { t: T; money: Money }) {
+/**
+ * The hero stage: a real, localized balance set huge, under a capsule of
+ * glass the shape of the app's tab bar. Plain HTML and CSS glass first; the
+ * lens script (when the device can take it) replaces the CSS glass with a
+ * live, refracting one that drifts and follows the pointer.
+ */
+function HeroStage({ t, money }: { t: T; money: Money }) {
   return (
-    <figure aria-label={t("mock.label")} className="mx-auto w-full max-w-[22rem]">
-      <div className="rounded-[2.75rem] border border-line-strong bg-bg-elevated p-2.5 shadow-float">
-        <div className="overflow-hidden rounded-[2.25rem] border border-line bg-bg">
-          <div className="space-y-4 px-4 pb-5 pt-7">
-            <div className="flex items-center gap-3">
-              <span className="flex size-10 items-center justify-center rounded-[var(--radius-md)] bg-info-soft text-xl" aria-hidden>
-                ✈️
-              </span>
-              <div className="min-w-0">
-                <p className="truncate font-display text-xl font-semibold">{t("mock.group")}</p>
-                <p className="text-xs text-fg-muted">{t("mock.meta")}</p>
-              </div>
-            </div>
-            <BalanceCard balance={1} className="p-5 shadow-none">
-              <p className="text-sm text-fg-muted">{t("mock.owed")}</p>
-              <p className="tabular mt-0.5 font-display text-4xl font-semibold tracking-tight text-positive">{money(11150, "EUR")}</p>
-              <div className="mt-4 grid grid-cols-2 gap-2 text-sm font-semibold">
-                <span className="flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius-md)] bg-accent text-accent-fg">
-                  <Plus className="size-4" aria-hidden /> {t("mock.add")}
-                </span>
-                <span className="flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius-md)] border border-line bg-surface-2">
-                  <ArrowRightLeft className="size-4" aria-hidden /> {t("mock.settle")}
-                </span>
-              </div>
-            </BalanceCard>
-            <p className="px-1 text-xs font-semibold uppercase tracking-wider text-fg-subtle">{t("mock.today")}</p>
-            <div className="divide-y divide-line overflow-hidden rounded-[var(--radius-lg)] border border-line bg-surface">
-              <MockRow emoji="🍽️" title={t("mock.dinner")} who={t("mock.youPaid")} total={money(16000, "EUR")} label={t("mock.lent")} amount={money(12000, "EUR")} tone="text-positive" />
-              <MockRow emoji="🚕" title={t("mock.taxi")} who={t("mock.bilalPaid")} total={money(3400, "EUR")} label={t("mock.borrowed")} amount={money(850, "EUR")} tone="text-negative" />
-            </div>
-          </div>
-        </div>
+    <div
+      data-lens-stage
+      className="@container relative isolate aspect-[6/5] w-full overflow-hidden rounded-[2rem] bg-surface shadow-[0_0_0_1px_var(--line),0_30px_80px_-40px_oklch(21.5%_0.014_170/0.35)] sm:aspect-[4/3.4]"
+    >
+      <div className="absolute inset-0 flex flex-col justify-center px-[9%]">
+        <p data-lens-text className="text-[clamp(1rem,3.2cqw,1.35rem)] leading-[1.5] text-fg-muted">
+          {t("mock.owed")}
+        </p>
+        <p className="mt-1">
+          <span className="relative inline-block">
+            <span
+              data-lens-text
+              data-lens-anchor
+              className="tabular inline-block font-wide text-[clamp(3.25rem,17cqw,8.5rem)] font-[640] leading-[1.1] tracking-[-0.035em] text-positive"
+            >
+              {money(11150, "EUR")}
+            </span>
+            <span
+              data-lens-fallback
+              aria-hidden
+              className="glass pointer-events-none absolute start-1/2 top-[52%] aspect-[1/0.36] w-[min(62cqw,320px)] -translate-x-1/2 -translate-y-1/2 rounded-full transition-opacity duration-500 rtl:translate-x-1/2"
+            />
+          </span>
+        </p>
+        <p data-lens-text className="mt-5 text-[clamp(0.95rem,2.8cqw,1.15rem)] leading-[1.5] text-fg-muted">
+          {t("mock.group")} · {t("mock.meta")}
+        </p>
       </div>
-    </figure>
-  );
-}
-
-function MockRow(p: { emoji: string; title: string; who: string; total: string; label: string; amount: string; tone: string }) {
-  return (
-    <div className="flex items-center gap-3 px-3 py-3">
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-surface-2 text-lg" aria-hidden>
-        {p.emoji}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium">{p.title}</span>
-        <span className="block truncate text-xs text-fg-muted">
-          {p.who} <span className="tabular">{p.total}</span>
+      <div aria-hidden className="absolute inset-x-[9%] bottom-[8%] flex items-center justify-between">
+        <span className="flex -space-x-2 rtl:space-x-reverse">
+          {(["Bilal", "Chen", "Dara"] as const).map((n, i) => (
+            <span
+              key={n}
+              className="identity flex size-9 items-center justify-center rounded-full font-wide text-[14px] font-[640] ring-2 ring-surface"
+              style={{ "--id-h": [75, 205, 320][i] } as React.CSSProperties}
+            >
+              {n[0]}
+            </span>
+          ))}
         </span>
-      </span>
-      <span className="shrink-0 text-end leading-tight">
-        <span className="block text-[11px] text-fg-muted">{p.label}</span>
-        <span className={cn("tabular text-sm font-semibold", p.tone)}>{p.amount}</span>
-      </span>
+        <span className="inline-flex h-10 items-center rounded-full bg-surface-2 px-4 text-[15px] font-[590] text-fg">{t("mock.settle")}</span>
+      </div>
     </div>
   );
 }
 
-/** A receipt split item by item, tip shared by what each person ordered. */
 function SplitDemo({ t, money }: { t: T; money: Money }) {
   const people = { A: "bg-[oklch(0.62_0.14_160)]", B: "bg-[oklch(0.6_0.15_250)]", C: "bg-[oklch(0.62_0.16_30)]" };
   const items = [

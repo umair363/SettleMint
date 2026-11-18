@@ -1,7 +1,7 @@
 "use client";
 
 import type { GroupDetailDto } from "@settlemint/shared";
-import { ArrowRight, ArrowRightLeft } from "lucide-react";
+import { ArrowRight, ArrowRightLeft } from "@/ui/icons";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
 import { toast } from "sonner";

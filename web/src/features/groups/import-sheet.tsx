@@ -2,7 +2,7 @@
 
 import { parseSplitwiseExport, type SplitwiseExport } from "@settlemint/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Check, FileUp } from "lucide-react";
+import { Check, FileUp } from "@/ui/icons";
 import { useRouter } from "next/navigation";
 import { useState, type ChangeEvent } from "react";
 import { toast } from "sonner";

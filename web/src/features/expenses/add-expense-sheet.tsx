@@ -12,7 +12,7 @@ import {
   type MemberDto,
   type RecurrenceFrequency,
 } from "@settlemint/shared";
-import { Calendar, Camera, Check, ChevronDown, ChevronLeft, ListChecks, LoaderCircle, Repeat, Equal, Percent, Receipt, Scale, SlidersHorizontal, Users } from "lucide-react";
+import { Calendar, Camera, Check, ChevronDown, ChevronLeft, ListChecks, LoaderCircle, Repeat, Equal, Percent, Receipt, Scale, SlidersHorizontal, Users } from "@/ui/icons";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
