@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, FileUp, Plus, Users } from "lucide-react";
+import { Archive, FileUp, Plus, Users } from "@/ui/icons";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "use-intl";
 import { Suspense, useState } from "react";

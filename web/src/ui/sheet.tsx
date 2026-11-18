@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { X } from "@/ui/icons";
 import type { ReactNode } from "react";
 import { Drawer } from "vaul";
 import { IconButton } from "./button";

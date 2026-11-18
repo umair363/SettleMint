@@ -41,6 +41,7 @@ const ur: Messages = {
     yourBalance: "آپ کا بیلنس",
     allSettled: "سارا حساب برابر",
     nobodyOwes: "کسی کا کسی پر کچھ باقی نہیں۔ زبردست۔",
+    acrossGroups: "{count, plural, one {# گروپ میں} other {# گروپس میں}}",
     overall: "{state, select, owed {مجموعی طور پر آپ کو لینے ہیں} owe {مجموعی طور پر آپ کو دینے ہیں} other {مجموعی طور پر حساب برابر ہے}}",
     owedAndOwe: "<owed></owed> آپ کو لینے ہیں · <owe></owe> آپ کو دینے ہیں",
     sampleTrip: "شمالی علاقہ جات کا ٹرپ",

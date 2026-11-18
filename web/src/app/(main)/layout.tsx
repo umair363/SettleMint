@@ -15,7 +15,7 @@ export const viewport = baseViewport;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" data-theme="dark" className={fontVariables} suppressHydrationWarning>
+    <html lang="en" data-theme="light" className={fontVariables} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <script dangerouslySetInnerHTML={{ __html: languageScript(UNTRANSLATED) }} />

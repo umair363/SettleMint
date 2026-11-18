@@ -2,7 +2,7 @@
 
 import { ApiError } from "@settlemint/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, UserPlus } from "lucide-react";
+import { Check, UserPlus } from "@/ui/icons";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";

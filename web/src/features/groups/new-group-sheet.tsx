@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { X } from "@/ui/icons";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent, type KeyboardEvent } from "react";
@@ -14,7 +14,8 @@ import { CurrencyPicker } from "@/ui/currency-picker";
 import { TextField } from "@/ui/field";
 import { springSnappy } from "@/ui/motion";
 import { Sheet } from "@/ui/sheet";
-import { GROUP_TYPE_STYLE } from "./group-row";
+import { groupGlyph } from "@settlemint/client/design/glyphs";
+import { Glyph } from "@/ui/icons";
 
 const TYPES = ["direct", "trip", "home", "couple", "event", "other"] as const;
 type GroupType = (typeof TYPES)[number];
@@ -70,7 +71,6 @@ function NewGroupForm({ onDone }: { onDone: () => void }) {
         name: name.trim(),
         type,
         currency: currencyValue,
-        emoji: GROUP_TYPE_STYLE[type].emoji,
         people: direct
           ? [{ displayName: name.trim() }]
           : [...people, ...(pending ? [pending] : [])].map((displayName) => ({ displayName })),
@@ -97,13 +97,11 @@ function NewGroupForm({ onDone }: { onDone: () => void }) {
             whileTap={{ scale: 0.94 }}
             transition={springSnappy}
             className={cn(
-              "flex min-w-16 flex-1 flex-col items-center gap-1 rounded-[var(--radius-md)] border px-2 py-2.5 text-xs font-medium transition-colors",
-              type === kind ? "border-accent bg-accent-soft text-fg" : "border-line bg-surface-2 text-fg-muted",
+              "flex min-w-[4.5rem] flex-1 flex-col items-center gap-1.5 rounded-[var(--radius-md)] px-2 py-3 text-[13px] font-[560] transition-colors duration-[var(--dur-feedback)]",
+              type === kind ? "bg-accent-soft text-fg shadow-[inset_0_0_0_1.5px_var(--positive)]" : "bg-surface-2 text-fg-muted hover:text-fg",
             )}
           >
-            <span className="text-2xl" aria-hidden>
-              {GROUP_TYPE_STYLE[kind].emoji}
-            </span>
+            <Glyph name={groupGlyph(kind).web} className={cn("size-6", type === kind && "text-positive")} />
             {t(`type.${kind}`)}
           </motion.button>
         ))}

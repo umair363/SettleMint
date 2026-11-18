@@ -22,7 +22,7 @@ const rememberLanguage = `document.addEventListener("click",function(e){var a=e.
 export default async function SiteLayout({ children, params }: { children: ReactNode; params: Promise<{ lang: string }> }) {
   const { lang } = await params;
   return (
-    <html lang={lang} dir={dirOf(lang as Language)} data-theme="dark" className={fontVariables} suppressHydrationWarning>
+    <html lang={lang} dir={dirOf(lang as Language)} data-theme="light" className={fontVariables} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <script dangerouslySetInnerHTML={{ __html: rememberLanguage }} />

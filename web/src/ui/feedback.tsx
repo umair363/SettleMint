@@ -1,10 +1,11 @@
 "use client";
 
-import { CloudOff, LoaderCircle, TriangleAlert } from "lucide-react";
+import { CloudOff, LoaderCircle, TriangleAlert } from "@/ui/icons";
 import { motion } from "motion/react";
 import type { ReactNode } from "react";
 import { Button } from "./button";
 import { cn } from "./cn";
+import { CategoryTile, GroupMark } from "./glyph-tile";
 import { springSoft } from "./motion";
 import { useTranslations } from "use-intl";
 
@@ -76,30 +77,46 @@ export function EmptyState({
       className={cn("px-5 py-8 sm:px-6", className)}
     >
       {preview && (
-        <div aria-hidden className="pointer-events-none mb-6 select-none [mask-image:linear-gradient(to_bottom,black_55%,transparent)]">
+        <div
+          aria-hidden
+          className="inset-list pointer-events-none mb-7 select-none overflow-hidden rounded-[var(--radius-md)] bg-surface-2/60 opacity-80 [--inset:4.25rem] [mask-image:linear-gradient(to_bottom,black_45%,transparent)]"
+        >
           {preview}
         </div>
       )}
-      <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-fg">
-        {icon && <span className="text-positive [&_svg]:size-5">{icon}</span>}
+      <h2 className="flex items-center gap-2 font-wide text-[22px] font-[640] leading-tight tracking-[-0.015em] text-fg">
+        {icon && <span className="text-positive [&_svg]:size-[22px]">{icon}</span>}
         {title}
       </h2>
-      {body && <p className="mt-1.5 max-w-sm text-[15px] text-fg-muted">{body}</p>}
+      {body && <p className="mt-2 max-w-sm text-[16px] leading-snug text-fg-muted">{body}</p>}
       {action && <div className="mt-5">{action}</div>}
     </motion.div>
   );
 }
 
 /** A faint example row for empty-state previews. */
-export function PreviewRow({ emoji, title, subtitle, amount, tone }: { emoji: string; title: string; subtitle: string; amount: string; tone?: "positive" | "negative" }) {
+export function PreviewRow({
+  glyph,
+  title,
+  subtitle,
+  amount,
+  tone,
+}: {
+  /** A group type (trip, home…) or category id (food, transport…). */
+  glyph: { group: string } | { category: string };
+  title: string;
+  subtitle: string;
+  amount: string;
+  tone?: "positive" | "negative";
+}) {
   return (
-    <div className="flex items-center gap-3 rounded-[var(--radius-md)] border border-dashed border-line-strong px-3 py-2.5">
-      <span className="flex size-9 items-center justify-center rounded-[var(--radius-sm)] bg-surface-2 text-lg">{emoji}</span>
+    <div className="flex items-center gap-3 px-4 py-3">
+      {"group" in glyph ? <GroupMark id={glyph.group} type={glyph.group} /> : <CategoryTile category={glyph.category} />}
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium">{title}</span>
-        <span className="block truncate text-xs text-fg-muted">{subtitle}</span>
+        <span className="block truncate text-[16px] font-[540]">{title}</span>
+        <span className="block truncate text-[14px] text-fg-muted">{subtitle}</span>
       </span>
-      <span className={cn("tabular text-sm font-semibold", tone === "positive" && "text-positive", tone === "negative" && "text-negative")}>
+      <span className={cn("tabular font-wide text-[16px] font-[620]", tone === "positive" && "text-positive", tone === "negative" && "text-negative")}>
         {amount}
       </span>
     </div>
@@ -130,7 +147,7 @@ export function ErrorState({
       >
         {offline ? <CloudOff aria-hidden /> : <TriangleAlert aria-hidden />}
       </div>
-      <h3 className="font-display text-base font-semibold text-fg">
+      <h3 className="font-wide text-[17px] font-[620] text-fg">
         {offline ? t("offlineTitle") : (title ?? t("loadFailed"))}
       </h3>
       {(body || offline) && (

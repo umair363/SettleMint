@@ -45,6 +45,7 @@ const en = {
     yourBalance: "Your balance",
     allSettled: "All settled up",
     nobodyOwes: "Nobody owes anybody. Nice.",
+    acrossGroups: "{count, plural, one {in # group} other {across # groups}}",
     overall: "{state, select, owed {Overall, you are owed} owe {Overall, you owe} other {Overall, you're even}}",
     owedAndOwe: "<owed></owed> owed to you · <owe></owe> you owe",
     sampleTrip: "Lisbon trip",

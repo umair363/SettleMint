@@ -1,7 +1,7 @@
 "use client";
 
 import { currencyExponent, formatMoney } from "@settlemint/shared";
-import { Delete } from "lucide-react";
+import { Delete } from "@/ui/icons";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo } from "react";
 import { useLocale, useTranslations } from "use-intl";

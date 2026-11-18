@@ -43,7 +43,7 @@ export function Segmented<T extends string>({
         }
       }}
       aria-label={label}
-      className={cn("inline-flex w-full rounded-[var(--radius-md)] bg-surface-2 p-1", className)}
+      className={cn("inline-flex w-full rounded-full bg-surface-2 p-1", className)}
     >
       {options.map((o) => {
         const active = o.value === value;
@@ -52,8 +52,8 @@ export function Segmented<T extends string>({
             key={o.value}
             value={o.value}
             className={cn(
-              "relative flex flex-1 items-center justify-center gap-1.5 rounded-[calc(var(--radius-md)-4px)] font-medium transition-colors",
-              size === "sm" ? "h-8 px-2.5 text-[13px]" : "h-10 px-3 text-sm",
+              "relative flex flex-1 items-center justify-center gap-1.5 rounded-full font-[560] transition-colors duration-[var(--dur-feedback)]",
+              size === "sm" ? "h-8 px-3 text-[13px]" : "h-10 px-3.5 text-[15px]",
               active ? "text-fg" : "text-fg-muted hover:text-fg",
             )}
           >
@@ -61,7 +61,7 @@ export function Segmented<T extends string>({
               <motion.span
                 layoutId={layoutId}
                 transition={springSnappy}
-                className="absolute inset-0 rounded-[inherit] border border-line bg-surface shadow-soft"
+                className="absolute inset-0 rounded-[inherit] bg-surface shadow-[0_1px_2px_oklch(21.5%_0.014_170/0.12),0_0_0_0.5px_var(--line)] dark:bg-surface-3"
                 aria-hidden
               />
             )}

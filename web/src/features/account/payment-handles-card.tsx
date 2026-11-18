@@ -7,7 +7,7 @@ import {
   type PaymentKind,
 } from "@settlemint/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "@/ui/icons";
 import { useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";

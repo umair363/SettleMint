@@ -1,21 +1,24 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import { ChevronRight } from "@/ui/icons";
 import Link from "next/link";
 import type { HTMLAttributes, ReactNode } from "react";
 import { cn } from "./cn";
 
+/**
+ * A grouped surface on the canvas. Content never floats: a hairline edge and
+ * the faintest contact shadow in light, a lighter surface in dark. Never nest one.
+ */
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      // Rows and states inside cards carry their own inset (grouped-list layout),
-      // which the detector's wrapper heuristic reads as cramped.
-      className={cn("rounded-[var(--radius-lg)] border border-line bg-surface shadow-soft", className)}
+      className={cn("rounded-[var(--radius-lg)] bg-surface shadow-[0_0_0_1px_var(--line),var(--shadow-soft)] dark:shadow-none", className)}
       {...props}
     />
   );
 }
 
+/** A section title in sentence case: the heading carries its own weight, no label above it. */
 export function SectionHeader({
   title,
   action,
@@ -26,8 +29,8 @@ export function SectionHeader({
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-end justify-between gap-3 px-1 pb-2", className)}>
-      <h2 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-fg-subtle">{title}</h2>
+    <div className={cn("flex items-baseline justify-between gap-3 px-1 pb-3", className)}>
+      <h2 className="font-wide text-[20px] font-[620] leading-tight tracking-[-0.012em] text-fg">{title}</h2>
       {action}
     </div>
   );
@@ -44,34 +47,31 @@ export interface ListRowProps {
   className?: string;
 }
 
-/** One tappable row. Renders a link, a button, or plain content. */
+/** One row of an inset list. Renders a link, a button, or plain content. */
 export function ListRow({ leading, title, subtitle, trailing, href, onClick, chevron, className }: ListRowProps) {
   const body = (
     <>
       {leading && <span className="shrink-0">{leading}</span>}
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[15px] font-medium text-fg">{title}</span>
-        {subtitle && <span className="mt-0.5 block truncate text-[13px] text-fg-muted">{subtitle}</span>}
+        <span className="block truncate text-[16px] font-[540] leading-snug text-fg">{title}</span>
+        {subtitle && <span className="mt-0.5 block truncate text-[14px] leading-snug text-fg-muted">{subtitle}</span>}
       </span>
       {trailing && <span className="shrink-0 text-end">{trailing}</span>}
       {chevron && <ChevronRight className="size-4 shrink-0 text-fg-subtle rtl:rotate-180" aria-hidden />}
     </>
   );
-  const rowClass = cn(
-    "flex w-full items-center gap-3 px-4 py-3 text-start",
-    (href || onClick) && "transition-colors hover:bg-surface-2 active:bg-surface-3",
-    className,
-  );
+  const rowClass = cn("flex min-h-16 w-full items-center gap-3 px-4 py-3 text-start", className);
+  const interactive = "transition-colors duration-[var(--dur-feedback)] hover:bg-surface-2/70 active:bg-surface-2";
   if (href) {
     return (
-      <Link href={href} className={cn(rowClass, "transition-[transform,background-color] duration-150 ease-out active:scale-[0.985]")}>
+      <Link href={href} className={cn(rowClass, interactive)}>
         {body}
       </Link>
     );
   }
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} className={cn(rowClass, "transition-[transform,background-color] duration-150 ease-out active:scale-[0.985]")}>
+      <button type="button" onClick={onClick} className={cn(rowClass, interactive)}>
         {body}
       </button>
     );
@@ -79,13 +79,29 @@ export function ListRow({ leading, title, subtitle, trailing, href, onClick, che
   return <div className={rowClass}>{body}</div>;
 }
 
-/** A card holding rows separated by hairlines. */
-export function List({ children, className }: { children: ReactNode; className?: string }) {
-  return <Card className={cn("divide-y divide-line overflow-hidden", className)}>{children}</Card>;
+/**
+ * An inset grouped list: rows separated by hairlines that start where the text
+ * starts (after a 40px leading tile), like the system's own lists.
+ */
+export function List({
+  children,
+  className,
+  inset = "leading",
+}: {
+  children: ReactNode;
+  className?: string;
+  /** "leading": rows have a 40px icon or avatar; "text": rows start with text. */
+  inset?: "leading" | "text";
+}) {
+  return (
+    <Card className={cn("inset-list overflow-hidden", inset === "leading" ? "[--inset:4.25rem]" : "[--inset:1rem]", className)}>
+      {children}
+    </Card>
+  );
 }
 
 const badgeTones = {
-  neutral: "bg-surface-3 text-fg-muted",
+  neutral: "bg-surface-2 text-fg-muted",
   accent: "bg-accent-soft text-positive",
   positive: "bg-positive-soft text-positive",
   negative: "bg-negative-soft text-negative",
@@ -105,7 +121,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-semibold",
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-[560]",
         badgeTones[tone],
         className,
       )}

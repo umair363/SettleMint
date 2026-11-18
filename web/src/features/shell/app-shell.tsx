@@ -1,7 +1,7 @@
 "use client";
 
 import { ApiError } from "@settlemint/shared";
-import { Activity, House, Plus, UserRound, Users } from "lucide-react";
+import { Activity, House, Plus, UserRound, Users } from "@/ui/icons";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -38,79 +38,80 @@ function AddButton({ className }: { className?: string }) {
   const { openAddExpense } = useAddExpense();
   const t = useTranslations("nav");
   return (
-    <motion.button
+    <button
       type="button"
       aria-label={t("addExpense")}
       onClick={() => {
         haptic(10);
         openAddExpense({ groupId: currentGroupId() });
       }}
-      whileTap={{ scale: 0.9 }}
-      whileHover={{ scale: 1.04 }}
-      transition={springSnappy}
       className={cn(
-        "flex size-14 items-center justify-center rounded-full bg-accent text-accent-fg shadow-lift",
+        "glass-tint flex size-16 shrink-0 items-center justify-center rounded-full text-accent-fg",
+        "transition-transform duration-[var(--dur-press)] ease-[var(--ease-standard)] active:scale-[0.94]",
         className,
       )}
     >
-      <Plus className="size-7" strokeWidth={2.4} />
-    </motion.button>
+      <Plus className="size-7" weight="bold" />
+    </button>
   );
 }
 
+/**
+ * Phones: a floating glass capsule holding the four sections, and, apart from
+ * it, the one mint action. Content scrolls under both. The add button comes
+ * last in reading order.
+ */
 function BottomNav({ pathname }: { pathname: string }) {
   const t = useTranslations("nav");
-  const left = NAV.slice(0, 2);
-  const right = NAV.slice(2);
-  const item = (n: (typeof NAV)[number]) => {
-    const active = n.match(pathname);
-    const Icon = n.icon;
-    return (
-      <Link
-        key={n.href}
-        href={n.href}
-        aria-current={active ? "page" : undefined}
-        className={cn(
-          "relative flex h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors",
-          active ? "text-fg" : "text-fg-subtle",
-        )}
-      >
-        {active && (
-          <motion.span layoutId="bottom-nav-dot" transition={springSnappy} className="absolute top-1 h-1 w-6 rounded-full bg-accent" />
-        )}
-        <Icon className="size-[22px]" strokeWidth={active ? 2.3 : 1.9} aria-hidden />
-        {t(n.label)}
-      </Link>
-    );
-  };
   return (
-    <nav
-      aria-label={t("main")}
-      className="glass safe-bottom fixed inset-x-0 bottom-0 z-40 rounded-t-[var(--radius-xl)] border-b-0 px-2 pt-1 lg:hidden"
-    >
-      <div className="mx-auto flex max-w-md items-center">
-        {left.map(item)}
-        <div className="flex w-20 justify-center">
-          <AddButton className="-mt-7" />
-        </div>
-        {right.map(item)}
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(env(safe-area-inset-bottom),12px)] lg:hidden">
+      <div className="mx-auto flex max-w-md items-center gap-2.5">
+        <nav aria-label={t("main")} className="glass pointer-events-auto flex h-16 flex-1 items-center rounded-full p-1.5">
+          {NAV.map((n) => {
+            const active = n.match(pathname);
+            const Icon = n.icon;
+            return (
+              <Link
+                key={n.href}
+                href={n.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "relative flex h-full flex-1 flex-col items-center justify-center gap-0.5 rounded-full text-[11px] font-[560] transition-colors duration-[var(--dur-feedback)]",
+                  active ? "text-fg" : "text-fg-muted hover:text-fg",
+                )}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="bottom-nav-pill"
+                    transition={springSnappy}
+                    className="absolute inset-0 rounded-full bg-[color-mix(in_oklch,var(--fg)_8%,transparent)]"
+                  />
+                )}
+                <Icon className="relative size-[22px]" weight={active ? "fill" : "regular"} />
+                <span className="relative">{t(n.label)}</span>
+              </Link>
+            );
+          })}
+        </nav>
+        <AddButton className="pointer-events-auto" />
       </div>
-    </nav>
+    </div>
   );
 }
 
+/** Desktop: an inset panel beside the content, with the one mint action at the top. */
 function Sidebar({ pathname, name, userId, image }: { pathname: string; name: string; userId: string; image: string | null }) {
   const { openAddExpense } = useAddExpense();
   const t = useTranslations("nav");
   return (
-    <aside className="fixed inset-y-0 start-0 z-30 hidden w-64 flex-col border-e border-line bg-bg-elevated px-4 py-6 lg:flex">
-      <Link href="/home" className="px-2">
+    <aside className="fixed inset-y-3 start-3 z-30 hidden w-[248px] flex-col rounded-[var(--radius-xl)] bg-surface p-4 shadow-[0_0_0_1px_var(--line)] lg:flex">
+      <Link href="/home" className="rounded-[var(--radius-md)] px-2 py-1.5">
         <Logo />
       </Link>
-      <Button className="mt-8" leading={<Plus className="size-4" />} onClick={() => openAddExpense({ groupId: currentGroupId() })}>
+      <Button className="mt-6" block leading={<Plus className="size-[18px]" />} onClick={() => openAddExpense({ groupId: currentGroupId() })}>
         {t("addExpense")}
       </Button>
-      <nav aria-label={t("main")} className="mt-6 flex flex-col gap-1">
+      <nav aria-label={t("main")} className="mt-5 flex flex-col gap-0.5">
         {NAV.map((n) => {
           const active = n.match(pathname);
           const Icon = n.icon;
@@ -120,22 +121,22 @@ function Sidebar({ pathname, name, userId, image }: { pathname: string; name: st
               href={n.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "relative flex h-11 items-center gap-3 rounded-[var(--radius-md)] px-3 text-[15px] font-medium transition-colors",
+                "relative flex h-11 items-center gap-3 rounded-[var(--radius-md)] px-3 text-[15px] font-[540] transition-colors duration-[var(--dur-feedback)]",
                 active ? "text-fg" : "text-fg-muted hover:bg-surface-2 hover:text-fg",
               )}
             >
               {active && (
                 <motion.span layoutId="side-nav-bg" transition={springSnappy} className="absolute inset-0 rounded-[inherit] bg-surface-2" />
               )}
-              <Icon className="relative size-5" aria-hidden />
+              <Icon className="relative size-5" weight={active ? "fill" : "regular"} />
               <span className="relative">{t(n.label)}</span>
             </Link>
           );
         })}
       </nav>
-      <Link href="/account" className="mt-auto flex items-center gap-3 rounded-[var(--radius-md)] px-2 py-2 hover:bg-surface-2">
+      <Link href="/account" className="mt-auto flex items-center gap-3 rounded-[var(--radius-md)] p-2 hover:bg-surface-2">
         <Avatar id={userId} name={name} image={image} size="sm" />
-        <span className="truncate text-sm font-medium">{name}</span>
+        <span className="truncate text-[15px] font-[540]">{name}</span>
       </Link>
     </aside>
   );
@@ -181,7 +182,7 @@ function Gate({ children }: { children: ReactNode }) {
     return (
       <>
         <Sidebar pathname={pathname} name={me.data.name} userId={me.data.id} image={me.data.image} />
-        <div className="min-h-dvh pb-28 lg:ps-64 lg:pb-10">{children}</div>
+        <div className="min-h-dvh pb-32 lg:ps-[272px] lg:pb-12">{children}</div>
         <BottomNav pathname={pathname} />
         <AddExpenseSheet />
         <SearchPalette />

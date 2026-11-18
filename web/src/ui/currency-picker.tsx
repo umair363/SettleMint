@@ -1,7 +1,7 @@
 "use client";
 
 import { CURRENCY_CODES, currencyName, currencySymbol } from "@settlemint/shared";
-import { Check, Search } from "lucide-react";
+import { Check, Search } from "@/ui/icons";
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "use-intl";
 import { cn } from "./cn";

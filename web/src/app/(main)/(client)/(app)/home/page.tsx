@@ -1,22 +1,20 @@
 "use client";
 
-import { Activity, ArrowRight, Link2, Plus, Sparkles, Users } from "lucide-react";
-import { motion } from "motion/react";
+import { ArrowRight, Link2, Plus } from "@/ui/icons";
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
 import { ActivityRow } from "@/features/activity/activity-row";
-import { useAddExpense } from "@/features/expenses/add-expense-context";
 import { GroupRow } from "@/features/groups/group-row";
 import { NewGroupSheet } from "@/features/groups/new-group-sheet";
 import { SearchButton } from "@/features/search/search-palette";
-import { PageBody, PageHeader } from "@/features/shell/page-header";
+import { PageBody } from "@/features/shell/page-header";
 import { totalsByCurrency, useActivity, useGroups, useMe } from "@settlemint/client/data/queries";
+import { Avatar } from "@/ui/avatar";
+import { BalanceStatement, LedgerLine } from "@/ui/balance-statement";
 import { Button } from "@/ui/button";
 import { EmptyState, ErrorState, PreviewRow, Skeleton, SkeletonRows } from "@/ui/feedback";
 import { Money } from "@/ui/money";
-import { listContainer, listItem } from "@/ui/motion";
-import { BalanceCard } from "@/ui/balance-card";
 import { Card, List, SectionHeader } from "@/ui/surface";
 
 function partOfDay() {
@@ -24,51 +22,60 @@ function partOfDay() {
   return h < 5 ? "night" : h < 12 ? "morning" : h < 18 ? "afternoon" : "evening";
 }
 
-function BalanceHero() {
+/**
+ * Where you stand, in one statement. With several currencies, the one you use
+ * most leads and the rest follow as quiet ledger lines; they are never added up.
+ */
+function Standing({ defaultCurrency }: { defaultCurrency: string | null }) {
   const groups = useGroups();
-  const totals = totalsByCurrency(groups.data);
   const t = useTranslations("home");
+  const tg = useTranslations("group");
+  const tgs = useTranslations("groups");
+  const totals = totalsByCurrency(groups.data);
 
   if (groups.isPending) {
     return (
-      <Card className="space-y-3 p-6">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-10 w-48" />
-      </Card>
+      <div className="space-y-3 py-1" aria-busy>
+        <Skeleton className="h-4 w-28" />
+        <Skeleton className="h-12 w-56" />
+        <Skeleton className="h-4 w-36" />
+      </div>
     );
   }
   if (totals.length === 0) {
-    return (
-      <BalanceCard balance={0}>
-        <p className="text-sm text-fg-muted">{t("yourBalance")}</p>
-        <p className="mt-1 font-display text-3xl font-semibold">{t("allSettled")}</p>
-        <p className="mt-1 text-sm text-fg-muted">{t("nobodyOwes")}</p>
-      </BalanceCard>
-    );
+    return <BalanceStatement label={t("yourBalance")} minor={0} currency={defaultCurrency ?? "USD"} settledText={t("allSettled")} context={t("nobodyOwes")} />;
   }
+
+  const lead = totals.find((x) => x.currency === defaultCurrency) ?? [...totals].sort((a, b) => Math.abs(b.net) - Math.abs(a.net))[0];
+  const rest = totals.filter((x) => x !== lead);
+  const count = (groups.data ?? []).filter((g) => !g.archived && g.currency === lead.currency && g.myBalance !== 0).length;
+  const state = lead.net > 0 ? "owed" : lead.net < 0 ? "owe" : "settled";
+
   return (
-    <BalanceCard balance={totals.reduce((s, t) => s + Math.sign(t.net), 0)}>
-      <div className="space-y-4">
-        {totals.map((b) => (
-          <div key={b.currency}>
-            <p className="text-sm text-fg-muted">
-              {t("overall", { state: b.net > 0 ? "owed" : b.net < 0 ? "owe" : "even" })}
-            </p>
-            <p className="mt-0.5 font-display text-4xl font-semibold tracking-tight">
-              <Money minor={b.net} currency={b.currency} tone="auto" absolute animated />
-            </p>
-            {b.owed > 0 && b.owe > 0 && (
-              <p className="mt-1 text-sm text-fg-muted">
-                {t.rich("owedAndOwe", {
-                  owed: () => <Money minor={b.owed} currency={b.currency} tone="positive" />,
-                  owe: () => <Money minor={b.owe} currency={b.currency} tone="negative" />,
-                })}
-              </p>
-            )}
-          </div>
-        ))}
-      </div>
-    </BalanceCard>
+    <BalanceStatement
+      label={tg("myBalance", { state })}
+      minor={lead.net}
+      currency={lead.currency}
+      context={
+        lead.owed > 0 && lead.owe > 0
+          ? t.rich("owedAndOwe", {
+              owed: () => <Money minor={lead.owed} currency={lead.currency} tone="positive" />,
+              owe: () => <Money minor={lead.owe} currency={lead.currency} tone="negative" />,
+            })
+          : t("acrossGroups", { count })
+      }
+    >
+      {rest.length > 0 && (
+        <div className="mt-4 space-y-1.5 border-t border-line pt-4">
+          {rest.map((b) => (
+            <LedgerLine key={b.currency}>
+              <Money minor={b.net} currency={b.currency} tone="auto" absolute className="font-wide text-[17px] font-[620]" />
+              <span>{b.net > 0 ? tgs("youAreOwed") : b.net < 0 ? tgs("youOwe") : tgs("settledUp")}</span>
+            </LedgerLine>
+          ))}
+        </div>
+      )}
+    </BalanceStatement>
   );
 }
 
@@ -76,7 +83,6 @@ export default function HomePage() {
   const me = useMe();
   const groups = useGroups();
   const activity = useActivity();
-  const { openAddExpense } = useAddExpense();
   const [newGroupOpen, setNewGroupOpen] = useState(false);
   const t = useTranslations("home");
   const tc = useTranslations("common");
@@ -85,58 +91,69 @@ export default function HomePage() {
   const recent = activity.data?.pages[0]?.items.slice(0, 5) ?? [];
   const isNew = groups.isSuccess && active.length === 0;
 
+  const seeAll = (href: string) => (
+    <Link href={href} className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[15px] font-[560] text-positive hover:bg-surface-2">
+      {tc("all")} <ArrowRight className="size-3.5 rtl:rotate-180" />
+    </Link>
+  );
+
   return (
     <>
-      <PageHeader title={t("greeting", { part: partOfDay(), name: firstName || "none" })} actions={<SearchButton />} />
-      <PageBody>
+      <header className="safe-top mx-auto flex w-full max-w-3xl items-center gap-3 px-5 pt-5 sm:px-6 lg:pt-10">
+        <h1 className="min-w-0 flex-1 truncate text-[17px] font-[540] text-fg-muted">
+          {t("greeting", { part: partOfDay(), name: firstName || "none" })}
+        </h1>
+        <SearchButton />
+        {me.data && (
+          <Link href="/account" aria-label={me.data.name} className="rounded-full lg:hidden">
+            <Avatar id={me.data.id} name={me.data.name} image={me.data.image} size="sm" />
+          </Link>
+        )}
+      </header>
+      <PageBody className="pt-6">
         {isNew ? (
           <Card>
             <EmptyState
-              icon={<Sparkles />}
               preview={
-                <div className="space-y-2">
-                  <PreviewRow emoji="✈️" title={t("sampleTrip")} subtitle={t("sampleTripLine")} amount="€128.50" tone="positive" />
-                  <PreviewRow emoji="🏠" title={t("sampleHome")} subtitle={t("sampleHomeLine")} amount="£42.00" tone="negative" />
-                </div>
+                <>
+                  <PreviewRow glyph={{ group: "trip" }} title={t("sampleTrip")} subtitle={t("sampleTripLine")} amount="€128.50" tone="positive" />
+                  <PreviewRow glyph={{ group: "home" }} title={t("sampleHome")} subtitle={t("sampleHomeLine")} amount="£42.00" tone="negative" />
+                </>
               }
               title={t("firstBillTitle")}
               body={t("firstBillBody")}
               action={
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Button leading={<Plus className="size-4" />} onClick={() => setNewGroupOpen(true)}>
-                    {t("createGroup")}
-                  </Button>
-                </div>
+                <Button size="lg" leading={<Plus className="size-[18px]" />} onClick={() => setNewGroupOpen(true)}>
+                  {t("createGroup")}
+                </Button>
               }
             />
-            <p className="flex items-center justify-center gap-1.5 pb-6 text-sm text-fg-muted">
-              <Link2 className="size-4" /> {t("haveInvite")}
-            </p>
-            <p className="pb-6 text-center text-sm">
-              <Link href="/groups" className="font-medium text-positive">
+            <div className="space-y-2 border-t border-line px-5 py-5 text-[15px] sm:px-6">
+              <p className="flex items-center gap-2 text-fg-muted">
+                <Link2 className="size-[18px]" /> {t("haveInvite")}
+              </p>
+              <Link href="/groups" className="inline-block font-[560] text-positive">
                 {t("fromSplitwise")}
               </Link>
-            </p>
+            </div>
           </Card>
         ) : (
           <>
-            <BalanceHero />
-            <div className="grid grid-cols-2 gap-3">
-              <Button variant="secondary" size="lg" leading={<Plus className="size-5" />} onClick={() => openAddExpense()}>
-                {tc("addExpense")}
-              </Button>
-              <Button variant="secondary" size="lg" leading={<Users className="size-5" />} onClick={() => setNewGroupOpen(true)}>
-                {t("newGroup")}
-              </Button>
-            </div>
+            <Standing defaultCurrency={me.data?.defaultCurrency ?? null} />
 
             <section>
               <SectionHeader
                 title={t("groups")}
                 action={
-                  <Link href="/groups" className="inline-flex items-center gap-1 text-sm font-medium text-positive">
-                    {tc("all")} <ArrowRight className="size-3.5 rtl:rotate-180" />
-                  </Link>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setNewGroupOpen(true)}
+                      className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[15px] font-[560] text-positive hover:bg-surface-2"
+                    >
+                      <Plus className="size-4" /> {t("newGroup")}
+                    </button>
+                  </div>
                 }
               />
               {groups.isPending ? (
@@ -149,33 +166,23 @@ export default function HomePage() {
                 </Card>
               ) : (
                 <List>
-                  <motion.div variants={listContainer} initial="hidden" animate="show" className="divide-y divide-line">
-                    {active.slice(0, 5).map((g) => (
-                      <motion.div key={g.id} variants={listItem}>
-                        <GroupRow group={g} />
-                      </motion.div>
-                    ))}
-                  </motion.div>
+                  {active.slice(0, 5).map((g) => (
+                    <GroupRow key={g.id} group={g} />
+                  ))}
                 </List>
               )}
+              {active.length > 5 && <div className="mt-2 flex justify-end">{seeAll("/groups")}</div>}
             </section>
 
             <section>
-              <SectionHeader
-                title={t("recentActivity")}
-                action={
-                  <Link href="/activity" className="inline-flex items-center gap-1 text-sm font-medium text-positive">
-                    {tc("all")} <ArrowRight className="size-3.5 rtl:rotate-180" />
-                  </Link>
-                }
-              />
+              <SectionHeader title={t("recentActivity")} action={recent.length > 0 ? seeAll("/activity") : undefined} />
               {activity.isPending ? (
                 <Card>
                   <SkeletonRows count={3} />
                 </Card>
               ) : recent.length === 0 ? (
                 <Card>
-                  <EmptyState icon={<Activity />} title={t("nothingYet")} body={t("activityEmpty")} />
+                  <EmptyState title={t("nothingYet")} body={t("activityEmpty")} />
                 </Card>
               ) : (
                 <List>

@@ -2,12 +2,11 @@
 
 import {
   ApiError,
-  getCategoryMeta,
   type ExpenseDto,
   type GroupDetailDto,
   type SettlementDto,
 } from "@settlemint/shared";
-import { ArrowRightLeft, Inbox, Plus, Repeat, Send, Settings, UserPlus } from "lucide-react";
+import { ArrowRightLeft, Inbox, Plus, Repeat, Send, Settings, UserPlus } from "@/ui/icons";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -16,7 +15,6 @@ import { useLocale, useTranslations } from "use-intl";
 import { useAddExpense } from "@/features/expenses/add-expense-context";
 import { ExpenseDetailSheet } from "@/features/groups/expense-detail-sheet";
 import { GroupSettingsSheet } from "@/features/groups/group-settings-sheet";
-import { GroupIcon } from "@/features/groups/group-row";
 import { InviteSheet } from "@/features/groups/invite-sheet";
 import { remindToPay } from "@/features/groups/remind";
 import { RepeatingSection } from "@/features/groups/repeating-section";
@@ -33,7 +31,8 @@ import { Segmented } from "@/ui/controls";
 import { EmptyState, ErrorState, PreviewRow, Skeleton, SkeletonRows } from "@/ui/feedback";
 import { Money } from "@/ui/money";
 import { springSoft } from "@/ui/motion";
-import { BalanceCard } from "@/ui/balance-card";
+import { BalanceStatement } from "@/ui/balance-statement";
+import { CategoryTile, GroupMark } from "@/ui/glyph-tile";
 import { Card, List, SectionHeader } from "@/ui/surface";
 
 type Tab = "expenses" | "balances";
@@ -42,7 +41,7 @@ type FeedItem =
   | { kind: "expense"; date: string; createdAt: string; expense: ExpenseDto }
   | { kind: "settlement"; date: string; createdAt: string; settlement: SettlementDto };
 
-const bold = (chunks: ReactNode) => <span className="font-medium">{chunks}</span>;
+const bold = (chunks: ReactNode) => <span className="font-[600]">{chunks}</span>;
 
 /** Name for sentences, plus which "you" form the sentence needs. */
 function nameOf(group: GroupDetailDto, memberId: string, someone: string) {
@@ -54,7 +53,6 @@ function direction(group: GroupDetailDto, fromId: string, toId: string) {
 }
 
 function ExpenseRow({ group, expense, onOpen }: { group: GroupDetailDto; expense: ExpenseDto; onOpen: () => void }) {
-  const cat = getCategoryMeta(expense.category);
   const saving = expense.lines.length === 0;
   const payers = expense.lines.filter((l) => l.paid > 0);
   const mine = expense.lines.find((l) => l.memberId === group.myMemberId);
@@ -77,29 +75,27 @@ function ExpenseRow({ group, expense, onOpen }: { group: GroupDetailDto; expense
       onClick={onOpen}
       disabled={saving}
       whileTap={{ scale: 0.985 }}
-      className="flex w-full items-center gap-3 px-4 py-3 text-start transition-colors hover:bg-surface-2"
+      className="flex min-h-16 w-full items-center gap-3 px-4 py-3 text-start transition-colors duration-[var(--dur-feedback)] hover:bg-surface-2/70"
     >
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-surface-2 text-xl" aria-hidden>
-        {cat.emoji}
-      </span>
+      <CategoryTile category={expense.category} />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[15px] font-medium">{expense.description}</span>
-        <span className="block truncate text-[13px] text-fg-muted">
+        <span className="block truncate text-[16px] font-[540]">{expense.description}</span>
+        <span className="mt-0.5 block truncate text-[14px] text-fg-muted">
           {expense.recurringRuleId && <Repeat className="me-1 inline size-3.5 align-[-2px]" aria-label={t("repeating")} />}
           {payerText} <Money minor={expense.amount} currency={expense.currency} />
         </span>
       </span>
-      <span className="shrink-0 text-end text-sm leading-tight">
+      <span className="shrink-0 text-end leading-tight">
         {saving ? (
-          <span className="text-xs text-fg-subtle">{t("saving")}</span>
+          <span className="text-[13px] text-fg-subtle">{t("saving")}</span>
         ) : !mine ? (
-          <span className="text-xs text-fg-subtle">{t("notInvolved")}</span>
+          <span className="text-[13px] text-fg-subtle">{t("notInvolved")}</span>
         ) : myNet === 0 ? (
-          <span className="text-xs text-fg-subtle">{t("noBalance")}</span>
+          <span className="text-[13px] text-fg-subtle">{t("noBalance")}</span>
         ) : (
           <>
-            <span className="block text-xs text-fg-muted">{myNet > 0 ? t("youLent") : t("youBorrowed")}</span>
-            <Money minor={myNet} currency={group.currency} tone="auto" absolute className="font-semibold" />
+            <span className="block text-[12px] text-fg-muted">{myNet > 0 ? t("youLent") : t("youBorrowed")}</span>
+            <Money minor={myNet} currency={group.currency} tone="auto" absolute className="font-wide text-[16px] font-[620]" />
           </>
         )}
       </span>
@@ -110,11 +106,11 @@ function ExpenseRow({ group, expense, onOpen }: { group: GroupDetailDto; expense
 function SettlementRow({ group, settlement }: { group: GroupDetailDto; settlement: SettlementDto }) {
   const t = useTranslations("group");
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-positive-soft text-positive">
-        <ArrowRightLeft className="size-[18px]" aria-hidden />
+    <div className="flex min-h-16 items-center gap-3 px-4 py-3">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-positive-soft text-positive">
+        <ArrowRightLeft className="size-5" aria-hidden />
       </span>
-      <span className="min-w-0 flex-1 text-[15px]">
+      <span className="min-w-0 flex-1 text-[16px]">
         {t.rich("paid", {
           dir: direction(group, settlement.fromMemberId, settlement.toMemberId),
           from: nameOf(group, settlement.fromMemberId, t("someone")),
@@ -122,7 +118,7 @@ function SettlementRow({ group, settlement }: { group: GroupDetailDto; settlemen
           b: bold,
         })}
       </span>
-      <Money minor={settlement.amount} currency={settlement.currency} className="font-semibold text-positive" />
+      <Money minor={settlement.amount} currency={settlement.currency} className="font-wide text-[16px] font-[620] text-positive" />
     </div>
   );
 }
@@ -179,8 +175,8 @@ function ExpensesTab({ group, onOpen }: { group: GroupDetailDto; onOpen: (e: Exp
           icon={<Inbox />}
           preview={
             <div className="space-y-2">
-              <PreviewRow emoji="🍽️" title={t("sampleDinner")} subtitle={t("sampleDinnerLine")} amount={t("sampleDinnerAmount")} tone="positive" />
-              <PreviewRow emoji="🚕" title={t("sampleTaxi")} subtitle={t("sampleTaxiLine")} amount={t("sampleTaxiAmount")} tone="negative" />
+              <PreviewRow glyph={{ category: "food" }} title={t("sampleDinner")} subtitle={t("sampleDinnerLine")} amount={t("sampleDinnerAmount")} tone="positive" />
+              <PreviewRow glyph={{ category: "transport" }} title={t("sampleTaxi")} subtitle={t("sampleTaxiLine")} amount={t("sampleTaxiAmount")} tone="negative" />
             </div>
           }
           title={t("noExpensesTitle")}
@@ -195,10 +191,12 @@ function ExpensesTab({ group, onOpen }: { group: GroupDetailDto; onOpen: (e: Exp
     );
   }
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {items.map(([day, dayItems]) => (
         <section key={day}>
-          <SectionHeader title={dayLabel(day, locale)} />
+          <h3 className="sticky top-[calc(3rem+env(safe-area-inset-top))] z-10 -mx-1 mb-2 bg-bg/90 px-2 py-1.5 text-[14px] font-[600] text-fg-muted backdrop-blur-sm lg:top-0">
+            {dayLabel(day, locale)}
+          </h3>
           <List>
             <AnimatePresence initial={false}>
               {dayItems.map((item) => (
@@ -240,9 +238,9 @@ function BalancesTab({ group, onSettle }: { group: GroupDetailDto; onSettle: (t:
       <section>
         <SectionHeader title={group.simplifyDebts ? t("suggestedPayments") : t("whoOwesWhom")} />
         {group.transfers.length === 0 ? (
-          <Card className="px-5 py-8 text-center">
-            <p className="font-display text-lg font-semibold">{t("everyoneSettled")}</p>
-            <p className="mt-1 text-sm text-fg-muted">{t("nobodyOwes")}</p>
+          <Card className="px-5 py-7">
+            <p className="font-wide text-[20px] font-[620]">{t("everyoneSettled")}</p>
+            <p className="mt-1 text-[15px] text-fg-muted">{t("nobodyOwes")}</p>
           </Card>
         ) : (
           <List>
@@ -250,27 +248,36 @@ function BalancesTab({ group, onSettle }: { group: GroupDetailDto; onSettle: (t:
               const involvesMe = tr.fromMemberId === group.myMemberId || tr.toMemberId === group.myMemberId;
               const from = group.members.find((m) => m.id === tr.fromMemberId);
               return (
-                <div key={`${tr.fromMemberId}-${tr.toMemberId}`} className="flex items-center gap-3 px-4 py-3">
-                  <Avatar id={tr.fromMemberId} name={from?.displayName ?? "?"} image={from?.image} size="sm" />
-                  <span className="min-w-0 flex-1 text-[15px]">
-                    {t.rich("owes", {
-                      dir: direction(group, tr.fromMemberId, tr.toMemberId),
-                      from: nameOf(group, tr.fromMemberId, t("someone")),
-                      to: nameOf(group, tr.toMemberId, t("someone")),
-                      b: bold,
-                    })}
-                    <span className="block">
-                      <Money minor={tr.amount} currency={group.currency} tone={involvesMe ? (tr.fromMemberId === group.myMemberId ? "negative" : "positive") : "plain"} className="font-semibold" />
-                    </span>
-                  </span>
-                  {tr.toMemberId === group.myMemberId && (
-                    <Button size="sm" variant="ghost" leading={<Send className="size-4" />} onClick={() => remindToPay(group, tr, locale)}>
-                      {t("remind")}
-                    </Button>
-                  )}
-                  <Button size="sm" variant={involvesMe ? "primary" : "secondary"} onClick={() => onSettle(tr)}>
-                    {tr.fromMemberId === group.myMemberId ? t("pay") : t("record")}
-                  </Button>
+                <div key={`${tr.fromMemberId}-${tr.toMemberId}`} className="flex gap-3 px-4 py-3.5">
+                  <Avatar id={tr.fromMemberId} name={from?.displayName ?? "?"} image={from?.image} size="md" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="min-w-0 text-[16px] leading-snug">
+                        {t.rich("owes", {
+                          dir: direction(group, tr.fromMemberId, tr.toMemberId),
+                          from: nameOf(group, tr.fromMemberId, t("someone")),
+                          to: nameOf(group, tr.toMemberId, t("someone")),
+                          b: bold,
+                        })}
+                      </span>
+                      <Money
+                        minor={tr.amount}
+                        currency={group.currency}
+                        tone={involvesMe ? (tr.fromMemberId === group.myMemberId ? "negative" : "positive") : "plain"}
+                        className="shrink-0 font-wide text-[17px] font-[620]"
+                      />
+                    </div>
+                    <div className="mt-2.5 flex flex-wrap gap-2">
+                      <Button size="sm" variant="secondary" onClick={() => onSettle(tr)}>
+                        {tr.fromMemberId === group.myMemberId ? t("pay") : t("record")}
+                      </Button>
+                      {tr.toMemberId === group.myMemberId && (
+                        <Button size="sm" variant="ghost" leading={<Send className="size-4" />} onClick={() => remindToPay(group, tr, locale)}>
+                          {t("remind")}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               );
             })}
@@ -287,18 +294,18 @@ function BalancesTab({ group, onSettle }: { group: GroupDetailDto; onSettle: (t:
           {people.map((m) => {
             const b = group.balances[m.id] ?? 0;
             return (
-              <div key={m.id} className="flex items-center gap-3 px-4 py-3">
-                <Avatar id={m.id} name={m.displayName} image={m.image} size="sm" pending={!m.claimed} />
-                <span className="min-w-0 flex-1 truncate font-medium">{m.isMe ? t("you") : m.displayName}</span>
-                <span className="text-end text-sm leading-tight">
+              <div key={m.id} className="flex min-h-16 items-center gap-3 px-4 py-3">
+                <Avatar id={m.id} name={m.displayName} image={m.image} size="md" pending={!m.claimed} />
+                <span className="min-w-0 flex-1 truncate text-[16px] font-[540]">{m.isMe ? t("you") : m.displayName}</span>
+                <span className="text-end leading-tight">
                   {b === 0 ? (
                     <span className="text-fg-subtle">{t("settled")}</span>
                   ) : (
                     <>
-                      <span className="block text-xs text-fg-muted">
+                      <span className="block text-[12px] text-fg-muted">
                         {t("memberBalance", { who: m.isMe ? "me" : "other", state: b > 0 ? "back" : "owes" })}
                       </span>
-                      <Money minor={b} currency={group.currency} tone="auto" absolute className="font-semibold" />
+                      <Money minor={b} currency={group.currency} tone="auto" absolute className="font-wide text-[16px] font-[620]" />
                     </>
                   )}
                 </span>
@@ -374,72 +381,70 @@ function GroupScreen() {
     <>
       <PageHeader
         back={{ href: "/groups", label: t("groups") }}
-        title={
-          <span className="flex items-center gap-3">
-            <GroupIcon type={g.type} emoji={g.emoji} />
-            <span className="truncate">{g.name}</span>
-          </span>
+        leading={<GroupMark id={g.id} type={g.type} size="lg" />}
+        title={g.name}
+        subtitle={
+          <button type="button" onClick={() => setInviteOpen(true)} className="flex items-center gap-2 hover:text-fg">
+            <AvatarStack people={active.map((m) => ({ id: m.id, name: m.displayName, image: m.image }))} max={5} size="xs" />
+            {t("people", { count: active.length })} · {g.currency}
+          </button>
         }
         actions={
           <>
-            <IconButton label={t("invitePeople")} variant="solid" onClick={() => setInviteOpen(true)}>
-              <UserPlus className="size-5" />
+            <IconButton label={t("invitePeople")} variant="solid" size="sm" onClick={() => setInviteOpen(true)}>
+              <UserPlus />
             </IconButton>
-            <IconButton label={t("settings")} variant="solid" onClick={() => setSettingsOpen(true)}>
-              <Settings className="size-5" />
+            <IconButton label={t("settings")} variant="solid" size="sm" onClick={() => setSettingsOpen(true)}>
+              <Settings />
             </IconButton>
           </>
         }
       />
       <PageBody>
-        <button type="button" onClick={() => setInviteOpen(true)} className="-mt-1 flex items-center gap-2 text-sm text-fg-muted hover:text-fg">
-          <AvatarStack people={active.map((m) => ({ id: m.id, name: m.displayName, image: m.image }))} max={5} size="xs" />
-          {t("people", { count: active.length })} · {g.currency}
-        </button>
-
-        <BalanceCard balance={g.myBalance}>
-          <div>
-            <p className="text-sm text-fg-muted">
-              {t("myBalance", { state: g.myBalance > 0 ? "owed" : g.myBalance < 0 ? "owe" : "settled" })}
-            </p>
-            {celebrate && g.myBalance === 0 ? (
-              <div className="mt-2">
+        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-5">
+          {celebrate && g.myBalance === 0 ? (
+            <div>
+              <p className="text-[17px] text-fg-muted">{t("myBalance", { state: "settled" })}</p>
+              <div className="mt-3">
                 <SettledCheck />
               </div>
-            ) : (
-              <p className="mt-0.5 font-display text-4xl font-semibold tracking-tight">
-                <Money minor={g.myBalance} currency={g.currency} tone="auto" absolute animated />
-              </p>
-            )}
-            <div className="mt-5 grid grid-cols-2 gap-2">
-              <Button leading={<Plus className="size-4" />} onClick={() => openAddExpense({ groupId: g.id })}>
-                {tc("addExpense")}
-              </Button>
-              <Button
-                variant="secondary"
-                leading={<ArrowRightLeft className="size-4" />}
-                disabled={g.transfers.length === 0}
-                onClick={() => {
-                  if (myTransfer) setSettle(myTransfer);
-                  else setTab("balances");
-                }}
-              >
-                {t("settleUp")}
-              </Button>
             </div>
+          ) : (
+            <BalanceStatement
+              label={t("myBalance", { state: g.myBalance > 0 ? "owed" : g.myBalance < 0 ? "owe" : "settled" })}
+              minor={g.myBalance}
+              currency={g.currency}
+              settledText={g.transfers.length === 0 ? t("everyoneSettled") : undefined}
+            />
+          )}
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              leading={<ArrowRightLeft className="size-[18px]" />}
+              disabled={g.transfers.length === 0}
+              onClick={() => {
+                if (myTransfer) setSettle(myTransfer);
+                else setTab("balances");
+              }}
+            >
+              {t("settleUp")}
+            </Button>
+            <Button variant="secondary" leading={<Plus className="size-[18px]" />} className="max-lg:hidden" onClick={() => openAddExpense({ groupId: g.id })}>
+              {tc("addExpense")}
+            </Button>
           </div>
-        </BalanceCard>
+        </div>
 
         {active.length === 1 && (
           <Card className="flex items-center gap-4 p-4">
-            <span className="flex size-10 items-center justify-center rounded-full bg-accent-soft text-positive">
+            <span className="flex size-10 items-center justify-center rounded-[var(--radius-sm)] bg-accent-soft text-positive">
               <UserPlus className="size-5" />
             </span>
-            <span className="flex-1 text-sm">
-              <span className="block font-medium">{t("justYouTitle")}</span>
+            <span className="flex-1 text-[15px] leading-snug">
+              <span className="block font-[600]">{t("justYouTitle")}</span>
               <span className="text-fg-muted">{t("justYouBody")}</span>
             </span>
-            <Button size="sm" onClick={() => setInviteOpen(true)}>
+            <Button size="sm" variant="secondary" onClick={() => setInviteOpen(true)}>
               {t("invite")}
             </Button>
           </Card>

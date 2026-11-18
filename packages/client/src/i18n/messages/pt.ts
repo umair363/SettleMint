@@ -41,6 +41,7 @@ const pt: Messages = {
     yourBalance: "Seu saldo",
     allSettled: "Tudo acertado",
     nobodyOwes: "Ninguém deve nada a ninguém. Ótimo.",
+    acrossGroups: "{count, plural, one {em # grupo} other {em # grupos}}",
     overall: "{state, select, owed {No total, devem a você} owe {No total, você deve} other {No total, você está quite}}",
     owedAndOwe: "Devem a você <owed></owed> · você deve <owe></owe>",
     sampleTrip: "Viagem a Lisboa",

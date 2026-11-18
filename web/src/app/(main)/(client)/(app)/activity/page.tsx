@@ -1,7 +1,7 @@
 "use client";
 
 import type { ActivityDto } from "@settlemint/shared";
-import { Activity } from "lucide-react";
+import { Activity } from "@/ui/icons";
 import { useMemo } from "react";
 import { useLocale, useTranslations } from "use-intl";
 import { ActivityRow } from "@/features/activity/activity-row";

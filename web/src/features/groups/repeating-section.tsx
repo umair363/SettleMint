@@ -1,7 +1,7 @@
 "use client";
 
 import { getCategoryMeta, type GroupDetailDto } from "@settlemint/shared";
-import { Repeat } from "lucide-react";
+import { Repeat } from "@/ui/icons";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "use-intl";
 import { dayLabel } from "@settlemint/client/text/dates";

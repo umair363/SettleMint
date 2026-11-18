@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Trash2 } from "@/ui/icons";
 import { animate, motion, useMotionValue, useTransform, type PanInfo } from "motion/react";
 import { useRef, type ReactNode } from "react";
 import { useLocale, useTranslations } from "use-intl";

@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Share } from "lucide-react";
+import { Bell, Share } from "@/ui/icons";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { disablePush, enablePush, pushState, type PushState } from "@/lib/push";

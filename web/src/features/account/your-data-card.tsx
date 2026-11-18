@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { Download, Trash2 } from "lucide-react";
+import { Download, Trash2 } from "@/ui/icons";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";

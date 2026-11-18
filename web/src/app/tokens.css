@@ -1,0 +1,87 @@
+/* Generated from packages/client/src/design/tokens.ts by web/scripts/build-tokens.mjs. Do not edit. */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: oklch(98.2% 0.004 165);
+  --bg-elevated: oklch(100% 0 0);
+  --surface: oklch(100% 0 0);
+  --surface-2: oklch(95.8% 0.005 165);
+  --surface-3: oklch(92.8% 0.007 165);
+  --line: oklch(21.5% 0.014 170 / 0.12);
+  --line-strong: oklch(21.5% 0.014 170 / 0.18);
+  --fg: oklch(21.5% 0.014 170);
+  --fg-muted: oklch(45% 0.014 170);
+  --fg-subtle: oklch(53.5% 0.012 170);
+  --accent: oklch(80% 0.145 163);
+  --accent-hover: oklch(76.5% 0.145 163);
+  --accent-fg: oklch(25% 0.06 165);
+  --accent-soft: oklch(80% 0.145 163 / 0.18);
+  --positive: oklch(50% 0.105 166);
+  --positive-soft: oklch(50% 0.105 166 / 0.1);
+  --negative: oklch(55.5% 0.145 48);
+  --negative-soft: oklch(55.5% 0.145 48 / 0.1);
+  --danger: oklch(53% 0.2 25);
+  --danger-soft: oklch(53% 0.2 25 / 0.09);
+  --warning: oklch(55% 0.115 78);
+  --warning-soft: oklch(55% 0.115 78 / 0.12);
+  --info: oklch(52% 0.13 255);
+  --info-soft: oklch(52% 0.13 255 / 0.1);
+  --glass: oklch(99.5% 0.003 165 / 0.72);
+  --glass-line: oklch(21.5% 0.014 170 / 0.1);
+  --glass-highlight: oklch(100% 0 0 / 0.9);
+  --scrim: oklch(20% 0.02 170 / 0.32);
+  --focus: oklch(50% 0.105 166);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: oklch(15.8% 0.007 170);
+  --bg-elevated: oklch(20.5% 0.009 170);
+  --surface: oklch(20.5% 0.009 170);
+  --surface-2: oklch(24.5% 0.01 170);
+  --surface-3: oklch(29.5% 0.011 170);
+  --line: oklch(100% 0 0 / 0.1);
+  --line-strong: oklch(100% 0 0 / 0.16);
+  --fg: oklch(96.5% 0.004 165);
+  --fg-muted: oklch(77.5% 0.012 170);
+  --fg-subtle: oklch(66.5% 0.012 170);
+  --accent: oklch(82% 0.14 163);
+  --accent-hover: oklch(86% 0.13 163);
+  --accent-fg: oklch(25% 0.06 165);
+  --accent-soft: oklch(82% 0.14 163 / 0.16);
+  --positive: oklch(84% 0.13 165);
+  --positive-soft: oklch(84% 0.13 165 / 0.12);
+  --negative: oklch(81% 0.12 58);
+  --negative-soft: oklch(81% 0.12 58 / 0.12);
+  --danger: oklch(72% 0.16 25);
+  --danger-soft: oklch(72% 0.16 25 / 0.12);
+  --warning: oklch(84% 0.12 80);
+  --warning-soft: oklch(84% 0.12 80 / 0.12);
+  --info: oklch(78% 0.11 255);
+  --info-soft: oklch(78% 0.11 255 / 0.12);
+  --glass: oklch(24% 0.008 170 / 0.66);
+  --glass-line: oklch(100% 0 0 / 0.12);
+  --glass-highlight: oklch(100% 0 0 / 0.1);
+  --scrim: oklch(5% 0.01 170 / 0.6);
+  --focus: oklch(84% 0.13 165);
+}
+
+:root {
+  --radius-tile: 0.75rem;
+  --radius-key: 1rem;
+  --radius-group: 1.25rem;
+  --radius-panel: 1.5rem;
+  --radius-sheet: 2rem;
+  --radius-pill: 999px;
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-focal: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --dur-press: 90ms;
+  --dur-feedback: 120ms;
+  --dur-state: 200ms;
+  --dur-panel: 240ms;
+  --dur-layout: 300ms;
+  --dur-focal: 600ms;
+}

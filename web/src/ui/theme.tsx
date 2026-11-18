@@ -9,7 +9,7 @@ const STORAGE_KEY = "sm-theme";
  * Runs in <head> before first paint so the page never flashes the wrong
  * theme. Keep it tiny and dependency-free.
  */
-export const themeScript = `(function(){try{var p=localStorage.getItem("${STORAGE_KEY}")||"system";var d=p==="dark"||(p==="system"&&matchMedia("(prefers-color-scheme: dark)").matches);var r=document.documentElement;r.dataset.theme=d?"dark":"light";r.style.colorScheme=d?"dark":"light"}catch(e){document.documentElement.dataset.theme="dark"}})()`;
+export const themeScript = `(function(){try{var p=localStorage.getItem("${STORAGE_KEY}")||"system";var d=p==="dark"||(p==="system"&&matchMedia("(prefers-color-scheme: dark)").matches);var r=document.documentElement;r.dataset.theme=d?"dark":"light";r.style.colorScheme=d?"dark":"light"}catch(e){document.documentElement.dataset.theme="light"}})()`;
 
 // The preference lives in localStorage and the system setting in a media
 // query: both are outside React, so they are read through a tiny store.

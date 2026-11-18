@@ -1,7 +1,7 @@
 "use client";
 
 import { getCategoryMeta, type ExpenseDto, type GroupDetailDto } from "@settlemint/shared";
-import { History, Pencil, Trash2 } from "lucide-react";
+import { History, Pencil, Trash2 } from "@/ui/icons";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "use-intl";
 import { useAddExpense } from "@/features/expenses/add-expense-context";
