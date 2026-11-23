@@ -206,6 +206,8 @@ const en = {
     other: "Other",
   },
   expense: {
+    quickUse: "Use this",
+    quickWith: "with {names}",
     friendPlaceholder: "Your friend's name",
     friendAdd: "Add and continue",
     addTitle: "Add expense",

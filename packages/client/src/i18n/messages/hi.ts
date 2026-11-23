@@ -202,6 +202,8 @@ const hi: Messages = {
     other: "अन्य",
   },
   expense: {
+    quickUse: "इसे इस्तेमाल करें",
+    quickWith: "{names} के साथ",
     friendPlaceholder: "दोस्त का नाम",
     friendAdd: "जोड़ें और आगे बढ़ें",
     addTitle: "खर्च जोड़ें",

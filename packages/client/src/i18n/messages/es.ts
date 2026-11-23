@@ -201,6 +201,8 @@ const es: Messages = {
     other: "Otros",
   },
   expense: {
+    quickUse: "Usar esto",
+    quickWith: "con {names}",
     friendPlaceholder: "Nombre de tu amigo",
     friendAdd: "Añadir y continuar",
     addTitle: "Añadir gasto",

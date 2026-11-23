@@ -202,6 +202,8 @@ const ur: Messages = {
     other: "دیگر",
   },
   expense: {
+    quickUse: "یہ استعمال کریں",
+    quickWith: "{names} کے ساتھ",
     friendPlaceholder: "دوست کا نام",
     friendAdd: "شامل کریں اور آگے بڑھیں",
     addTitle: "خرچ شامل کریں",

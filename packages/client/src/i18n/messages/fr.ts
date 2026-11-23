@@ -203,6 +203,8 @@ const fr: Messages = {
     other: "Autre",
   },
   expense: {
+    quickUse: "Utiliser",
+    quickWith: "avec {names}",
     friendPlaceholder: "Prénom de votre ami",
     friendAdd: "Ajouter et continuer",
     addTitle: "Ajouter une dépense",

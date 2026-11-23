@@ -206,6 +206,8 @@ const ar: Messages = {
     other: "أخرى",
   },
   expense: {
+    quickUse: "استخدم هذا",
+    quickWith: "مع {names}",
     friendPlaceholder: "اسم صديقك",
     friendAdd: "أضف وتابع",
     addTitle: "إضافة مصروف",

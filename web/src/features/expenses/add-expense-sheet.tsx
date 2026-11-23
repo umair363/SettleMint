@@ -26,6 +26,7 @@ import { prepareReceiptImage } from "@/lib/image";
 import { dayLabel, todayIso } from "@settlemint/client/text/dates";
 import { useCreateExpense, useCreateGroup, useCreateRecurring, useGroup, useGroups, useMe, useUpdateExpense } from "@settlemint/client/data/queries";
 import { guessCurrency } from "@settlemint/client/text/currency-guess";
+import { parseQuickAdd } from "@settlemint/client/text/quick-add";
 import { categoryGlyph, groupGlyph } from "@settlemint/client/design/glyphs";
 import { GroupIcon } from "@/features/groups/group-row";
 import { amountToExpr, AmountDisplay, AmountPad, evaluateAmount } from "@/ui/amount-pad";
@@ -260,6 +261,27 @@ function FormBody({
   };
 
   const total = evaluateAmount(expr, currency) ?? 0;
+
+  // "Dinner 45 with Sam": offer to fill the form from a typed sentence.
+  const quick = useMemo(() => {
+    if (expense || expr !== "") return null;
+    const parsed = parseQuickAdd(
+      description,
+      members.filter((m) => m.id !== group.myMemberId && !m.left).map((m) => m.displayName),
+    );
+    const minor = parsed ? parseMoneyInput(parsed.amount, currency, locale) : null;
+    return parsed && minor && minor > 0 ? { ...parsed, minor } : null;
+  }, [description, expr, expense, members, group.myMemberId, currency, locale]);
+  const applyQuick = () => {
+    if (!quick) return;
+    setDescription(quick.description);
+    setExpr(amountToExpr(quick.minor, currency));
+    if (quick.people.length) {
+      const ids = quick.people.flatMap((n) => members.filter((m) => m.displayName === n).map((m) => m.id));
+      setDraft(equalDraft([group.myMemberId, ...ids]));
+      setPayerId(group.myMemberId);
+    }
+  };
   const spec = useMemo(() => specFromDraft(draft, memberIds, currency, locale), [draft, memberIds, currency, locale]);
   const preview = useMemo(() => previewSplit(total, spec), [total, spec]);
   const payers = multiPay
@@ -428,6 +450,22 @@ function FormBody({
                 />
               </label>
             </div>
+
+            {quick && (
+              <button
+                type="button"
+                onClick={applyQuick}
+                className="mt-2 flex w-full items-center gap-2 rounded-[var(--radius-md)] bg-accent-soft px-3.5 py-2.5 text-start text-[14px] text-fg"
+              >
+                <span className="min-w-0 flex-1 truncate">
+                  <span className="font-[600]">{quick.description || catLabel}</span>
+                  {" · "}
+                  <Money minor={quick.minor} currency={currency} />
+                  {quick.people.length > 0 && ` · ${t("quickWith", { names: quick.people.join(", ") })}`}
+                </span>
+                <span className="shrink-0 font-[650] text-positive">{t("quickUse")}</span>
+              </button>
+            )}
 
             <div className="flex flex-1 flex-col justify-center">
             <AmountDisplay
