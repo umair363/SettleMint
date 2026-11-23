@@ -194,7 +194,7 @@ function ExpensesTab({ group, onOpen }: { group: GroupDetailDto; onOpen: (e: Exp
     <div className="space-y-6">
       {items.map(([day, dayItems]) => (
         <section key={day}>
-          <h2 className="sticky top-[calc(3rem+env(safe-area-inset-top))] z-10 -mx-1 mb-2 bg-bg/90 px-2 py-1.5 text-[14px] font-[600] text-fg-muted backdrop-blur-sm lg:top-0">
+          <h2 className="sticky top-[calc(3rem+env(safe-area-inset-top))] z-10 -mx-1 mb-2 bg-bg px-2 py-1.5 text-[14px] font-[600] text-fg-muted lg:top-0">
             {dayLabel(day, locale)}
           </h2>
           <List>

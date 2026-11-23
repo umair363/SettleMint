@@ -8,6 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { useTranslations } from "use-intl";
 import { Logo } from "./logo";
+import { PageTransition, PullToRefresh } from "./native-feel";
 import { useLiveUpdates } from "@/features/pwa/live-updates";
 import { AddExpenseProvider, useAddExpense } from "@/features/expenses/add-expense-context";
 import { AddExpenseSheet } from "@/features/expenses/add-expense-sheet";
@@ -182,7 +183,10 @@ function Gate({ children }: { children: ReactNode }) {
     return (
       <>
         <Sidebar pathname={pathname} name={me.data.name} userId={me.data.id} image={me.data.image} />
-        <div className="min-h-dvh pb-32 lg:ps-[272px] lg:pb-12">{children}</div>
+        <div className="min-h-dvh pb-32 lg:ps-[272px] lg:pb-12">
+          <PageTransition>{children}</PageTransition>
+        </div>
+        <PullToRefresh />
         <BottomNav pathname={pathname} />
         <AddExpenseSheet />
         <SearchPalette />
