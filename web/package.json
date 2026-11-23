@@ -46,7 +46,7 @@
     "intl-messageformat": "^12.1.5",
     "playwright": "^1.65.1",
     "tailwindcss": "^4.3.5",
-    "typescript": "^5",
+    "typescript": "^7",
     "wrangler": "^4.164.0"
   }
 }
