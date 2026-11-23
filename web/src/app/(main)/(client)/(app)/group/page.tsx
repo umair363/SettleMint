@@ -24,6 +24,7 @@ import { dayLabel } from "@settlemint/client/text/dates";
 import { useExpenses, useGroup, useSetExpenseDeleted, useSettlements } from "@settlemint/client/data/queries";
 import { toast } from "sonner";
 import { SettledCheck } from "@/ui/settled-check";
+import { SettleRing } from "@/ui/settle-ring";
 import { SwipeRow } from "@/ui/swipe-row";
 import { Avatar, AvatarStack } from "@/ui/avatar";
 import { Button, IconButton } from "@/ui/button";
@@ -402,6 +403,7 @@ function GroupScreen() {
       />
       <PageBody>
         <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-5">
+          <div className="flex items-end gap-5">
           {celebrate && g.myBalance === 0 ? (
             <div>
               <p className="text-[17px] text-fg-muted">{t("myBalance", { state: "settled" })}</p>
@@ -417,6 +419,8 @@ function GroupScreen() {
               settledText={g.transfers.length === 0 ? t("everyoneSettled") : undefined}
             />
           )}
+          <SettleRing outstanding={g.transfers.reduce((sum, tr) => sum + tr.amount, 0)} spent={g.totalSpent} />
+          </div>
           <div className="flex gap-2">
             <Button
               variant="secondary"

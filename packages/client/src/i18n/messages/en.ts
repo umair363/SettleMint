@@ -82,6 +82,7 @@ const en = {
     people: "{count, plural, one {# person} other {# people}}",
   },
   group: {
+    settleProgress: "{percent}% settled",
     someone: "Someone",
     you: "You",
     onePaid: "{who, select, me {You paid} other {{name} paid}}",

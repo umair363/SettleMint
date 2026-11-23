@@ -78,6 +78,7 @@ const es: Messages = {
     people: "{count, plural, one {# persona} other {# personas}}",
   },
   group: {
+    settleProgress: "{percent}% saldado",
     someone: "Alguien",
     you: "Tú",
     onePaid: "{who, select, me {Pagaste tú} other {Pagó {name}}}",

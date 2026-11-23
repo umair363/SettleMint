@@ -78,6 +78,7 @@ const hi: Messages = {
     people: "{count, plural, one {# व्यक्ति} other {# लोग}}",
   },
   group: {
+    settleProgress: "{percent}% चुकता",
     someone: "कोई",
     you: "आप",
     onePaid: "{who, select, me {आपने भुगतान किया} other {{name} ने भुगतान किया}}",

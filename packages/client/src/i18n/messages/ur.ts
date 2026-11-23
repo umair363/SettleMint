@@ -78,6 +78,7 @@ const ur: Messages = {
     people: "{count, plural, one {# فرد} other {# افراد}}",
   },
   group: {
+    settleProgress: "{percent}% حساب برابر",
     someone: "کوئی",
     you: "آپ",
     onePaid: "{who, select, me {آپ نے ادا کیا} other {{name} نے ادا کیا}}",

@@ -81,6 +81,7 @@ const ar: Messages = {
     people: PEOPLE,
   },
   group: {
+    settleProgress: "تمت تسوية {percent}٪",
     someone: "شخص ما",
     you: "أنت",
     onePaid: "{who, select, me {دفعتَ أنت} other {دفع {name}}}",

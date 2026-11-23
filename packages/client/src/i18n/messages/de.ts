@@ -78,6 +78,7 @@ const de: Messages = {
     people: "{count, plural, one {# Person} other {# Personen}}",
   },
   group: {
+    settleProgress: "{percent} % beglichen",
     someone: "Jemand",
     you: "Du",
     onePaid: "{who, select, me {Du hast bezahlt} other {{name} hat bezahlt}}",
