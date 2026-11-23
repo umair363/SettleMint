@@ -7,6 +7,8 @@ export interface ActivityLine {
   amount?: { minor: number; currency: string };
   kind: "expense" | "payment" | "member" | "group";
   deleted?: boolean;
+  /** The same sentence split so names and items can be shown bold. */
+  parts: { text: string; strong: boolean }[];
 }
 
 export type ActivityT = ReturnType<typeof useTranslations<"activity">>;
@@ -19,13 +21,34 @@ const str = (v: unknown) => (typeof v === "string" ? v : "");
  * differently from "Ana added…".
  */
 export function describeActivity(e: ActivityDto, myUserId: string | undefined, t: ActivityT): ActivityLine {
+  const plain = describe(e, myUserId, t, (v) => v);
+  // Names and items are wrapped in invisible markers, so any language's sentence can be split around them.
+  const marked = describe(e, myUserId, t, (v) => `${OPEN}${v}${CLOSE}`);
+  const parts: ActivityLine["parts"] = [];
+  marked.text.split(OPEN).forEach((chunk, i) => {
+    const [strong, rest] = i === 0 ? ["", chunk] : chunk.split(CLOSE);
+    if (strong) parts.push({ text: strong, strong: true });
+    if (rest) parts.push({ text: rest, strong: false });
+  });
+  return { ...plain, parts };
+}
+
+const OPEN = "\u2062";
+const CLOSE = "\u2063";
+
+function describe(
+  e: ActivityDto,
+  myUserId: string | undefined,
+  t: ActivityT,
+  mark: (v: string) => string,
+): Omit<ActivityLine, "parts"> {
   const d = e.data;
   const me = Boolean(e.actorUserId && e.actorUserId === myUserId);
-  const who = { who: me ? "me" : "other", name: e.actorName ?? t("someone") };
+  const who = { who: me ? "me" : "other", name: mark(e.actorName ?? t("someone")) };
   const money =
     typeof d.amount === "number" && typeof d.currency === "string" ? { minor: d.amount, currency: d.currency } : undefined;
   const after = (d.after ?? {}) as Record<string, unknown>;
-  const item = str(d.description);
+  const item = mark(str(d.description));
 
   switch (e.type) {
     case "expense.created":
@@ -38,7 +61,7 @@ export function describeActivity(e: ActivityDto, myUserId: string | undefined, t
     case "expense.updated":
       return {
         kind: "expense",
-        text: t("expenseEdited", { ...who, item: str(after.description) }),
+        text: t("expenseEdited", { ...who, item: mark(str(after.description)) }),
         amount:
           typeof after.amount === "number" && typeof after.currency === "string"
             ? { minor: after.amount, currency: after.currency }
@@ -54,7 +77,7 @@ export function describeActivity(e: ActivityDto, myUserId: string | undefined, t
       const dir = fromMe ? "out" : toMe ? "in" : "other";
       return {
         kind: "payment",
-        text: t("paid", { dir, from: str(d.fromName) || t("someone"), to: str(d.toName) || t("someone") }),
+        text: t("paid", { dir, from: mark(str(d.fromName) || t("someone")), to: mark(str(d.toName) || t("someone")) }),
         amount: money,
       };
     }
@@ -65,15 +88,15 @@ export function describeActivity(e: ActivityDto, myUserId: string | undefined, t
     case "settlement.restored":
       return { kind: "payment", text: t("paymentRestored", who), amount: money };
     case "member.added":
-      return { kind: "member", text: t("memberAdded", { ...who, member: str(d.displayName) }) };
+      return { kind: "member", text: t("memberAdded", { ...who, member: mark(str(d.displayName)) }) };
     case "member.joined":
-      return { kind: "member", text: t("memberJoined", { name: str(d.displayName) || who.name }) };
+      return { kind: "member", text: t("memberJoined", { name: str(d.displayName) ? mark(str(d.displayName)) : who.name }) };
     case "member.renamed":
-      return { kind: "member", text: t("memberRenamed", { ...who, from: str(d.from), to: str(d.to) }) };
+      return { kind: "member", text: t("memberRenamed", { ...who, from: mark(str(d.from)), to: mark(str(d.to)) }) };
     case "member.left":
-      return { kind: "member", text: t("memberLeft", { name: str(d.displayName) || who.name }) };
+      return { kind: "member", text: t("memberLeft", { name: str(d.displayName) ? mark(str(d.displayName)) : who.name }) };
     case "member.removed":
-      return { kind: "member", text: t("memberRemoved", { ...who, member: str(d.displayName) }) };
+      return { kind: "member", text: t("memberRemoved", { ...who, member: mark(str(d.displayName)) }) };
     case "group.created":
       return { kind: "group", text: t("groupCreated", who) };
     case "group.imported":

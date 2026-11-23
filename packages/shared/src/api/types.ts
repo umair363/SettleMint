@@ -54,6 +54,20 @@ export interface PaymentHandleDto {
   label: string | null;
 }
 
+/** Something deleted in the last 30 days that can still be brought back. */
+export interface TrashItemDto {
+  kind: "group" | "expense" | "payment";
+  id: string;
+  title: string;
+  groupId: string;
+  groupName: string;
+  amount: number | null;
+  currency: string | null;
+  deletedAt: string;
+  /** Only a group's owner can bring a whole group back. */
+  canRestore: boolean;
+}
+
 export interface SearchResultDto {
   groups: { id: string; name: string; emoji: string | null; type: string }[];
   expenses: {

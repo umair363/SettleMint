@@ -197,6 +197,7 @@ try {
   });
 
   await step("payment method", async () => {
+    await page.getByRole("button", { name: "How people pay you" }).click();
     await page.getByRole("button", { name: "Add a method" }).click();
     await page.getByLabel("PayPal details").fill("https://paypal.me/AnaSouza");
     await page.getByRole("button", { name: "Save", exact: true }).click();

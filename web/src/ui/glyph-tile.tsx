@@ -1,6 +1,6 @@
 import { categoryGlyph, groupGlyph } from "@settlemint/client/design/glyphs";
 import { identityHue } from "@settlemint/client/design/tokens";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { cn } from "./cn";
 import { Glyph } from "./icons";
 
@@ -19,6 +19,21 @@ export function GroupMark({ id, type, size = "md", className }: { id: string; ty
       style={{ "--id-h": identityHue(id) } as CSSProperties}
     >
       <Glyph name={groupGlyph(type).web} />
+    </span>
+  );
+}
+
+/** A settings row's icon: neutral tile, so colour stays reserved for balances and warnings. */
+export function IconTile({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "danger" }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "inline-flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-sm)] [&>svg]:size-5",
+        tone === "danger" ? "bg-negative-soft text-negative" : "bg-surface-2 text-fg-muted",
+      )}
+    >
+      {children}
     </span>
   );
 }

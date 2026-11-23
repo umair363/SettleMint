@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { Download, Trash2 } from "@/ui/icons";
+import { Download, LoaderCircle, Trash2 } from "@/ui/icons";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -12,11 +12,12 @@ import { disablePush } from "@/lib/push";
 import { Button } from "@/ui/button";
 import { TextField } from "@/ui/field";
 import { Sheet } from "@/ui/sheet";
-import { Card } from "@/ui/surface";
+import { IconTile } from "@/ui/glyph-tile";
+import { ListRow } from "@/ui/surface";
 import { useTranslations } from "use-intl";
 
 /** Export everything, or delete the account (privacy-law and store requirements). */
-export function YourDataCard() {
+export function YourDataRows() {
   const router = useRouter();
   const qc = useQueryClient();
   const [exporting, setExporting] = useState(false);
@@ -59,19 +60,21 @@ export function YourDataCard() {
   };
 
   return (
-    <Card className="space-y-4 p-5">
-      <div>
-        <p className="font-semibold">{t("title")}</p>
-        <p className="text-sm text-fg-muted">{t("body")}</p>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <Button variant="secondary" size="sm" leading={<Download className="size-4" />} loading={exporting} onClick={exportData}>
-          {t("export")}
-        </Button>
-        <Button variant="danger" size="sm" leading={<Trash2 className="size-4" />} onClick={() => setDeleteOpen(true)}>
-          {t("delete")}
-        </Button>
-      </div>
+    <>
+      <ListRow
+        onClick={exporting ? undefined : exportData}
+        leading={<IconTile>{exporting ? <LoaderCircle className="animate-spin" /> : <Download />}</IconTile>}
+        title={t("export")}
+      />
+      <ListRow
+        onClick={() => setDeleteOpen(true)}
+        leading={
+          <IconTile tone="danger">
+            <Trash2 />
+          </IconTile>
+        }
+        title={<span className="text-negative">{t("delete")}</span>}
+      />
 
       <Sheet
         open={deleteOpen}
@@ -95,6 +98,6 @@ export function YourDataCard() {
           </Button>
         </div>
       </Sheet>
-    </Card>
+    </>
   );
 }

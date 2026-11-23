@@ -27,6 +27,7 @@ import type {
   ReceiptScanDto,
   RecurringRuleDto,
   SearchResultDto,
+  TrashItemDto,
   SettlementDto,
 } from "./types";
 
@@ -113,6 +114,8 @@ export function createApiClient(opts: ApiClientOptions) {
       paymentHandles: () => get<PaymentHandleDto[]>("/me/payment-handles"),
       setPaymentHandles: (handles: PaymentHandleInput[]) =>
         request<PaymentHandleDto[]>("PUT", "/me/payment-handles", { handles }),
+      /** Groups, expenses and payments deleted in the last 30 days. */
+      trash: () => get<TrashItemDto[]>("/me/trash"),
       /** Everything involving me, as a JSON document. */
       export: () => get<unknown>("/me/export"),
       /** Permanently delete my account (my past expenses stay as a named placeholder). */

@@ -27,7 +27,7 @@ let nextKey = 0;
 const newKey = () => `row-${nextKey++}`;
 
 /** "How people pay you": the methods shown to your groups when they settle up. */
-export function PaymentHandlesCard() {
+export function PaymentHandlesCard({ bare = false }: { bare?: boolean } = {}) {
   const qc = useQueryClient();
   const saved = useQuery({ queryKey: ["payment-handles"], queryFn: api.me.paymentHandles });
   const [draft, setDraft] = useState<Row[] | null>(null);
@@ -36,6 +36,7 @@ export function PaymentHandlesCard() {
   const t = useTranslations("payments");
   const tc = useTranslations("common");
   const kindText = usePaymentKindText();
+  const Wrap = bare ? "div" : Card;
 
   const save = useMutation({
     meta: { handlesErrors: true },
@@ -56,7 +57,7 @@ export function PaymentHandlesCard() {
   const anyInvalid = rows.some(invalid);
 
   return (
-    <Card className="space-y-4 p-5">
+    <Wrap className="space-y-4 p-5">
       <div>
         <p className="font-semibold">{t("title")}</p>
         <p className="text-sm text-fg-muted">{t("body")}</p>
@@ -115,6 +116,6 @@ export function PaymentHandlesCard() {
           </Button>
         )}
       </div>
-    </Card>
+    </Wrap>
   );
 }

@@ -328,6 +328,33 @@ describe("groups and expenses", () => {
     expect(page.items).toHaveLength(1);
   });
 
+  it("lists what was deleted recently, for members only, until it is restored", async () => {
+    const { ana, group, anaId, benId } = await tripWithFriends();
+    const lunch = (
+      await ana.post<ExpenseDto>(`/v1/groups/${group.id}/expenses`, {
+        description: "Lunch",
+        amount: 1200,
+        currency: "USD",
+        date: today,
+        payers: [{ memberId: anaId, amount: 1200 }],
+        split: { method: "equal", memberIds: [anaId, benId] },
+      })
+    ).body;
+    expect((await ana.get("/v1/me/trash")).body).toEqual([]);
+
+    await ana.del(`/v1/expenses/${lunch.id}`);
+    const trash = (await ana.get<{ kind: string; title: string; amount: number; canRestore: boolean }[]>("/v1/me/trash")).body;
+    expect(trash).toHaveLength(1);
+    expect(trash[0]).toMatchObject({ kind: "expense", title: "Lunch", amount: 1200, canRestore: true });
+
+    const stranger = client();
+    await stranger.signUp("Stranger");
+    expect((await stranger.get("/v1/me/trash")).body).toEqual([]);
+
+    await ana.post(`/v1/expenses/${lunch.id}/restore`);
+    expect((await ana.get("/v1/me/trash")).body).toEqual([]);
+  });
+
   it("edits with version checks, deletes and restores", async () => {
     const { ana, group, anaId, benId } = await tripWithFriends();
     const created = (

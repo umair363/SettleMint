@@ -32,8 +32,16 @@ export function ActivityRow({ event, myUserId, showGroup = true }: { event: Acti
         </span>
       )}
       <span className="min-w-0 flex-1">
-        <span className={cn("block text-[16px] leading-snug text-fg", line.deleted && "text-fg-muted line-through decoration-fg-subtle")}>
-          {line.text}
+        <span className={cn("block text-[16px] leading-snug text-fg/80", line.deleted && "text-fg-muted line-through decoration-fg-subtle")}>
+          {line.parts.map((part, i) =>
+            part.strong ? (
+              <strong key={i} className="font-[650]">
+                {part.text}
+              </strong>
+            ) : (
+              <span key={i}>{part.text}</span>
+            ),
+          )}
         </span>
         <span className="mt-0.5 block truncate text-[14px] text-fg-muted">
           {showGroup && <>{event.groupName} · </>}

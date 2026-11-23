@@ -1,8 +1,8 @@
 "use client";
 
 import { Trash2 } from "@/ui/icons";
-import { animate, motion, useMotionValue, useTransform, type PanInfo } from "motion/react";
-import { useRef, type ReactNode } from "react";
+import { animate, motion, useMotionValue, useMotionValueEvent, useTransform, type PanInfo } from "motion/react";
+import { useRef, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "use-intl";
 import { dirOf, matchLanguage } from "@settlemint/client/i18n/languages";
 import { haptic } from "./motion";
@@ -35,8 +35,17 @@ export function SwipeRow({
   const x = useMotionValue(0);
   const dragged = useRef(false);
   const revealed = useTransform(x, (v) => Math.max(0, v * out));
-  const actionOpacity = useTransform(revealed, [0, 24, REVEAL], [0, 0.4, 1]);
-  const actionScale = useTransform(revealed, [0, REVEAL, COMMIT], [0.8, 1, 1.08]);
+  const actionScale = useTransform(revealed, [0, REVEAL, COMMIT], [0.8, 1, 1.15]);
+  // The red grows with the swipe and deepens at the point of no return, so deleting never happens by surprise.
+  const actionBg = useTransform(revealed, [0, REVEAL, COMMIT], ["oklch(0.62 0.17 25)", "oklch(0.56 0.2 25)", "oklch(0.46 0.2 25)"]);
+  const [armed, setArmed] = useState(false);
+  useMotionValueEvent(revealed, "change", (v) => {
+    const now = v > COMMIT;
+    if (now !== armed) {
+      setArmed(now);
+      haptic(now ? 14 : 6);
+    }
+  });
 
   const settle = (to: number) => animate(x, to, { type: "spring", stiffness: 600, damping: 45 });
 
@@ -66,12 +75,12 @@ export function SwipeRow({
           haptic(8);
           onAction();
         }}
-        style={{ opacity: actionOpacity }}
-        className="absolute inset-y-0 end-0 flex w-[88px] items-center justify-center bg-negative text-bg"
+        style={{ width: revealed, backgroundColor: actionBg }}
+        className="absolute inset-y-0 end-0 flex items-center justify-start overflow-hidden text-white"
       >
-        <motion.span style={{ scale: actionScale }} className="flex flex-col items-center gap-0.5 text-xs font-semibold">
+        <motion.span style={{ scale: actionScale }} className="flex min-w-[88px] shrink-0 flex-col items-center gap-0.5 whitespace-nowrap px-2 text-xs font-semibold">
           <Trash2 className="size-5" />
-          {label}
+          {armed ? t("releaseToDelete") : label}
         </motion.span>
       </motion.button>
       <motion.div

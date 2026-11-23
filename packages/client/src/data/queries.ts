@@ -45,6 +45,7 @@ export const keys = {
   settlements: (groupId: string) => ["settlements", groupId] as const,
   recurring: (groupId: string) => ["recurring", groupId] as const,
   activity: ["activity"] as const,
+  trash: ["trash"] as const,
   groupActivity: (groupId: string, entityId?: string) => ["activity", groupId, entityId ?? "all"] as const,
   invite: (token: string) => ["invite", token] as const,
 };
@@ -58,6 +59,7 @@ export function invalidateGroup(qc: QueryClient, groupId: string) {
     qc.invalidateQueries({ queryKey: keys.settlements(groupId) }),
     qc.invalidateQueries({ queryKey: keys.recurring(groupId) }),
     qc.invalidateQueries({ queryKey: keys.activity }),
+    qc.invalidateQueries({ queryKey: keys.trash }),
   ]);
 }
 
@@ -157,6 +159,22 @@ export function useCreateGroup() {
       ]);
       return qc.invalidateQueries({ queryKey: keys.groups });
     },
+  });
+}
+
+/** Groups, expenses and payments deleted in the last 30 days. */
+export function useTrash() {
+  return useQuery({ queryKey: keys.trash, queryFn: () => api.me.trash() });
+}
+
+/** Bring something back from "Recently deleted". */
+export function useRestoreTrashItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ kind, id }: { kind: "group" | "expense" | "payment"; id: string }) =>
+      (kind === "group" ? api.groups.restore(id) : kind === "expense" ? api.expenses.restore(id) : api.settlements.restore(id)).then(() => undefined),
+    // Balances, lists and history all change, so refresh everything.
+    onSuccess: () => qc.invalidateQueries(),
   });
 }
 

@@ -24,6 +24,7 @@ import {
   CheckIcon,
   CircleNotchIcon,
   ClockCounterClockwiseIcon,
+  CoinsIcon,
   CloudSlashIcon,
   ConfettiIcon,
   CopyIcon,
@@ -112,6 +113,7 @@ export const Equal = icon(EqualsIcon);
 export const ExternalLink = icon(ArrowSquareOutIcon);
 export const FileUp = icon(FileArrowUpIcon);
 export const History = icon(ClockCounterClockwiseIcon);
+export const Coins = icon(CoinsIcon);
 export const House = icon(HouseIcon);
 export const Inbox = icon(TrayIcon);
 export const KeyRound = icon(KeyIcon);

@@ -5,12 +5,12 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { disablePush, enablePush, pushState, type PushState } from "@/lib/push";
 import { Switch } from "@/ui/controls";
-import { Card, SectionHeader } from "@/ui/surface";
+import { IconTile } from "@/ui/glyph-tile";
 import { useTranslations } from "use-intl";
 
 
-/** Opt in to being told when friends add expenses or pay you, on this device. */
-export function NotificationsCard() {
+/** One settings row: opt in to being told when friends add expenses or pay you, on this device. */
+export function NotificationsRow() {
   const [state, setState] = useState<PushState | null>(null);
   const [busy, setBusy] = useState(false);
   const t = useTranslations("notifications");
@@ -56,25 +56,22 @@ export function NotificationsCard() {
           ? t("unsupported")
           : null;
   return (
-    <section>
-      <SectionHeader title={t("title")} />
-      <Card className="space-y-3 p-5">
-        <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-positive">
-            <Bell className="size-5" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <Switch
-              label={t("onThisDevice")}
-              description={t("description")}
-              checked={state === "on"}
-              disabled={busy || Boolean(hint)}
-              onCheckedChange={toggle}
-            />
-          </div>
-        </div>
-        {hint && <p className="text-[13px] text-fg-muted">{hint}</p>}
-      </Card>
-    </section>
+    <div className="flex min-h-16 items-start gap-3 px-4 py-3">
+      <span className="mt-0.5">
+        <IconTile>
+          <Bell />
+        </IconTile>
+      </span>
+      <div className="min-w-0 flex-1 self-center">
+        <Switch
+          label={t("onThisDevice")}
+          description={hint ? undefined : t("description")}
+          checked={state === "on"}
+          disabled={busy || Boolean(hint)}
+          onCheckedChange={toggle}
+        />
+        {hint && <p className="mt-1 text-[13px] text-fg-muted">{hint}</p>}
+      </div>
+    </div>
   );
 }

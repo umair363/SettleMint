@@ -1,15 +1,15 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { Download, LogOut, Monitor, Moon, Share, ShieldCheck, Sun } from "@/ui/icons";
+import { Coins, Download, History, LogOut, Monitor, Moon, Send, Share, ShieldCheck, Sun, UserRound } from "@/ui/icons";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
-import { LanguageCard } from "@/features/account/language-card";
-import { NotificationsCard } from "@/features/account/notifications-card";
+import { LanguageRow } from "@/features/account/language-card";
+import { NotificationsRow } from "@/features/account/notifications-card";
 import { PaymentHandlesCard } from "@/features/account/payment-handles-card";
-import { YourDataCard } from "@/features/account/your-data-card";
+import { YourDataRows } from "@/features/account/your-data-card";
 import { useInstall } from "@/features/pwa/pwa";
 import { PageBody, PageHeader } from "@/features/shell/page-header";
 import { authClient } from "@/lib/auth-client";
@@ -21,7 +21,9 @@ import { Button } from "@/ui/button";
 import { Segmented } from "@/ui/controls";
 import { CurrencyPicker } from "@/ui/currency-picker";
 import { TextField } from "@/ui/field";
-import { Card, SectionHeader } from "@/ui/surface";
+import { IconTile } from "@/ui/glyph-tile";
+import { Sheet } from "@/ui/sheet";
+import { Card, List, ListRow, SectionHeader } from "@/ui/surface";
 import { useTheme, type ThemePreference } from "@/ui/theme";
 
 function SaveGuestAccount() {
@@ -125,13 +127,17 @@ export default function AccountPage() {
   const router = useRouter();
   const qc = useQueryClient();
   const { preference, setPreference } = useTheme();
-  const [name, setName] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [nameOpen, setNameOpen] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const t = useTranslations("account");
+  const tp = useTranslations("payments");
+  const tt = useTranslations("trash");
+  const tn = useTranslations("yourData");
 
   if (!me.data) return null;
-  const nameValue = name ?? me.data.name;
 
   const signOut = async () => {
     setSigningOut(true);
@@ -144,68 +150,83 @@ export default function AccountPage() {
     router.replace("/sign-in");
   };
 
+  const saveName = (e: FormEvent) => {
+    e.preventDefault();
+    update.mutate(
+      { name: name.trim() },
+      {
+        onSuccess: () => {
+          toast.success(t("nameUpdated"));
+          setNameOpen(false);
+        },
+      },
+    );
+  };
+
   return (
     <>
       <PageHeader title={t("title")} />
       <PageBody>
-        <Card className="flex items-center gap-4 p-5">
-          <Avatar id={me.data.id} name={me.data.name} image={me.data.image} size="lg" />
-          <div className="min-w-0">
-            <p className="truncate font-display text-xl font-semibold">{me.data.name}</p>
-            <p className="truncate text-sm text-fg-muted">{me.data.email ?? t("guest")}</p>
+        <div className="flex flex-col items-center gap-3 pb-2 pt-2 text-center">
+          <Avatar id={me.data.id} name={me.data.name} image={me.data.image} size="xl" />
+          <div className="min-w-0 max-w-full">
+            <p className="font-wide truncate text-[26px] font-[680] leading-tight">{me.data.name}</p>
+            <p className="mt-0.5 truncate text-[15px] text-fg-muted">{me.data.email ?? t("guest")}</p>
           </div>
-        </Card>
+        </div>
 
         {me.data.isGuest && <SaveGuestAccount />}
 
-        <section>
-          <SectionHeader title={t("profile")} />
-          <Card className="space-y-5 p-5">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                update.mutate({ name: nameValue.trim() }, { onSuccess: () => toast.success(t("nameUpdated")) });
-              }}
-            >
-              <TextField
-                label={t("name")}
-                value={nameValue}
-                maxLength={60}
-                onChange={(e) => setName(e.target.value)}
-                trailing={
-                  nameValue.trim() && nameValue.trim() !== me.data.name ? (
-                    <Button type="submit" size="sm" loading={update.isPending}>
-                      {t("save")}
-                    </Button>
-                  ) : undefined
-                }
-              />
-            </form>
-            <div className="space-y-1.5">
-              <span className="text-[13px] font-medium text-fg-muted">{t("defaultCurrency")}</span>
-              <button
-                type="button"
-                onClick={() => setPickerOpen(true)}
-                className="flex h-12 w-full items-center justify-between rounded-[var(--radius-md)] border border-line bg-surface-2 px-3.5 text-start hover:border-line-strong"
-              >
-                <span className="font-medium">{me.data.defaultCurrency ?? t("notSet")}</span>
-                <span className="text-sm text-positive">{t("change")}</span>
-              </button>
-            </div>
-          </Card>
-        </section>
-
-        {!me.data.isGuest && <PaymentHandlesCard />}
+        <List>
+          <ListRow
+            leading={
+              <IconTile>
+                <UserRound />
+              </IconTile>
+            }
+            title={t("name")}
+            trailing={<span className="text-[15px] text-fg-muted">{me.data.name}</span>}
+            chevron
+            onClick={() => {
+              setName(me.data!.name);
+              setNameOpen(true);
+            }}
+          />
+          <ListRow
+            leading={
+              <IconTile>
+                <Coins />
+              </IconTile>
+            }
+            title={t("currencyRow")}
+            trailing={<span className="text-[15px] text-fg-muted">{me.data.defaultCurrency ?? t("notSet")}</span>}
+            chevron
+            onClick={() => setPickerOpen(true)}
+          />
+          {!me.data.isGuest && (
+            <ListRow
+              leading={
+                <IconTile>
+                  <Send />
+                </IconTile>
+              }
+              title={tp("title")}
+              chevron
+              onClick={() => setPayOpen(true)}
+            />
+          )}
+        </List>
 
         <InstallCard />
 
-        <NotificationsCard />
-
-        <LanguageCard />
+        <List>
+          <NotificationsRow />
+          <LanguageRow />
+        </List>
 
         <section>
           <SectionHeader title={t("appearance")} />
-          <Card className="p-5">
+          <Card className="p-4">
             <Segmented<ThemePreference>
               label={t("theme")}
               value={preference}
@@ -219,13 +240,40 @@ export default function AccountPage() {
           </Card>
         </section>
 
-        <YourDataCard />
+        <section>
+          <SectionHeader title={tn("title")} />
+          <List>
+            <ListRow
+              href="/trash"
+              leading={
+                <IconTile>
+                  <History />
+                </IconTile>
+              }
+              title={tt("link")}
+              chevron
+            />
+            <YourDataRows />
+          </List>
+        </section>
 
         <Button variant="secondary" block size="lg" loading={signingOut} leading={<LogOut className="size-4" />} onClick={signOut}>
           {t("signOut")}
         </Button>
         <p className="pb-4 text-center text-xs text-fg-subtle">{t("tagline")}</p>
       </PageBody>
+
+      <Sheet open={nameOpen} onOpenChange={setNameOpen} title={t("name")}>
+        <form onSubmit={saveName} className="space-y-4 pb-2">
+          <TextField aria-label={t("name")} value={name} maxLength={60} onChange={(e) => setName(e.target.value)} autoFocus={matchMedia("(pointer: fine)").matches} />
+          <Button type="submit" block size="lg" loading={update.isPending} disabled={!name.trim() || name.trim() === me.data.name}>
+            {t("save")}
+          </Button>
+        </form>
+      </Sheet>
+      <Sheet open={payOpen} onOpenChange={setPayOpen} title={tp("title")} description={tp("body")} showDescription tall>
+        <PaymentHandlesCard bare />
+      </Sheet>
       <CurrencyPicker
         open={pickerOpen}
         onOpenChange={setPickerOpen}

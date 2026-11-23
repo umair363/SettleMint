@@ -1,4 +1,5 @@
-import { and, asc, desc, eq, ilike, inArray, isNotNull, isNull, ne } from "drizzle-orm";
+import { and, asc, desc, eq, gt, ilike, inArray, isNotNull, isNull, ne } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { uuidv7 } from "uuidv7";
 import {
@@ -10,6 +11,7 @@ import {
   type Me,
   type PaymentHandleDto,
   type SearchResultDto,
+  type TrashItemDto,
 } from "@settlemint/shared";
 import { requireUser } from "../app";
 import type { DbOrTx } from "../db/client";
@@ -43,6 +45,81 @@ export const meRoutes: FastifyPluginAsyncZod = async (app) => {
   };
 
   app.get("/me", async (req) => load(requireUser(req).id));
+
+  /** Deleted in the last 30 days, newest first: the "Recently deleted" list. */
+  app.get("/me/trash", async (req): Promise<TrashItemDto[]> => {
+    const me = requireUser(req);
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const mine = await app.db
+      .select({ groupId: members.groupId, role: members.role })
+      .from(members)
+      .where(and(eq(members.userId, me.id), isNull(members.leftAt)));
+    if (mine.length === 0) return [];
+    const ids = mine.map((m) => m.groupId);
+    const owns = new Set(mine.filter((m) => m.role === "owner").map((m) => m.groupId));
+    const from = alias(members, "from_member");
+    const to = alias(members, "to_member");
+
+    const [gone, spent, paid] = await Promise.all([
+      app.db
+        .select()
+        .from(groups)
+        .where(and(inArray(groups.id, ids), isNotNull(groups.deletedAt), gt(groups.deletedAt, since))),
+      app.db
+        .select({ e: expenses, groupName: groups.name })
+        .from(expenses)
+        .innerJoin(groups, eq(groups.id, expenses.groupId))
+        .where(and(inArray(expenses.groupId, ids), isNull(groups.deletedAt), isNotNull(expenses.deletedAt), gt(expenses.deletedAt, since)))
+        .orderBy(desc(expenses.deletedAt))
+        .limit(50),
+      app.db
+        .select({ s: settlements, groupName: groups.name, from: from.displayName, to: to.displayName })
+        .from(settlements)
+        .innerJoin(groups, eq(groups.id, settlements.groupId))
+        .innerJoin(from, eq(from.id, settlements.fromMemberId))
+        .innerJoin(to, eq(to.id, settlements.toMemberId))
+        .where(and(inArray(settlements.groupId, ids), isNull(groups.deletedAt), isNotNull(settlements.deletedAt), gt(settlements.deletedAt, since)))
+        .orderBy(desc(settlements.deletedAt))
+        .limit(50),
+    ]);
+
+    const items: TrashItemDto[] = [
+      ...gone.map((g) => ({
+        kind: "group" as const,
+        id: g.id,
+        title: g.name,
+        groupId: g.id,
+        groupName: g.name,
+        amount: null,
+        currency: null,
+        deletedAt: (g.deletedAt as Date).toISOString(),
+        canRestore: owns.has(g.id),
+      })),
+      ...spent.map(({ e, groupName }) => ({
+        kind: "expense" as const,
+        id: e.id,
+        title: e.description,
+        groupId: e.groupId,
+        groupName,
+        amount: e.amount,
+        currency: e.currency,
+        deletedAt: (e.deletedAt as Date).toISOString(),
+        canRestore: true,
+      })),
+      ...paid.map((r) => ({
+        kind: "payment" as const,
+        id: r.s.id,
+        title: `${r.from} → ${r.to}`,
+        groupId: r.s.groupId,
+        groupName: r.groupName,
+        amount: r.s.amount,
+        currency: r.s.currency,
+        deletedAt: (r.s.deletedAt as Date).toISOString(),
+        canRestore: true,
+      })),
+    ];
+    return items.sort((a, b) => b.deletedAt.localeCompare(a.deletedAt));
+  });
 
   app.patch("/me", { schema: { body: updateMeBody } }, async (req) => {
     const me = requireUser(req);

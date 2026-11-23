@@ -63,6 +63,9 @@ export function GroupSettingsSheet({
 
   const saveField = (changes: Parameters<typeof update.mutate>[0]) =>
     update.mutate(changes, {
+      onSuccess: () => {
+        if (changes.name) toast.success(t("renamed", { name: changes.name }));
+      },
       onError: (err) => {
         if (err instanceof ApiError && err.code === "VERSION_CONFLICT") toast.error(t("conflict"));
       },
