@@ -83,8 +83,13 @@
     -webkit-tap-highlight-color: transparent;
     text-size-adjust: 100%;
     background: var(--bg);
+    /* An app, not a web page: nothing ever slides sideways, and the whole screen doesn't rubber-band. */
+    overflow-x: clip;
+    overscroll-behavior: none;
   }
   body {
+    overflow-x: clip;
+    overflow-wrap: break-word;
     background: var(--bg);
     color: var(--fg);
     font-family: var(--font-sans);

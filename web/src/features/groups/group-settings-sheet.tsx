@@ -127,7 +127,7 @@ export function GroupSettingsSheet({
                           rename.mutate({ memberId: m.id, displayName: editName.trim() }, { onSuccess: () => setEditing(null) });
                         }}
                       >
-                        <TextField aria-label={t("newName")} autoFocus value={editName} onChange={(e) => setEditName(e.target.value)} containerClassName="flex-1" maxLength={60} />
+                        <TextField aria-label={t("newName")} autoFocus={matchMedia("(pointer: fine)").matches} value={editName} onChange={(e) => setEditName(e.target.value)} containerClassName="flex-1" maxLength={60} />
                         <Button type="submit" size="sm" className="mt-1.5" disabled={!editName.trim()} loading={rename.isPending}>
                           {tc("save")}
                         </Button>

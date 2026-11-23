@@ -86,7 +86,7 @@ function NewGroupForm({ onDone }: { onDone: () => void }) {
 
   return (
     <form onSubmit={submit} className="flex h-full flex-col gap-5 pt-1">
-      <div className="flex gap-2 overflow-x-auto no-scrollbar" role="radiogroup" aria-label={t("kind")}>
+      <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t("kind")}>
         {TYPES.map((kind) => (
           <motion.button
             key={kind}
@@ -97,7 +97,7 @@ function NewGroupForm({ onDone }: { onDone: () => void }) {
             whileTap={{ scale: 0.94 }}
             transition={springSnappy}
             className={cn(
-              "flex min-w-[4.5rem] flex-1 flex-col items-center gap-1.5 rounded-[var(--radius-md)] px-2 py-3 text-[13px] font-[560] transition-colors duration-[var(--dur-feedback)]",
+              "flex min-w-0 flex-col items-center gap-1.5 rounded-[var(--radius-md)] px-2 py-3 text-[13px] font-[560] transition-colors duration-[var(--dur-feedback)]",
               type === kind ? "bg-accent-soft text-fg shadow-[inset_0_0_0_1.5px_var(--positive)]" : "bg-surface-2 text-fg-muted hover:text-fg",
             )}
           >
@@ -110,7 +110,8 @@ function NewGroupForm({ onDone }: { onDone: () => void }) {
       <TextField
         label={type === "direct" ? t("theirName") : t("name")}
         required
-        autoFocus
+        // On phones the keyboard opening mid-animation drags the page under the sheet.
+        autoFocus={matchMedia("(pointer: fine)").matches}
         maxLength={100}
         value={name}
         onChange={(e) => setName(e.target.value)}

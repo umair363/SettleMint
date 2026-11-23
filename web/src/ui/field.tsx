@@ -4,7 +4,7 @@ import { forwardRef, useId, type InputHTMLAttributes, type ReactNode, type Texta
 import { cn } from "./cn";
 
 const controlBase = [
-  "w-full rounded-[var(--radius-md)] border border-line bg-surface-2 px-3.5 text-[15px] text-fg",
+  "w-full rounded-[var(--radius-md)] border border-line bg-surface-2 px-3.5 text-[16px] text-fg",
   "placeholder:text-fg-subtle transition-[border-color,box-shadow,background-color] duration-150",
   "hover:border-line-strong focus:border-accent focus:bg-surface focus:outline-none focus:ring-4 focus:ring-accent-soft",
   "disabled:opacity-50 aria-[invalid=true]:border-negative aria-[invalid=true]:focus:ring-negative-soft",
