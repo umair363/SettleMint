@@ -350,6 +350,18 @@ const ar: Messages = {
     ownerOnly: "مالك المجموعة وحده يمكنه استعادتها",
     link: "المحذوفات مؤخرًا",
   },
+  recap: {
+    title: "ملخص",
+    link: "عرض الملخص",
+    spent: "إجمالي الإنفاق",
+    count: "{count, plural, zero {لا مصروفات} one {مصروف واحد} two {مصروفان} few {# مصروفات} many {# مصروفًا} other {# مصروف}}",
+    where: "أين ذهب المال",
+    whoPaid: "من دفع",
+    biggest: "أكبر مصروف",
+    share: "مشاركة كصورة",
+    failed: "تعذّر إنشاء الصورة",
+    empty: "أضف بعض المصروفات وسيظهر ملخصك هنا.",
+  },
   groupSettings: {
     title: "إعدادات المجموعة",
     left: "غادرتَ {group}",

@@ -342,6 +342,18 @@ const pt: Messages = {
     ownerOnly: "Só o dono do grupo pode restaurá-lo",
     link: "Apagados recentemente",
   },
+  recap: {
+    title: "Resumo",
+    link: "Ver o resumo",
+    spent: "Total gasto",
+    count: "{count, plural, one {# despesa} other {# despesas}}",
+    where: "Para onde foi",
+    whoPaid: "Quem pagou",
+    biggest: "Maior despesa",
+    share: "Compartilhar como imagem",
+    failed: "Não foi possível criar a imagem",
+    empty: "Adicione despesas e seu resumo aparece aqui.",
+  },
   groupSettings: {
     title: "Configurações do grupo",
     left: "Você saiu de {group}",

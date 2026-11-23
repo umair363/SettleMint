@@ -344,6 +344,18 @@ const fr: Messages = {
     ownerOnly: "Seul le propriétaire du groupe peut le restaurer",
     link: "Supprimés récemment",
   },
+  recap: {
+    title: "Récapitulatif",
+    link: "Voir le récapitulatif",
+    spent: "Total dépensé",
+    count: "{count, plural, one {# dépense} other {# dépenses}}",
+    where: "Où c'est parti",
+    whoPaid: "Qui a payé",
+    biggest: "Plus grosse dépense",
+    share: "Partager en image",
+    failed: "Impossible de créer l'image",
+    empty: "Ajoutez des dépenses et votre récapitulatif apparaîtra ici.",
+  },
   groupSettings: {
     title: "Réglages du groupe",
     left: "Vous avez quitté {group}",

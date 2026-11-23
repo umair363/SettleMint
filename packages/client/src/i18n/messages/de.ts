@@ -343,6 +343,18 @@ const de: Messages = {
     ownerOnly: "Nur der Besitzer der Gruppe kann sie wiederherstellen",
     link: "Zuletzt gelöscht",
   },
+  recap: {
+    title: "Rückblick",
+    link: "Rückblick ansehen",
+    spent: "Insgesamt ausgegeben",
+    count: "{count, plural, one {# Ausgabe} other {# Ausgaben}}",
+    where: "Wohin das Geld ging",
+    whoPaid: "Wer bezahlt hat",
+    biggest: "Größte Ausgabe",
+    share: "Als Bild teilen",
+    failed: "Bild konnte nicht erstellt werden",
+    empty: "Füge Ausgaben hinzu, dann erscheint hier dein Rückblick.",
+  },
   groupSettings: {
     title: "Gruppeneinstellungen",
     left: "Du hast {group} verlassen",

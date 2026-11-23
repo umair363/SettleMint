@@ -342,6 +342,18 @@ const es: Messages = {
     ownerOnly: "Solo el propietario del grupo puede restaurarlo",
     link: "Eliminado recientemente",
   },
+  recap: {
+    title: "Resumen",
+    link: "Ver el resumen",
+    spent: "Total gastado",
+    count: "{count, plural, one {# gasto} other {# gastos}}",
+    where: "En qué se fue",
+    whoPaid: "Quién pagó",
+    biggest: "Mayor gasto",
+    share: "Compartir como imagen",
+    failed: "No se pudo crear la imagen",
+    empty: "Añade algunos gastos y tu resumen aparecerá aquí.",
+  },
   groupSettings: {
     title: "Ajustes del grupo",
     left: "Saliste de {group}",

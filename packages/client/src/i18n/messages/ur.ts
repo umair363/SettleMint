@@ -343,6 +343,18 @@ const ur: Messages = {
     ownerOnly: "صرف گروپ کا مالک اسے بحال کر سکتا ہے",
     link: "حال ہی میں حذف شدہ",
   },
+  recap: {
+    title: "خلاصہ",
+    link: "خلاصہ دیکھیں",
+    spent: "کل خرچ",
+    count: "{count, plural, one {# خرچ} other {# خرچے}}",
+    where: "پیسہ کہاں گیا",
+    whoPaid: "کس نے ادا کیا",
+    biggest: "سب سے بڑا خرچ",
+    share: "تصویر کے طور پر شیئر کریں",
+    failed: "تصویر نہیں بن سکی",
+    empty: "کچھ خرچے شامل کریں، آپ کا خلاصہ یہاں نظر آئے گا۔",
+  },
   groupSettings: {
     title: "گروپ کی ترتیبات",
     left: "آپ نے {group} چھوڑ دیا",

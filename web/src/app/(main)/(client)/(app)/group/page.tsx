@@ -6,7 +6,7 @@ import {
   type GroupDetailDto,
   type SettlementDto,
 } from "@settlemint/shared";
-import { ArrowRightLeft, Inbox, Plus, Repeat, Send, Settings, UserPlus } from "@/ui/icons";
+import { ArrowRightLeft, ChevronRight, Inbox, Plus, Repeat, Send, Settings, UserPlus } from "@/ui/icons";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -233,6 +233,7 @@ function ExpensesTab({ group, onOpen }: { group: GroupDetailDto; onOpen: (e: Exp
 function BalancesTab({ group, onSettle }: { group: GroupDetailDto; onSettle: (t: SettleTarget) => void }) {
   const locale = useLocale();
   const t = useTranslations("group");
+  const trecap = useTranslations("recap");
   const people = group.members.filter((m) => !m.left || (group.balances[m.id] ?? 0) !== 0);
   return (
     <div className="space-y-6">
@@ -317,6 +318,11 @@ function BalancesTab({ group, onSettle }: { group: GroupDetailDto; onSettle: (t:
         <p className="mt-2 px-1 text-[13px] text-fg-subtle">
           {t.rich("totalSpent", { amount: () => <Money minor={group.totalSpent} currency={group.currency} /> })}
         </p>
+        {group.totalSpent > 0 && (
+          <Link href={`/recap?id=${group.id}`} className="mt-3 inline-flex items-center gap-1 rounded-full px-1 py-1 text-[15px] font-[600] text-positive">
+            {trecap("link")} <ChevronRight className="size-4 rtl:rotate-180" aria-hidden />
+          </Link>
+        )}
       </section>
     </div>
   );

@@ -347,6 +347,18 @@ const en = {
     ownerOnly: "Only the group's owner can restore it",
     link: "Recently deleted",
   },
+  recap: {
+    title: "Recap",
+    link: "See the recap",
+    spent: "Total spent",
+    count: "{count, plural, one {# expense} other {# expenses}}",
+    where: "Where it went",
+    whoPaid: "Who paid",
+    biggest: "Biggest expense",
+    share: "Share as image",
+    failed: "Couldn't make the image",
+    empty: "Add some expenses and your recap shows up here.",
+  },
   groupSettings: {
     title: "Group settings",
     left: "You left {group}",
