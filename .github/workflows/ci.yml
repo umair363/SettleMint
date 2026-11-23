@@ -102,7 +102,7 @@ jobs:
         run: cat api.log
       - name: Keep screenshots
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-screenshots
           path: e2e-shots
