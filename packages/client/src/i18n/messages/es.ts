@@ -60,6 +60,9 @@ const es: Messages = {
     activityEmpty: "Aquí verás los gastos y pagos de tus grupos.",
   },
   groups: {
+    friends: "Amigos",
+    addFriend: "Añadir amigo",
+    sectionGroups: "Grupos",
     title: "Grupos",
     newGroup: "Nuevo grupo",
     emptyTitle: "Aún no hay grupos",
@@ -197,11 +200,13 @@ const es: Messages = {
     other: "Otros",
   },
   expense: {
+    friendPlaceholder: "Nombre de tu amigo",
+    friendAdd: "Añadir y continuar",
     addTitle: "Añadir gasto",
     editTitle: "Editar gasto",
     openOnline: "Abre el grupo una vez con conexión y después podrás añadirle gastos sin conexión.",
-    startTitle: "Empieza con un grupo",
-    startBody: "Los gastos van en grupos: un viaje, tu casa o solo tú y un amigo.",
+    startTitle: "¿Con quién es?",
+    startBody: "Añade un amigo o crea un grupo para un viaje o tu casa.",
     createGroup: "Crear un grupo",
     scanItems: "{count, plural, one {Se leyó # artículo} other {Se leyeron # artículos}}",
     scanTotal: "Se leyó el total",
@@ -289,6 +294,8 @@ const es: Messages = {
     },
   },
   newGroup: {
+    friendTitle: "Añadir un amigo",
+    friendBody: "Solo su nombre. No necesita la app.",
     title: "Nuevo grupo",
     kind: "Tipo de grupo",
     type: {

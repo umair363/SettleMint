@@ -12,10 +12,10 @@ import {
   type MemberDto,
   type RecurrenceFrequency,
 } from "@settlemint/shared";
-import { Calendar, Camera, Check, ChevronDown, ChevronLeft, ListChecks, LoaderCircle, Repeat, Equal, Percent, Receipt, Scale, SlidersHorizontal, Users } from "@/ui/icons";
+import { Glyph, Calendar, Camera, Check, ChevronDown, ChevronLeft, ListChecks, LoaderCircle, Repeat, Equal, Percent, Receipt, Scale, SlidersHorizontal, Users } from "@/ui/icons";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "use-intl";
 import { uuidv7 } from "uuidv7";
@@ -24,7 +24,10 @@ import { apiErrorText } from "@settlemint/client/text/api-error-text";
 import { guessCategory } from "@settlemint/client/text/category-guess";
 import { prepareReceiptImage } from "@/lib/image";
 import { dayLabel, todayIso } from "@settlemint/client/text/dates";
-import { useCreateExpense, useCreateRecurring, useGroup, useGroups, useUpdateExpense } from "@settlemint/client/data/queries";
+import { useCreateExpense, useCreateGroup, useCreateRecurring, useGroup, useGroups, useMe, useUpdateExpense } from "@settlemint/client/data/queries";
+import { guessCurrency } from "@settlemint/client/text/currency-guess";
+import { groupGlyph } from "@settlemint/client/design/glyphs";
+import { GroupIcon } from "@/features/groups/group-row";
 import { amountToExpr, AmountDisplay, AmountPad, evaluateAmount } from "@/ui/amount-pad";
 import { Avatar } from "@/ui/avatar";
 import { Button } from "@/ui/button";
@@ -50,6 +53,32 @@ import {
   type EditableMethod,
   type SplitDraft,
 } from "@settlemint/client/data/split-model";
+
+/** Split with one person: type a name and carry on. Behind the scenes it's a private two-person group. */
+function QuickFriend({ onCreated }: { onCreated: (groupId: string) => void }) {
+  const t = useTranslations("expense");
+  const locale = useLocale();
+  const me = useMe();
+  const create = useCreateGroup();
+  const [name, setName] = useState("");
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    const n = name.trim();
+    if (!n) return;
+    create.mutate(
+      { name: n, type: "direct", currency: me.data?.defaultCurrency ?? guessCurrency(locale), people: [{ displayName: n }] },
+      { onSuccess: (g) => onCreated(g.id) },
+    );
+  };
+  return (
+    <form onSubmit={submit} className="flex items-center gap-2">
+      <TextField aria-label={t("friendPlaceholder")} placeholder={t("friendPlaceholder")} value={name} onChange={(e) => setName(e.target.value)} containerClassName="flex-1" maxLength={60} />
+      <Button type="submit" loading={create.isPending} disabled={!name.trim()}>
+        {t("friendAdd")}
+      </Button>
+    </form>
+  );
+}
 
 const LAST_GROUP_KEY = "sm-last-group";
 
@@ -129,14 +158,18 @@ function ExpenseForm({
         title={t("startTitle")}
         body={t("startBody")}
         action={
-          <Button
-            onClick={() => {
-              onDone();
-              router.push("/groups?new=1");
-            }}
-          >
-            {t("createGroup")}
-          </Button>
+          <div className="w-full max-w-sm space-y-3">
+            <QuickFriend onCreated={setChosenGroupId} />
+            <Button
+              variant="ghost"
+              onClick={() => {
+                onDone();
+                router.push("/groups?new=1");
+              }}
+            >
+              {t("createGroup")}
+            </Button>
+          </div>
         }
       />
     );
@@ -161,13 +194,14 @@ function FormBody({
   onDone,
 }: {
   group: GroupDetailDto;
-  groups: { id: string; name: string; emoji: string | null; currency: string; archived: boolean }[];
+  groups: { id: string; name: string; emoji: string | null; type: string; currency: string; archived: boolean }[];
   expense?: ExpenseDto;
   onPickGroup: (id: string) => void;
   onDone: () => void;
 }) {
   const locale = useLocale();
   const t = useTranslations("expense");
+  const tg = useTranslations("groups");
   const tc = useTranslations("common");
   const ts = useTranslations("split");
   const tcat = useTranslations("categories");
@@ -347,7 +381,7 @@ function FormBody({
                 disabled={Boolean(expense)}
                 className="inline-flex max-w-[60%] items-center gap-1.5 rounded-full bg-surface-2 py-1.5 ps-2.5 pe-2 text-sm font-medium enabled:hover:bg-surface-3"
               >
-                <span aria-hidden>{group.emoji ?? "👥"}</span>
+                <Glyph name={groupGlyph(group.type).web} className="size-4 text-fg-muted" />
                 <span className="truncate">{group.name}</span>
                 {!expense && <ChevronDown className="size-4 text-fg-subtle" aria-hidden />}
               </button>
@@ -495,29 +529,38 @@ function FormBody({
             </button>
             <div className="min-h-0 flex-1 overflow-y-auto pb-4">
               {panel === "group" && (
-                <ul className="space-y-1">
-                  {groups
-                    .filter((g) => !g.archived)
-                    .map((g) => (
-                      <li key={g.id}>
-                        <button
-                          type="button"
-                          onClick={() => onPickGroup(g.id)}
-                          className={cn(
-                            "flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-3 text-start hover:bg-surface-2",
-                            g.id === group.id && "bg-accent-soft",
-                          )}
-                        >
-                          <span className="text-2xl" aria-hidden>
-                            {g.emoji ?? "👥"}
-                          </span>
-                          <span className="flex-1 font-medium">{g.name}</span>
-                          <span className="text-xs text-fg-subtle">{g.currency}</span>
-                          {g.id === group.id && <Check className="size-4 text-positive" aria-label={t("selected")} />}
-                        </button>
-                      </li>
+                <div className="space-y-5">
+                  <QuickFriend onCreated={onPickGroup} />
+                  {[
+                    { title: tg("friends"), items: groups.filter((g) => !g.archived && g.type === "direct") },
+                    { title: tg("sectionGroups"), items: groups.filter((g) => !g.archived && g.type !== "direct") },
+                  ]
+                    .filter((section) => section.items.length > 0)
+                    .map((section) => (
+                      <section key={section.title}>
+                        <h3 className="px-3 pb-1 text-[13px] font-[600] text-fg-muted">{section.title}</h3>
+                        <ul className="space-y-1">
+                          {section.items.map((g) => (
+                            <li key={g.id}>
+                              <button
+                                type="button"
+                                onClick={() => onPickGroup(g.id)}
+                                className={cn(
+                                  "flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 text-start hover:bg-surface-2",
+                                  g.id === group.id && "bg-accent-soft",
+                                )}
+                              >
+                                <GroupIcon id={g.id} type={g.type} />
+                                <span className="flex-1 truncate font-medium">{g.name}</span>
+                                <span className="text-xs text-fg-subtle">{g.currency}</span>
+                                {g.id === group.id && <Check className="size-4 text-positive" aria-label={t("selected")} />}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
                     ))}
-                </ul>
+                </div>
               )}
 
               {panel === "category" && (

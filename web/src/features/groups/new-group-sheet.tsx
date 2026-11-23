@@ -17,8 +17,8 @@ import { Sheet } from "@/ui/sheet";
 import { groupGlyph } from "@settlemint/client/design/glyphs";
 import { Glyph } from "@/ui/icons";
 
-const TYPES = ["direct", "trip", "home", "couple", "event", "other"] as const;
-type GroupType = (typeof TYPES)[number];
+const TYPES = ["trip", "home", "couple", "event", "other"] as const;
+type GroupType = (typeof TYPES)[number] | "direct";
 
 export function NewGroupSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const t = useTranslations("newGroup");
@@ -29,13 +29,23 @@ export function NewGroupSheet({ open, onOpenChange }: { open: boolean; onOpenCha
   );
 }
 
-function NewGroupForm({ onDone }: { onDone: () => void }) {
+/** Splitting with one person: just their name. They don't need the app. */
+export function NewFriendSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const t = useTranslations("newGroup");
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange} title={t("friendTitle")} description={t("friendBody")} showDescription>
+      {open && <NewGroupForm friend onDone={() => onOpenChange(false)} />}
+    </Sheet>
+  );
+}
+
+function NewGroupForm({ onDone, friend = false }: { onDone: () => void; friend?: boolean }) {
   const router = useRouter();
   const locale = useLocale();
   const me = useMe();
   const create = useCreateGroup();
   const [name, setName] = useState("");
-  const [type, setType] = useState<GroupType>("trip");
+  const [type, setType] = useState<GroupType>(friend ? "direct" : "trip");
   const [currency, setCurrency] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [person, setPerson] = useState("");
@@ -78,7 +88,7 @@ function NewGroupForm({ onDone }: { onDone: () => void }) {
       {
         onSuccess: (group) => {
           onDone();
-          router.push(`/group?id=${group.id}&invite=1`);
+          router.push(friend ? `/group?id=${group.id}` : `/group?id=${group.id}&invite=1`);
         },
       },
     );
@@ -86,6 +96,7 @@ function NewGroupForm({ onDone }: { onDone: () => void }) {
 
   return (
     <form onSubmit={submit} className="flex h-full flex-col gap-5 pt-1">
+      {!friend && (
       <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t("kind")}>
         {TYPES.map((kind) => (
           <motion.button
@@ -106,6 +117,7 @@ function NewGroupForm({ onDone }: { onDone: () => void }) {
           </motion.button>
         ))}
       </div>
+      )}
 
       <TextField
         label={type === "direct" ? t("theirName") : t("name")}
@@ -177,7 +189,7 @@ function NewGroupForm({ onDone }: { onDone: () => void }) {
 
       <div className="mt-auto pb-2">
         <Button type="submit" block size="lg" loading={create.isPending} disabled={!name.trim()}>
-          {type === "direct" ? t("startSplitting") : t("create")}
+          {type === "direct" ? (friend ? t("friendTitle") : t("startSplitting")) : t("create")}
         </Button>
       </div>
       <CurrencyPicker open={pickerOpen} onOpenChange={setPickerOpen} value={currencyValue} onChange={setCurrency} />

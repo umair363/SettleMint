@@ -60,6 +60,9 @@ const ur: Messages = {
     activityEmpty: "آپ کے گروپوں کے خرچ اور ادائیگیاں یہاں نظر آئیں گی۔",
   },
   groups: {
+    friends: "دوست",
+    addFriend: "دوست شامل کریں",
+    sectionGroups: "گروپ",
     title: "گروپ",
     newGroup: "نیا گروپ",
     emptyTitle: "ابھی کوئی گروپ نہیں",
@@ -198,11 +201,13 @@ const ur: Messages = {
     other: "دیگر",
   },
   expense: {
+    friendPlaceholder: "دوست کا نام",
+    friendAdd: "شامل کریں اور آگے بڑھیں",
     addTitle: "خرچ شامل کریں",
     editTitle: "خرچ میں ترمیم",
     openOnline: "گروپ کو ایک بار آن لائن کھولیں، پھر آپ اس میں آف لائن خرچ شامل کر سکیں گے۔",
-    startTitle: "گروپ سے شروع کریں",
-    startBody: "خرچ گروپوں میں رہتے ہیں: ایک ٹرپ، آپ کا گھر، یا صرف آپ اور ایک دوست۔",
+    startTitle: "یہ کس کے ساتھ ہے؟",
+    startBody: "کوئی دوست شامل کریں یا سفر یا گھر کے لیے گروپ بنائیں۔",
     createGroup: "گروپ بنائیں",
     scanItems: "{count, plural, one {# آئٹم پڑھا گیا} other {# آئٹم پڑھے گئے}}",
     scanTotal: "کل رقم پڑھ لی گئی",
@@ -290,6 +295,8 @@ const ur: Messages = {
     },
   },
   newGroup: {
+    friendTitle: "دوست شامل کریں",
+    friendBody: "بس ان کا نام۔ انہیں ایپ کی ضرورت نہیں۔",
     title: "نیا گروپ",
     kind: "گروپ کی قسم",
     type: {

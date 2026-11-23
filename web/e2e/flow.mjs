@@ -236,10 +236,9 @@ try {
 
   await step("split with one friend", async () => {
     await page.goto("http://localhost:4555/groups", { waitUntil: "load" });
-    await page.getByRole("button", { name: "New group" }).click();
-    await page.getByRole("radio", { name: "Friend" }).click();
+    await page.getByRole("button", { name: "Add friend" }).click();
     await page.getByLabel("Their name").fill("Sam");
-    await page.getByRole("button", { name: "Start splitting" }).click();
+    await page.getByRole("button", { name: "Add a friend" }).last().click();
     await page.waitForURL("**/group?id=*", { timeout: 20000 });
     await page.keyboard.press("Escape");
     await page.getByRole("heading", { name: "Sam" }).waitFor();

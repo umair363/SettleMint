@@ -60,6 +60,9 @@ const de: Messages = {
     activityEmpty: "Hier erscheinen Ausgaben und Zahlungen aus deinen Gruppen.",
   },
   groups: {
+    friends: "Freunde",
+    addFriend: "Freund hinzufügen",
+    sectionGroups: "Gruppen",
     title: "Gruppen",
     newGroup: "Neue Gruppe",
     emptyTitle: "Noch keine Gruppen",
@@ -198,11 +201,13 @@ const de: Messages = {
     other: "Sonstiges",
   },
   expense: {
+    friendPlaceholder: "Name deines Freundes",
+    friendAdd: "Hinzufügen und weiter",
     addTitle: "Ausgabe hinzufügen",
     editTitle: "Ausgabe bearbeiten",
     openOnline: "Öffne die Gruppe einmal online, dann kannst du offline Ausgaben hinzufügen.",
-    startTitle: "Starte mit einer Gruppe",
-    startBody: "Ausgaben gehören zu Gruppen: eine Reise, dein Zuhause oder nur du und ein Freund.",
+    startTitle: "Mit wem?",
+    startBody: "Füge einen Freund hinzu oder erstelle eine Gruppe für eine Reise oder dein Zuhause.",
     createGroup: "Gruppe erstellen",
     scanItems: "{count, plural, one {# Position erkannt} other {# Positionen erkannt}}",
     scanTotal: "Gesamtbetrag erkannt",
@@ -290,6 +295,8 @@ const de: Messages = {
     },
   },
   newGroup: {
+    friendTitle: "Freund hinzufügen",
+    friendBody: "Nur der Name. Die Person braucht die App nicht.",
     title: "Neue Gruppe",
     kind: "Art der Gruppe",
     type: {

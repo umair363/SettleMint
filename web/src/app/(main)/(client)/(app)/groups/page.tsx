@@ -1,12 +1,12 @@
 "use client";
 
-import { Archive, FileUp, Plus, Users } from "@/ui/icons";
+import { Archive, FileUp, Plus, UserPlus, Users } from "@/ui/icons";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "use-intl";
 import { Suspense, useState } from "react";
 import { GroupRow } from "@/features/groups/group-row";
 import { ImportSheet } from "@/features/groups/import-sheet";
-import { NewGroupSheet } from "@/features/groups/new-group-sheet";
+import { NewFriendSheet, NewGroupSheet } from "@/features/groups/new-group-sheet";
 import { SearchButton } from "@/features/search/search-palette";
 import { PageBody, PageHeader } from "@/features/shell/page-header";
 import { useGroups } from "@settlemint/client/data/queries";
@@ -21,6 +21,7 @@ function Groups() {
   const [creating, setCreating] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [friendOpen, setFriendOpen] = useState(false);
   const t = useTranslations("groups");
   // "?new=1" (from the add-expense sheet) opens the new-group sheet.
   const open = creating || params.get("new") === "1";
@@ -29,7 +30,8 @@ function Groups() {
     if (!o && params.get("new")) router.replace("/groups");
   };
 
-  const active = (groups.data ?? []).filter((g) => !g.archived);
+  const active = (groups.data ?? []).filter((g) => !g.archived && g.type !== "direct");
+  const friends = (groups.data ?? []).filter((g) => !g.archived && g.type === "direct");
   const archived = (groups.data ?? []).filter((g) => g.archived);
 
   return (
@@ -39,6 +41,9 @@ function Groups() {
         actions={
           <>
           <SearchButton />
+          <IconButton label={t("addFriend")} variant="solid" onClick={() => setFriendOpen(true)}>
+            <UserPlus className="size-5" />
+          </IconButton>
           <IconButton label={t("newGroup")} variant="solid" onClick={() => setOpen(true)}>
             <Plus className="size-5" />
           </IconButton>
@@ -54,27 +59,45 @@ function Groups() {
           <Card>
             <ErrorState onRetry={() => groups.refetch()} />
           </Card>
-        ) : active.length === 0 && archived.length === 0 ? (
+        ) : active.length === 0 && friends.length === 0 && archived.length === 0 ? (
           <Card>
             <EmptyState
               icon={<Users />}
               title={t("emptyTitle")}
               body={t("emptyBody")}
               action={
-                <Button leading={<Plus className="size-4" />} onClick={() => setOpen(true)}>
-                  {t("create")}
-                </Button>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button leading={<UserPlus className="size-4" />} onClick={() => setFriendOpen(true)}>
+                    {t("addFriend")}
+                  </Button>
+                  <Button variant="secondary" leading={<Plus className="size-4" />} onClick={() => setOpen(true)}>
+                    {t("create")}
+                  </Button>
+                </div>
               }
             />
           </Card>
         ) : (
           <>
+            {friends.length > 0 && (
+              <section>
+                <SectionHeader title={t("friends")} />
+                <List>
+                  {friends.map((g) => (
+                    <GroupRow key={g.id} group={g} />
+                  ))}
+                </List>
+              </section>
+            )}
             {active.length > 0 && (
-              <List>
-                {active.map((g) => (
-                  <GroupRow key={g.id} group={g} />
-                ))}
-              </List>
+              <section>
+                {friends.length > 0 && <SectionHeader title={t("sectionGroups")} />}
+                <List>
+                  {active.map((g) => (
+                    <GroupRow key={g.id} group={g} />
+                  ))}
+                </List>
+              </section>
             )}
             {archived.length > 0 && (
               <section>
@@ -102,6 +125,7 @@ function Groups() {
         </Button>
       </PageBody>
       <NewGroupSheet open={open} onOpenChange={setOpen} />
+      <NewFriendSheet open={friendOpen} onOpenChange={setFriendOpen} />
       <ImportSheet open={importOpen} onOpenChange={setImportOpen} />
     </>
   );

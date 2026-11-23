@@ -60,6 +60,9 @@ const hi: Messages = {
     activityEmpty: "आपके ग्रुप के खर्च और भुगतान यहाँ दिखेंगे।",
   },
   groups: {
+    friends: "दोस्त",
+    addFriend: "दोस्त जोड़ें",
+    sectionGroups: "ग्रुप",
     title: "ग्रुप",
     newGroup: "नया ग्रुप",
     emptyTitle: "अभी कोई ग्रुप नहीं",
@@ -198,11 +201,13 @@ const hi: Messages = {
     other: "अन्य",
   },
   expense: {
+    friendPlaceholder: "दोस्त का नाम",
+    friendAdd: "जोड़ें और आगे बढ़ें",
     addTitle: "खर्च जोड़ें",
     editTitle: "खर्च बदलें",
     openOnline: "ग्रुप को एक बार ऑनलाइन खोलें, फिर आप उसमें ऑफ़लाइन खर्च जोड़ सकेंगे।",
-    startTitle: "एक ग्रुप से शुरू करें",
-    startBody: "खर्च ग्रुप में रहते हैं: एक ट्रिप, आपका घर, या सिर्फ़ आप और एक दोस्त।",
+    startTitle: "यह किसके साथ है?",
+    startBody: "दोस्त जोड़ें या यात्रा या घर के लिए ग्रुप बनाएँ।",
     createGroup: "ग्रुप बनाएँ",
     scanItems: "{count, plural, one {# आइटम पढ़ा गया} other {# आइटम पढ़े गए}}",
     scanTotal: "कुल रकम पढ़ ली गई",
@@ -290,6 +295,8 @@ const hi: Messages = {
     },
   },
   newGroup: {
+    friendTitle: "दोस्त जोड़ें",
+    friendBody: "बस उनका नाम। उन्हें ऐप की ज़रूरत नहीं।",
     title: "नया ग्रुप",
     kind: "ग्रुप का प्रकार",
     type: {

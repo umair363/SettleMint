@@ -32,7 +32,7 @@ export function GroupRow({ group }: { group: GroupSummaryDto }) {
       href={`/group?id=${group.id}`}
       leading={<GroupIcon id={group.id} type={group.type} />}
       title={group.name}
-      subtitle={`${t("people", { count: group.memberCount })} · ${timeAgo(group.lastActivityAt, locale)}`}
+      subtitle={group.type === "direct" ? timeAgo(group.lastActivityAt, locale) : `${t("people", { count: group.memberCount })} · ${timeAgo(group.lastActivityAt, locale)}`}
       trailing={<BalanceLabel minor={group.myBalance} currency={group.currency} />}
     />
   );

@@ -64,6 +64,9 @@ const en = {
     activityEmpty: "Expenses and payments in your groups show up here.",
   },
   groups: {
+    friends: "Friends",
+    addFriend: "Add friend",
+    sectionGroups: "Groups",
     title: "Groups",
     newGroup: "New group",
     emptyTitle: "No groups yet",
@@ -202,11 +205,13 @@ const en = {
     other: "Other",
   },
   expense: {
+    friendPlaceholder: "Your friend's name",
+    friendAdd: "Add and continue",
     addTitle: "Add expense",
     editTitle: "Edit expense",
     openOnline: "Open the group once while online, then you can add expenses to it offline.",
-    startTitle: "Start with a group",
-    startBody: "Expenses live in groups: a trip, your home, or just you and a friend.",
+    startTitle: "Who is this with?",
+    startBody: "Add a friend, or make a group for a trip or your home.",
     createGroup: "Create a group",
     scanItems: "{count, plural, one {Read # item} other {Read # items}}",
     scanTotal: "Read the total",
@@ -294,6 +299,8 @@ const en = {
     },
   },
   newGroup: {
+    friendTitle: "Add a friend",
+    friendBody: "Just their name. They don't need the app.",
     title: "New group",
     kind: "Kind of group",
     type: {

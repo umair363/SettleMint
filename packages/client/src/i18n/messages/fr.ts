@@ -61,6 +61,9 @@ const fr: Messages = {
     activityEmpty: "Les dépenses et paiements de vos groupes apparaissent ici.",
   },
   groups: {
+    friends: "Amis",
+    addFriend: "Ajouter un ami",
+    sectionGroups: "Groupes",
     title: "Groupes",
     newGroup: "Nouveau groupe",
     emptyTitle: "Aucun groupe pour l’instant",
@@ -199,11 +202,13 @@ const fr: Messages = {
     other: "Autre",
   },
   expense: {
+    friendPlaceholder: "Prénom de votre ami",
+    friendAdd: "Ajouter et continuer",
     addTitle: "Ajouter une dépense",
     editTitle: "Modifier la dépense",
     openOnline: "Ouvrez le groupe une fois en ligne, ensuite vous pourrez y ajouter des dépenses hors ligne.",
-    startTitle: "Commencez par un groupe",
-    startBody: "Les dépenses vivent dans des groupes : un voyage, votre logement ou juste vous et un ami.",
+    startTitle: "C'est avec qui ?",
+    startBody: "Ajoutez un ami ou créez un groupe pour un voyage ou votre foyer.",
     createGroup: "Créer un groupe",
     scanItems: "{count, plural, one {# article lu} other {# articles lus}}",
     scanTotal: "Total lu",
@@ -291,6 +296,8 @@ const fr: Messages = {
     },
   },
   newGroup: {
+    friendTitle: "Ajouter un ami",
+    friendBody: "Juste son prénom. Pas besoin de l'appli.",
     title: "Nouveau groupe",
     kind: "Type de groupe",
     type: {

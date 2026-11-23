@@ -1,12 +1,12 @@
 "use client";
 
-import { ArrowRight, Link2, Plus } from "@/ui/icons";
+import { ArrowRight, Link2, Plus, UserPlus } from "@/ui/icons";
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
 import { ActivityRow } from "@/features/activity/activity-row";
 import { GroupRow } from "@/features/groups/group-row";
-import { NewGroupSheet } from "@/features/groups/new-group-sheet";
+import { NewFriendSheet, NewGroupSheet } from "@/features/groups/new-group-sheet";
 import { SearchButton } from "@/features/search/search-palette";
 import { PageBody } from "@/features/shell/page-header";
 import { totalsByCurrency, useActivity, useGroups, useMe } from "@settlemint/client/data/queries";
@@ -84,12 +84,16 @@ export default function HomePage() {
   const groups = useGroups();
   const activity = useActivity();
   const [newGroupOpen, setNewGroupOpen] = useState(false);
+  const [friendOpen, setFriendOpen] = useState(false);
+  const tg = useTranslations("groups");
   const t = useTranslations("home");
   const tc = useTranslations("common");
   const firstName = me.data?.name.split(" ")[0] ?? "";
-  const active = (groups.data ?? []).filter((g) => !g.archived);
+  const everyone = (groups.data ?? []).filter((g) => !g.archived);
+  const active = everyone.filter((g) => g.type !== "direct");
+  const friends = everyone.filter((g) => g.type === "direct");
   const recent = activity.data?.pages[0]?.items.slice(0, 5) ?? [];
-  const isNew = groups.isSuccess && active.length === 0;
+  const isNew = groups.isSuccess && everyone.length === 0;
 
   const seeAll = (href: string) => (
     <Link href={href} className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[15px] font-[560] text-positive hover:bg-surface-2">
@@ -123,9 +127,14 @@ export default function HomePage() {
               title={t("firstBillTitle")}
               body={t("firstBillBody")}
               action={
-                <Button size="lg" leading={<Plus className="size-[18px]" />} onClick={() => setNewGroupOpen(true)}>
-                  {t("createGroup")}
-                </Button>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button size="lg" leading={<UserPlus className="size-[18px]" />} onClick={() => setFriendOpen(true)}>
+                    {tg("addFriend")}
+                  </Button>
+                  <Button size="lg" variant="secondary" leading={<Plus className="size-[18px]" />} onClick={() => setNewGroupOpen(true)}>
+                    {t("createGroup")}
+                  </Button>
+                </div>
               }
             />
             <div className="space-y-2 border-t border-line px-5 py-5 text-[15px] sm:px-6">
@@ -141,11 +150,42 @@ export default function HomePage() {
           <>
             <Standing defaultCurrency={me.data?.defaultCurrency ?? null} />
 
+            {friends.length > 0 && (
+              <section>
+                <SectionHeader
+                  title={tg("friends")}
+                  action={
+                    <button
+                      type="button"
+                      onClick={() => setFriendOpen(true)}
+                      className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[15px] font-[560] text-positive hover:bg-surface-2"
+                    >
+                      <UserPlus className="size-4" /> {tg("addFriend")}
+                    </button>
+                  }
+                />
+                <List>
+                  {friends.slice(0, 5).map((g) => (
+                    <GroupRow key={g.id} group={g} />
+                  ))}
+                </List>
+              </section>
+            )}
+
             <section>
               <SectionHeader
                 title={t("groups")}
                 action={
                   <div className="flex items-center gap-1">
+                    {friends.length === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setFriendOpen(true)}
+                        className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[15px] font-[560] text-positive hover:bg-surface-2"
+                      >
+                        <UserPlus className="size-4" /> {tg("addFriend")}
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => setNewGroupOpen(true)}
@@ -164,7 +204,7 @@ export default function HomePage() {
                 <Card>
                   <ErrorState onRetry={() => groups.refetch()} />
                 </Card>
-              ) : (
+              ) : active.length === 0 ? null : (
                 <List>
                   {active.slice(0, 5).map((g) => (
                     <GroupRow key={g.id} group={g} />
@@ -196,6 +236,7 @@ export default function HomePage() {
         )}
       </PageBody>
       <NewGroupSheet open={newGroupOpen} onOpenChange={setNewGroupOpen} />
+      <NewFriendSheet open={friendOpen} onOpenChange={setFriendOpen} />
     </>
   );
 }

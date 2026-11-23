@@ -63,6 +63,9 @@ const ar: Messages = {
     activityEmpty: "ستظهر هنا مصروفات مجموعاتك ودفعاتها.",
   },
   groups: {
+    friends: "الأصدقاء",
+    addFriend: "إضافة صديق",
+    sectionGroups: "المجموعات",
     title: "المجموعات",
     newGroup: "مجموعة جديدة",
     emptyTitle: "لا توجد مجموعات بعد",
@@ -202,11 +205,13 @@ const ar: Messages = {
     other: "أخرى",
   },
   expense: {
+    friendPlaceholder: "اسم صديقك",
+    friendAdd: "أضف وتابع",
     addTitle: "إضافة مصروف",
     editTitle: "تعديل المصروف",
     openOnline: "افتح المجموعة مرة واحدة وأنت متصل، ثم يمكنك إضافة مصروفات إليها دون اتصال.",
-    startTitle: "ابدأ بمجموعة",
-    startBody: "المصروفات تكون داخل مجموعات: رحلة أو بيتك أو أنت وصديق فقط.",
+    startTitle: "مع من؟",
+    startBody: "أضف صديقًا أو أنشئ مجموعة لرحلة أو لمنزلك.",
     createGroup: "إنشاء مجموعة",
     scanItems:
       "{count, plural, zero {لم تُقرأ أي عناصر} one {قُرئ عنصر واحد} two {قُرئ عنصران} few {قُرئت # عناصر} many {قُرئ # عنصرًا} other {قُرئ # عنصر}}",
@@ -297,6 +302,8 @@ const ar: Messages = {
     },
   },
   newGroup: {
+    friendTitle: "إضافة صديق",
+    friendBody: "اسمه فقط. لا يحتاج إلى التطبيق.",
     title: "مجموعة جديدة",
     kind: "نوع المجموعة",
     type: {
