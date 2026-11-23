@@ -26,7 +26,7 @@ import { prepareReceiptImage } from "@/lib/image";
 import { dayLabel, todayIso } from "@settlemint/client/text/dates";
 import { useCreateExpense, useCreateGroup, useCreateRecurring, useGroup, useGroups, useMe, useUpdateExpense } from "@settlemint/client/data/queries";
 import { guessCurrency } from "@settlemint/client/text/currency-guess";
-import { groupGlyph } from "@settlemint/client/design/glyphs";
+import { categoryGlyph, groupGlyph } from "@settlemint/client/design/glyphs";
 import { GroupIcon } from "@/features/groups/group-row";
 import { amountToExpr, AmountDisplay, AmountPad, evaluateAmount } from "@/ui/amount-pad";
 import { Avatar } from "@/ui/avatar";
@@ -392,9 +392,9 @@ function FormBody({
                 type="button"
                 onClick={() => setPanel("category")}
                 aria-label={t("categoryLabel", { category: catLabel })}
-                className="flex size-12 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-surface-2 text-2xl hover:bg-surface-3"
+                className="flex size-12 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-surface-2 text-fg-muted hover:bg-surface-3"
               >
-                {cat.emoji}
+                <Glyph name={categoryGlyph(category).web} className="size-6" />
               </button>
               <TextField
                 aria-label={t("description")}
@@ -452,7 +452,7 @@ function FormBody({
               </div>
             )}
 
-            <div className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5 pb-3">
+            <div className="flex flex-wrap gap-2 pb-3">
               <Pill onClick={() => setPanel("paidBy")} label={t("paidBy")} value={payerSummary} />
               <Pill onClick={() => setPanel("split")} label={t("split")} value={splitSummary} />
               <label className="relative inline-flex h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3.5 text-sm hover:bg-surface-3">
@@ -579,9 +579,7 @@ function FormBody({
                         c.id === category ? "border-accent bg-accent-soft" : "border-line bg-surface-2 hover:bg-surface-3",
                       )}
                     >
-                      <span className="text-2xl" aria-hidden>
-                        {c.emoji}
-                      </span>
+                      <Glyph name={categoryGlyph(c.id).web} className="size-6 text-fg-muted" />
                       {tcat(c.id as CategoryKey)}
                     </button>
                   ))}
@@ -647,11 +645,11 @@ function Pill({ label, value, onClick }: { label: string; value: string; onClick
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3.5 text-sm hover:bg-surface-3"
+      className="inline-flex h-11 min-w-0 max-w-full items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3.5 text-sm hover:bg-surface-3"
     >
-      <span className="text-fg-subtle">{label}</span>
-      <span className="font-medium">{value}</span>
-      <ChevronDown className="size-4 text-fg-subtle" aria-hidden />
+      <span className="shrink-0 text-fg-subtle">{label}</span>
+      <span className="truncate font-medium">{value}</span>
+      <ChevronDown className="size-4 shrink-0 text-fg-subtle" aria-hidden />
     </button>
   );
 }
