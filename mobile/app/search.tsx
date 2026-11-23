@@ -10,6 +10,7 @@ import { GroupIcon } from "@/features/rows";
 import { api } from "@/lib/api";
 import { useTheme } from "@/theme/theme";
 import { IconButton } from "@/ui/button";
+import { CategoryTile } from "@/ui/glyphs";
 import { Field } from "@/ui/field";
 import { Screen } from "@/ui/screen";
 import { Card, Divider, Money, Row, SectionHeader } from "@/ui/surface";
@@ -77,7 +78,7 @@ export default function Search() {
             {data.groups.map((g, i) => (
               <View key={g.id}>
                 {i > 0 && <Divider inset={72} />}
-                <Row leading={<GroupIcon type={g.type} emoji={g.emoji} />} title={g.name} onPress={() => open(g.id)} chevron />
+                <Row leading={<GroupIcon id={g.id} type={g.type} />} title={g.name} onPress={() => open(g.id)} chevron />
               </View>
             ))}
           </Card>
@@ -94,11 +95,7 @@ export default function Search() {
                   {i > 0 && <Divider inset={68} />}
                   <Row
                     leading={
-                      <View style={{ width: 40, height: 40, borderRadius: radius.md, backgroundColor: c.surface2, alignItems: "center", justifyContent: "center" }}>
-                        <Text style={{ fontSize: 20, lineHeight: 26 }} accessibilityLabel={tcat(cat.id as CategoryKey)}>
-                          {cat.emoji}
-                        </Text>
-                      </View>
+                      <CategoryTile category={cat.id} />
                     }
                     title={e.description}
                     subtitle={`${e.groupName} · ${dayLabel(e.date, locale)}`}

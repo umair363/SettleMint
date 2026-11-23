@@ -1,10 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useCreateGroup, useMe } from "@settlemint/client/data/queries";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useTranslations } from "use-intl";
-import { GROUP_EMOJI } from "@/features/rows";
+import { GROUP_ICON } from "@/ui/glyphs";
 import { useTheme } from "@/theme/theme";
 import { Button, IconButton } from "@/ui/button";
 import { CurrencyButton } from "@/ui/currency-picker";
@@ -12,8 +12,8 @@ import { Field } from "@/ui/field";
 import { Screen } from "@/ui/screen";
 import { Text } from "@/ui/text";
 
-const TYPES = ["direct", "trip", "home", "couple", "event", "other"] as const;
-type GroupType = (typeof TYPES)[number];
+const TYPES = ["trip", "home", "couple", "event", "other"] as const;
+type GroupType = (typeof TYPES)[number] | "direct";
 
 export default function NewGroup() {
   const { c, radius } = useTheme();
@@ -21,7 +21,9 @@ export default function NewGroup() {
   const tc = useTranslations("common");
   const me = useMe();
   const create = useCreateGroup();
-  const [type, setType] = useState<GroupType>("trip");
+  // "Add friend" is its own simple flow: just a name, no group to set up.
+  const friend = useLocalSearchParams<{ friend?: string }>().friend === "1";
+  const [type, setType] = useState<GroupType>(friend ? "direct" : "trip");
   const [name, setName] = useState("");
   const [currency, setCurrency] = useState<string | null>(null);
   const [people, setPeople] = useState<string[]>([]);
@@ -43,7 +45,6 @@ export default function NewGroup() {
         name: name.trim(),
         type,
         currency: currencyValue,
-        emoji: GROUP_EMOJI[type],
         simplifyDebts: true,
         people: direct ? [{ displayName: name.trim() }] : [...people, ...(pending ? [pending] : [])].map((displayName) => ({ displayName })),
       },
@@ -51,7 +52,7 @@ export default function NewGroup() {
         onSuccess: (group) => {
           router.dismiss();
           router.push({ pathname: "/group/[id]", params: { id: group.id } });
-          router.push({ pathname: "/invite", params: { groupId: group.id } });
+          if (!friend) router.push({ pathname: "/invite", params: { groupId: group.id } });
         },
       },
     );
@@ -60,14 +61,16 @@ export default function NewGroup() {
   return (
     <Screen
       sheet
-      title={t("title")}
+      title={friend ? t("friendTitle") : t("title")}
+      subtitle={friend ? t("friendBody") : undefined}
       headerRight={<IconButton icon="close" label={tc("close")} onPress={() => router.back()} />}
       footer={
         <Button size="lg" block loading={create.isPending} disabled={!name.trim()} onPress={submit} testID="create-group">
-          {direct ? t("startSplitting") : t("create")}
+          {direct ? (friend ? t("friendTitle") : t("startSplitting")) : t("create")}
         </Button>
       }
     >
+      {!friend && (
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} accessibilityRole="radiogroup" accessibilityLabel={t("kind")}>
         {TYPES.map((k) => {
           const on = k === type;
@@ -88,7 +91,7 @@ export default function NewGroup() {
                 backgroundColor: on ? c.accentSoft : c.surface2,
               }}
             >
-              <Text style={{ fontSize: 24, lineHeight: 30 }}>{GROUP_EMOJI[k]}</Text>
+              <Ionicons name={GROUP_ICON[k]} size={24} color={on ? c.positive : c.fgMuted} />
               <Text variant="caption" tone={on ? "fg" : "muted"}>
                 {t(`type.${k}`)}
               </Text>
@@ -96,6 +99,7 @@ export default function NewGroup() {
           );
         })}
       </ScrollView>
+      )}
 
       <Field
         label={direct ? t("theirName") : t("name")}

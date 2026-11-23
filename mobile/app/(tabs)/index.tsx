@@ -1,11 +1,13 @@
-import { totalsByCurrency, useActivity, useGroups, useMe } from "@settlemint/client/data/queries";
+import { totalsByCurrency, useActivity, useGroups, useMe, usePeople } from "@settlemint/client/data/queries";
+import { listablePeople } from "@settlemint/client/data/people";
 import { router } from "expo-router";
+import type { ReactNode } from "react";
 import { View } from "react-native";
 import { useTranslations } from "use-intl";
-import { ActivityRow, GroupRow } from "@/features/rows";
-import { useTheme } from "@/theme/theme";
+import { ActivityRow, GroupRow, PersonRow } from "@/features/rows";
 import { Button, IconButton } from "@/ui/button";
 import { Screen } from "@/ui/screen";
+import { BalanceStatement } from "@/ui/statement";
 import { Card, Divider, Empty, Money, SectionHeader } from "@/ui/surface";
 import { Text } from "@/ui/text";
 
@@ -14,46 +16,43 @@ function partOfDay() {
   return h < 5 ? "night" : h < 12 ? "morning" : h < 18 ? "afternoon" : "evening";
 }
 
-function BalanceHero() {
-  const { c } = useTheme();
+/** Where you stand, as a sentence: one big figure, other currencies as quiet lines. */
+function Standing() {
   const groups = useGroups();
   const t = useTranslations("home");
   const totals = totalsByCurrency(groups.data);
-  const mood = totals.reduce((s, x) => s + Math.sign(x.net), 0);
-  const tint = mood > 0 ? c.positiveSoft : mood < 0 ? c.negativeSoft : c.surface;
-
+  const lead = totals[0];
+  if (!lead) {
+    return <BalanceStatement label={t("yourBalance")} minor={0} currency="USD" settledText={t("allSettled")} context={t("nobodyOwes")} />;
+  }
+  const count = (groups.data ?? []).filter((g) => !g.archived && g.currency === lead.currency && g.myBalance !== 0).length;
   return (
-    <Card style={{ backgroundColor: tint, padding: 20 }}>
-      {totals.length === 0 ? (
-        <View style={{ gap: 4 }}>
-          <Text variant="sub" tone="muted">
-            {t("yourBalance")}
-          </Text>
-          <Text variant="title">{t("allSettled")}</Text>
-          <Text variant="sub" tone="muted">
-            {t("nobodyOwes")}
-          </Text>
+    <BalanceStatement
+      label={t("overall", { state: lead.net > 0 ? "owed" : lead.net < 0 ? "owe" : "even" })}
+      minor={lead.net}
+      currency={lead.currency}
+      context={t("acrossGroups", { count })}
+    >
+      {totals.slice(1).map((b) => (
+        <View key={b.currency} style={{ flexDirection: "row", gap: 8, alignItems: "baseline", marginTop: 6 }}>
+          <Money minor={b.net} currency={b.currency} tone="auto" variant="bodyStrong" />
+          <Text tone="muted">{t("overall", { state: b.net > 0 ? "owed" : b.net < 0 ? "owe" : "even" })}</Text>
         </View>
-      ) : (
-        <View style={{ gap: 16 }}>
-          {totals.map((b) => (
-            <View key={b.currency} style={{ gap: 2 }}>
-              <Text variant="sub" tone="muted">
-                {t("overall", { state: b.net > 0 ? "owed" : b.net < 0 ? "owe" : "even" })}
-              </Text>
-              <Money minor={b.net} currency={b.currency} tone="auto" variant="display" />
-              {b.owed > 0 && b.owe > 0 && (
-                <Text variant="sub" tone="muted">
-                  {t.rich("owedAndOwe", {
-                    owed: () => <Money minor={b.owed} currency={b.currency} tone="positive" variant="sub" />,
-                    owe: () => <Money minor={b.owe} currency={b.currency} tone="negative" variant="sub" />,
-                  })}
-                </Text>
-              )}
-            </View>
-          ))}
+      ))}
+    </BalanceStatement>
+  );
+}
+
+/** An inset list: rows in one card, separated by hairlines. */
+function List({ children }: { children: ReactNode[] }) {
+  return (
+    <Card padded={false}>
+      {children.map((child, i) => (
+        <View key={i}>
+          {i > 0 && <Divider inset={72} />}
+          {child}
         </View>
-      )}
+      ))}
     </Card>
   );
 }
@@ -62,15 +61,21 @@ export default function Home() {
   const me = useMe();
   const groups = useGroups();
   const activity = useActivity();
+  const people = listablePeople(usePeople().data);
   const t = useTranslations("home");
   const tc = useTranslations("common");
+  const tg = useTranslations("groups");
+  const tp = useTranslations("people");
   const ts = useTranslations("search");
   const firstName = me.data?.isGuest ? "" : (me.data?.name.split(" ")[0] ?? "");
-  const active = (groups.data ?? []).filter((g) => !g.archived);
+  const everyone = (groups.data ?? []).filter((g) => !g.archived);
+  const friends = everyone.filter((g) => g.type === "direct");
+  const active = everyone.filter((g) => g.type !== "direct");
   const recent = activity.data?.pages[0]?.items.slice(0, 5) ?? [];
-  const isNew = groups.isSuccess && active.length === 0;
+  const isNew = groups.isSuccess && everyone.length === 0;
 
   const refresh = () => void Promise.all([groups.refetch(), activity.refetch()]);
+  const addFriend = () => router.push({ pathname: "/new-group", params: { friend: "1" } });
 
   return (
     <Screen
@@ -81,49 +86,71 @@ export default function Home() {
     >
       {isNew ? (
         <Card>
-          <Empty
-            icon="sparkles"
-            title={t("firstBillTitle")}
-            body={t("firstBillBody")}
-            action={t("createGroup")}
-            onAction={() => router.push("/new-group")}
-          />
-          <Text variant="sub" tone="muted" center style={{ paddingBottom: 4 }}>
+          <Empty icon="sparkles" title={t("firstBillTitle")} body={t("firstBillBody")} />
+          <View style={{ gap: 8, paddingBottom: 8 }}>
+            <Button size="lg" icon="person-add" onPress={addFriend}>
+              {tg("addFriend")}
+            </Button>
+            <Button size="lg" variant="secondary" icon="add" onPress={() => router.push("/new-group")}>
+              {t("createGroup")}
+            </Button>
+          </View>
+          <Text variant="sub" tone="muted" center style={{ paddingTop: 8 }}>
             {t("haveInvite")}
           </Text>
-          <Button variant="ghost" onPress={() => router.push("/import")}>
-            {t("fromSplitwise")}
-          </Button>
+          <View style={{ alignItems: "center" }}>
+            <Button variant="ghost" onPress={() => router.push("/import")}>
+              {t("fromSplitwise")}
+            </Button>
+          </View>
         </Card>
       ) : (
         <>
-          <BalanceHero />
-          <View style={{ flexDirection: "row", gap: 12 }}>
-            <Button variant="secondary" size="lg" icon="add" style={{ flex: 1 }} onPress={() => router.push("/add-expense")}>
-              {tc("addExpense")}
-            </Button>
-            <Button variant="secondary" size="lg" icon="people" style={{ flex: 1 }} onPress={() => router.push("/new-group")}>
-              {t("newGroup")}
-            </Button>
-          </View>
+          <Standing />
+
+          {friends.length > 0 && (
+            <View>
+              <SectionHeader
+                title={tg("friends")}
+                action={
+                  <Button variant="ghost" icon="person-add" onPress={addFriend}>
+                    {tg("addFriend")}
+                  </Button>
+                }
+              />
+              <List>{friends.slice(0, 5).map((g) => <GroupRow key={g.id} group={g} />)}</List>
+            </View>
+          )}
+
+          {people.length > 0 && (
+            <View>
+              <SectionHeader title={tp("title")} />
+              <List>{people.slice(0, 5).map((p) => <PersonRow key={p.key} person={p} />)}</List>
+            </View>
+          )}
 
           <View>
             <SectionHeader
               title={t("groups")}
               action={
-                <Button variant="ghost" onPress={() => router.push("/groups")}>
-                  {tc("all")}
-                </Button>
+                <View style={{ flexDirection: "row" }}>
+                  {friends.length === 0 && (
+                    <Button variant="ghost" icon="person-add" onPress={addFriend}>
+                      {tg("addFriend")}
+                    </Button>
+                  )}
+                  <Button variant="ghost" icon="add" onPress={() => router.push("/new-group")}>
+                    {t("newGroup")}
+                  </Button>
+                </View>
               }
             />
-            <Card padded={false}>
-              {active.slice(0, 5).map((g, i) => (
-                <View key={g.id}>
-                  {i > 0 && <Divider inset={72} />}
-                  <GroupRow group={g} />
-                </View>
-              ))}
-            </Card>
+            {active.length > 0 && <List>{active.slice(0, 5).map((g) => <GroupRow key={g.id} group={g} />)}</List>}
+            {active.length > 5 && (
+              <Button variant="ghost" onPress={() => router.push("/groups")}>
+                {tc("all")}
+              </Button>
+            )}
           </View>
 
           <View>

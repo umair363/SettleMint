@@ -10,6 +10,7 @@ import { useLocale, useTranslations } from "use-intl";
 import { api } from "@/lib/api";
 import { useTheme } from "@/theme/theme";
 import { Button, IconButton } from "@/ui/button";
+import { CategoryTile } from "@/ui/glyphs";
 import { Screen } from "@/ui/screen";
 import { Avatar, Card, Loading, Money, SectionHeader } from "@/ui/surface";
 import { Text } from "@/ui/text";
@@ -67,9 +68,7 @@ export default function ExpenseDetail() {
   return (
     <Screen sheet headerRight={<IconButton icon="close" label={tc("close")} onPress={() => router.back()} />} title={e.description}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
-        <View style={{ width: 56, height: 56, borderRadius: radius.md, backgroundColor: c.surface2, alignItems: "center", justifyContent: "center" }}>
-          <Text style={{ fontSize: 28, lineHeight: 36 }}>{cat.emoji}</Text>
-        </View>
+        <CategoryTile category={cat.id} size={56} />
         <View style={{ gap: 2 }}>
           <Money minor={e.amount} currency={e.currency} variant="title" />
           <Text variant="sub" tone="muted">

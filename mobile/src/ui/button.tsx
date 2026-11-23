@@ -42,8 +42,8 @@ export function Button({
   testID,
 }: ButtonProps) {
   const { c, radius } = useTheme();
-  const bg = { primary: c.accent, secondary: c.surface2, ghost: "transparent", danger: c.negativeSoft }[variant];
-  const fg = { primary: c.accentFg, secondary: c.fg, ghost: c.fgMuted, danger: c.negative }[variant];
+  const bg = { primary: c.accent, secondary: c.surface2, ghost: "transparent", danger: c.dangerSoft }[variant];
+  const fg = { primary: c.accentFg, secondary: c.fg, ghost: c.fgMuted, danger: c.danger }[variant];
   const inactive = disabled || loading;
 
   return (

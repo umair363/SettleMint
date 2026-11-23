@@ -1,38 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
 import { describeActivity } from "@settlemint/client/text/activity-text";
 import { timeAgo } from "@settlemint/client/text/dates";
-import type { ActivityDto, GroupSummaryDto } from "@settlemint/shared";
+import type { ActivityDto, GroupSummaryDto, PersonDto } from "@settlemint/shared";
 import { router } from "expo-router";
 import { View } from "react-native";
 import { useLocale, useTranslations } from "use-intl";
 import { useTheme } from "@/theme/theme";
-import type { Palette } from "@/theme/tokens";
-import { Money, Row } from "@/ui/surface";
+import { CategoryTile, GroupMark } from "@/ui/glyphs";
+import { Avatar, Money, Row } from "@/ui/surface";
 import { Text } from "@/ui/text";
 
-export const GROUP_EMOJI: Record<string, string> = {
-  trip: "✈️",
-  home: "🏠",
-  couple: "💞",
-  event: "🎉",
-  other: "👥",
-  direct: "🤝",
-};
-
-const tint = (c: Palette, type: string) =>
-  ({ trip: c.infoSoft, home: c.warningSoft, couple: c.negativeSoft, event: c.accentSoft })[type] ?? c.surface3;
-
-export function GroupIcon({ type, emoji, size = 44 }: { type: string; emoji: string | null; size?: number }) {
-  const { c } = useTheme();
-  return (
-    <View
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-      style={{ width: size, height: size, borderRadius: size * 0.32, backgroundColor: tint(c, type), alignItems: "center", justifyContent: "center" }}
-    >
-      <Text style={{ fontSize: size * 0.5, lineHeight: size * 0.66 }}>{emoji ?? GROUP_EMOJI[type] ?? "👥"}</Text>
-    </View>
-  );
+/** A group's mark: drawn in its own colour. (`emoji` is ignored: groups are drawn, not emoji.) */
+export function GroupIcon({ id, type, size = 44 }: { id: string; type: string; emoji?: string | null; size?: number }) {
+  return <GroupMark id={id} type={type} size={size} />;
 }
 
 /** "you are owed $12.00" / "you owe" / "settled up", stacked at the end of a row. */
@@ -60,7 +40,7 @@ export function GroupRow({ group }: { group: GroupSummaryDto }) {
   return (
     <Row
       onPress={() => router.push({ pathname: "/group/[id]", params: { id: group.id } })}
-      leading={<GroupIcon type={group.type} emoji={group.emoji} />}
+      leading={<GroupIcon id={group.id} type={group.type} />}
       title={group.name}
       subtitle={`${t("people", { count: group.memberCount })} · ${timeAgo(group.lastActivityAt, locale)}`}
       trailing={<BalanceLabel minor={group.myBalance} currency={group.currency} />}
@@ -68,11 +48,12 @@ export function GroupRow({ group }: { group: GroupSummaryDto }) {
   );
 }
 
+// Neutral tiles: colour is kept for balances, except a payment (mint).
 const ACTIVITY_ICON = {
-  expense: { icon: "receipt-outline", bg: "infoSoft", fg: "info" },
+  expense: { icon: "receipt-outline", bg: "surface2", fg: "fgMuted" },
   payment: { icon: "swap-horizontal", bg: "positiveSoft", fg: "positive" },
-  member: { icon: "person-add-outline", bg: "warningSoft", fg: "warning" },
-  group: { icon: "settings-outline", bg: "surface3", fg: "fgMuted" },
+  member: { icon: "person-add-outline", bg: "surface2", fg: "fgMuted" },
+  group: { icon: "settings-outline", bg: "surface2", fg: "fgMuted" },
 } as const;
 
 export function ActivityRow({ event, myUserId, showGroup = true }: { event: ActivityDto; myUserId?: string; showGroup?: boolean }) {
@@ -85,12 +66,17 @@ export function ActivityRow({ event, myUserId, showGroup = true }: { event: Acti
     <Row
       onPress={() => router.push({ pathname: "/group/[id]", params: { id: event.groupId } })}
       leading={
-        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c[style.bg], alignItems: "center", justifyContent: "center" }}>
-          <Ionicons name={style.icon} size={18} color={c[style.fg]} />
-        </View>
+        line.kind === "expense" && typeof event.data.category === "string" ? (
+          <CategoryTile category={event.data.category} />
+        ) : (
+          <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: c[style.bg], alignItems: "center", justifyContent: "center" }}>
+            <Ionicons name={style.icon} size={20} color={c[style.fg]} />
+          </View>
+        )
       }
       title={line.text}
-      subtitle={`${showGroup ? `${event.groupEmoji ?? "👥"} ${event.groupName} · ` : ""}${timeAgo(event.createdAt, locale)}`}
+      titleParts={line.parts}
+      subtitle={`${showGroup ? `${event.groupName} · ` : ""}${timeAgo(event.createdAt, locale)}`}
       trailing={
         line.amount ? (
           <Money
@@ -101,6 +87,30 @@ export function ActivityRow({ event, myUserId, showGroup = true }: { event: Acti
             style={line.deleted ? { textDecorationLine: "line-through" } : undefined}
           />
         ) : undefined
+      }
+    />
+  );
+}
+
+/** Someone you share groups with, and what is owed between you across all of them. */
+export function PersonRow({ person }: { person: PersonDto }) {
+  const t = useTranslations("people");
+  return (
+    <Row
+      onPress={() => router.push({ pathname: "/person", params: { key: person.key } })}
+      leading={<Avatar id={person.key} name={person.name} size={44} />}
+      title={person.name}
+      subtitle={t("shared", { count: person.groups.length })}
+      trailing={
+        person.totals.length === 0 ? (
+          <BalanceLabel minor={0} currency="USD" />
+        ) : (
+          <View style={{ gap: 4 }}>
+            {person.totals.map((x) => (
+              <BalanceLabel key={x.currency} minor={x.amount} currency={x.currency} />
+            ))}
+          </View>
+        )
       }
     />
   );

@@ -9,8 +9,10 @@ import { Pressable, Share, View } from "react-native";
 import { useLocale, useTranslations } from "use-intl";
 import { GroupIcon } from "@/features/rows";
 import { useTheme } from "@/theme/theme";
+import { CategoryTile } from "@/ui/glyphs";
 import { Button, IconButton } from "@/ui/button";
 import { Screen } from "@/ui/screen";
+import { BalanceStatement, SettleProgress } from "@/ui/statement";
 import { Avatar, Card, Divider, Empty, Loading, Money, Row, SectionHeader, Segmented } from "@/ui/surface";
 import { Text } from "@/ui/text";
 import { toast } from "@/ui/toast";
@@ -53,9 +55,7 @@ function ExpenseRow({ group, expense, onDelete }: { group: GroupDetailDto; expen
         opacity: saving ? 0.6 : 1,
       })}
     >
-      <View style={{ width: 40, height: 40, borderRadius: radius.md, backgroundColor: c.surface2, alignItems: "center", justifyContent: "center" }}>
-        <Text style={{ fontSize: 20, lineHeight: 26 }}>{cat.emoji}</Text>
-      </View>
+      <CategoryTile category={cat.id} />
       <View style={{ flex: 1, gap: 2 }}>
         <Text variant="bodyStrong" numberOfLines={1}>
           {expense.recurringRuleId ? "🔁 " : ""}
@@ -194,6 +194,7 @@ function settleParams(group: GroupDetailDto, tr: TransferDto) {
 
 function BalancesTab({ group }: { group: GroupDetailDto }) {
   const t = useTranslations("group");
+  const trecap = useTranslations("recap");
   const locale = useLocale();
   const active = group.members.filter((m) => !m.left || (group.balances[m.id] ?? 0) !== 0);
 
@@ -261,7 +262,7 @@ function BalancesTab({ group }: { group: GroupDetailDto }) {
               <View key={m.id}>
                 {i > 0 && <Divider inset={64} />}
                 <Row
-                  leading={<Avatar name={m.displayName} size={36} />}
+                  leading={<Avatar id={m.id} name={m.displayName} size={36} />}
                   title={m.isMe ? t("you") : m.displayName}
                   trailing={
                     b === 0 ? (
@@ -285,6 +286,11 @@ function BalancesTab({ group }: { group: GroupDetailDto }) {
         <Text variant="caption" tone="subtle" style={{ marginTop: 8, paddingHorizontal: 4 }}>
           {t.rich("totalSpent", { amount: () => <Money minor={group.totalSpent} currency={group.currency} variant="caption" tone="muted" /> })}
         </Text>
+        {group.totalSpent > 0 && (
+          <Button variant="ghost" onPress={() => router.push({ pathname: "/recap", params: { id: group.id } })}>
+            {trecap("link")}
+          </Button>
+        )}
       </View>
     </View>
   );
@@ -318,7 +324,6 @@ export default function GroupScreen() {
   const g = group.data;
   const active = g.members.filter((m) => !m.left);
   const myTransfer = g.transfers.find((tr) => tr.fromMemberId === g.myMemberId || tr.toMemberId === g.myMemberId);
-  const tint = g.myBalance > 0 ? c.positiveSoft : g.myBalance < 0 ? c.negativeSoft : c.surface;
 
   return (
     <Screen
@@ -333,7 +338,7 @@ export default function GroupScreen() {
       </View>
 
       <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
-        <GroupIcon type={g.type} emoji={g.emoji} size={56} />
+        <GroupIcon id={g.id} type={g.type} size={56} />
         <View style={{ flex: 1, gap: 2 }}>
           <Text variant="title" accessibilityRole="header" numberOfLines={2}>
             {g.name}
@@ -344,31 +349,30 @@ export default function GroupScreen() {
         </View>
       </View>
 
-      <Card style={{ backgroundColor: tint, padding: 20, gap: 16 }}>
-        <View style={{ gap: 2 }}>
-          <Text variant="sub" tone="muted">
-            {t("myBalance", { state: g.myBalance > 0 ? "owed" : g.myBalance < 0 ? "owe" : "settled" })}
-          </Text>
-          <Money minor={g.myBalance} currency={g.currency} tone="auto" variant="display" />
-        </View>
-        <View style={{ flexDirection: "row", gap: 8 }}>
-          <Button icon="add" style={{ flex: 1 }} onPress={() => router.push({ pathname: "/add-expense", params: { groupId: g.id } })}>
-            {tc("addExpense")}
-          </Button>
-          <Button
-            variant="secondary"
-            icon="swap-horizontal"
-            style={{ flex: 1 }}
-            disabled={g.transfers.length === 0}
-            onPress={() => {
-              if (myTransfer) router.push({ pathname: "/settle", params: settleParams(g, myTransfer) });
-              else setTab("balances");
-            }}
-          >
-            {t("settleUp")}
-          </Button>
-        </View>
-      </Card>
+      <BalanceStatement
+        label={t("myBalance", { state: g.myBalance > 0 ? "owed" : g.myBalance < 0 ? "owe" : "settled" })}
+        minor={g.myBalance}
+        currency={g.currency}
+        settledText={g.transfers.length === 0 ? t("everyoneSettled") : undefined}
+      />
+      <SettleProgress outstanding={g.transfers.reduce((sum, tr) => sum + tr.amount, 0)} spent={g.totalSpent} />
+      <View style={{ flexDirection: "row", gap: 8 }}>
+        <Button icon="add" style={{ flex: 1 }} onPress={() => router.push({ pathname: "/add-expense", params: { groupId: g.id } })}>
+          {tc("addExpense")}
+        </Button>
+        <Button
+          variant="secondary"
+          icon="swap-horizontal"
+          style={{ flex: 1 }}
+          disabled={g.transfers.length === 0}
+          onPress={() => {
+            if (myTransfer) router.push({ pathname: "/settle", params: settleParams(g, myTransfer) });
+            else setTab("balances");
+          }}
+        >
+          {t("settleUp")}
+        </Button>
+      </View>
 
       {active.length === 1 && (
         <Card style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>

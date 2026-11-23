@@ -3,6 +3,7 @@ import { formatMoney } from "@settlemint/shared";
 import type { ReactNode } from "react";
 import { ActivityIndicator, I18nManager, Pressable, View, type StyleProp, type ViewStyle } from "react-native";
 import { useLocale } from "use-intl";
+import { identity } from "@/theme/identity";
 import { useTheme } from "@/theme/theme";
 import type { IconName } from "./button";
 import { Button } from "./button";
@@ -27,7 +28,7 @@ export function Card({ children, style, padded = true }: { children: ReactNode; 
 export function SectionHeader({ title, action }: { title: string; action?: ReactNode }) {
   return (
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8, marginTop: 8 }}>
-      <Text variant="label" tone="muted" accessibilityRole="header" style={{ textTransform: "uppercase", letterSpacing: 0.6 }}>
+      <Text variant="heading" accessibilityRole="header" style={{ fontSize: 20, fontWeight: "600", letterSpacing: -0.2 }}>
         {title}
       </Text>
       {action}
@@ -56,18 +57,16 @@ export function Money({
   );
 }
 
-const AVATAR_COLORS = ["#3dd68c", "#7aa7ff", "#ffbd5a", "#ff7a70", "#c792ea", "#5fd3e0", "#f78fb3", "#a3d65c"];
-
-/** Initials on a colour picked from the name, so a person keeps their colour everywhere. */
-export function Avatar({ name, size = 40, emoji }: { name: string; size?: number; emoji?: string | null }) {
-  const { c } = useTheme();
-  let hash = 0;
-  for (const ch of name) hash = (hash * 31 + ch.codePointAt(0)!) | 0;
-  const color = AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+/** Initials in the person's own quiet colour, so a face keeps it everywhere (and never reads as a balance). */
+export function Avatar({ name, size = 40, id }: { name: string; size?: number; id?: string; emoji?: string | null }) {
+  const { isDark } = useTheme();
+  const tone = identity(id ?? name, isDark);
+  // One letter when small, so it is never clipped.
+  const letters = size < 36 ? 1 : 2;
   const initials = name
     .trim()
     .split(/\s+/)
-    .slice(0, 2)
+    .slice(0, letters)
     .map((w) => [...w][0] ?? "")
     .join("")
     .toLocaleUpperCase();
@@ -75,18 +74,9 @@ export function Avatar({ name, size = 40, emoji }: { name: string; size?: number
     <View
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      style={{
-        width: size,
-        height: size,
-        borderRadius: emoji ? size * 0.3 : size / 2,
-        backgroundColor: emoji ? c.surface2 : `${color}26`,
-        alignItems: "center",
-        justifyContent: "center",
-      }}
+      style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: tone.bg, alignItems: "center", justifyContent: "center" }}
     >
-      <Text style={{ fontSize: emoji ? size * 0.5 : size * 0.38, fontWeight: "700", color: emoji ? undefined : color, lineHeight: size * 0.62 }}>
-        {emoji || initials || "?"}
-      </Text>
+      <Text style={{ fontSize: size * 0.38, fontWeight: "700", color: tone.fg, lineHeight: size * 0.62 }}>{initials || "?"}</Text>
     </View>
   );
 }
@@ -95,6 +85,7 @@ export function Avatar({ name, size = 40, emoji }: { name: string; size?: number
 export function Row({
   leading,
   title,
+  titleParts,
   subtitle,
   trailing,
   onPress,
@@ -103,6 +94,8 @@ export function Row({
 }: {
   leading?: ReactNode;
   title: string;
+  /** The same text split so names can be shown bold (activity sentences). */
+  titleParts?: { text: string; strong: boolean }[];
   subtitle?: string;
   trailing?: ReactNode;
   onPress?: () => void;
@@ -114,9 +107,19 @@ export function Row({
     <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, paddingHorizontal: 16, minHeight: 60 }}>
       {leading}
       <View style={{ flex: 1, gap: 2 }}>
-        <Text variant="bodyStrong" numberOfLines={1}>
-          {title}
-        </Text>
+        {titleParts ? (
+          <Text variant="body" numberOfLines={2} accessibilityLabel={title}>
+            {titleParts.map((p, i) => (
+              <Text key={i} variant="body" style={p.strong ? { fontWeight: "700" } : undefined}>
+                {p.text}
+              </Text>
+            ))}
+          </Text>
+        ) : (
+          <Text variant="bodyStrong" numberOfLines={1}>
+            {title}
+          </Text>
+        )}
         {subtitle ? (
           <Text variant="sub" tone="muted" numberOfLines={1}>
             {subtitle}
@@ -242,7 +245,7 @@ export function Segmented<T extends string>({
 }
 
 /** A small rounded tag (selected people, filters). */
-export function Chip({ label, selected, onPress }: { label: string; selected?: boolean; onPress?: () => void }) {
+export function Chip({ label, selected, onPress, icon }: { label: string; selected?: boolean; onPress?: () => void; icon?: IconName }) {
   const { c, radius } = useTheme();
   return (
     <Pressable
@@ -261,7 +264,7 @@ export function Chip({ label, selected, onPress }: { label: string; selected?: b
         borderColor: selected ? c.accent : c.line,
       }}
     >
-      {selected && <Ionicons name="checkmark" size={16} color={c.positive} />}
+      {selected ? <Ionicons name="checkmark" size={16} color={c.positive} /> : icon ? <Ionicons name={icon} size={16} color={c.fgMuted} /> : null}
       <Text variant="label" tone={selected ? "positive" : "fg"}>
         {label}
       </Text>

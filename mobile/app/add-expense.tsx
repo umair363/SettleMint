@@ -14,6 +14,7 @@ import { useCreateExpense, useCreateRecurring, useGroup, useGroups, useUpdateExp
 import type { CategoryKey } from "@settlemint/client/i18n/messages/en";
 import { apiErrorText } from "@settlemint/client/text/api-error-text";
 import { guessCategory } from "@settlemint/client/text/category-guess";
+import { parseQuickAdd } from "@settlemint/client/text/quick-add";
 import { dayLabel, todayIso } from "@settlemint/client/text/dates";
 import {
   ApiError,
@@ -33,10 +34,12 @@ import { useMemo, useState } from "react";
 import { Modal, Platform, Pressable, ScrollView, TextInput, View } from "react-native";
 import { useLocale, useTranslations } from "use-intl";
 import { uuidv7 } from "uuidv7";
+import { QuickFriend } from "@/features/quick-friend";
 import { pickReceiptPhoto } from "@/features/receipt";
 import { GroupIcon } from "@/features/rows";
 import { api } from "@/lib/api";
 import { useTheme } from "@/theme/theme";
+import { categoryIcon } from "@/ui/glyphs";
 import { Button, haptic, IconButton } from "@/ui/button";
 import { CurrencyPicker } from "@/ui/currency-picker";
 import { Field } from "@/ui/field";
@@ -85,13 +88,11 @@ export default function AddExpense() {
   if (!groupId || !group.data) {
     return (
       <Screen sheet title={t("addTitle")}>
-        <Empty
-          icon="people"
-          title={t("startTitle")}
-          body={t("startBody")}
-          action={t("createGroup")}
-          onAction={() => router.replace("/new-group")}
-        />
+        <Empty icon="people" title={t("startTitle")} body={t("startBody")} />
+        <QuickFriend onCreated={setChosen} />
+        <Button variant="ghost" onPress={() => router.replace("/new-group")}>
+          {t("createGroup")}
+        </Button>
       </Screen>
     );
   }
@@ -133,6 +134,7 @@ function Form({
   const ts = useTranslations("split");
   const tcat = useTranslations("categories");
   const tst = useTranslations("settle");
+  const tg = useTranslations("groups");
 
   const members = useMemo(
     () => group.members.filter((m) => !m.left || expense?.lines.some((l) => l.memberId === m.id)),
@@ -188,6 +190,27 @@ function Form({
 
   const total = parseMoneyInput(amountText, currency, locale) ?? 0;
   const category = pickedCategory ?? guessCategory(description) ?? "other";
+
+  // "Dinner 45 with Sam": offer to fill the form from a typed sentence.
+  const quick = useMemo(() => {
+    if (expense || amountText !== "") return null;
+    const parsed = parseQuickAdd(
+      description,
+      members.filter((m) => m.id !== group.myMemberId && !m.left).map((m) => m.displayName),
+    );
+    const minor = parsed ? parseMoneyInput(parsed.amount, currency, locale) : null;
+    return parsed && minor && minor > 0 ? { ...parsed, minor } : null;
+  }, [description, amountText, expense, members, group.myMemberId, currency, locale]);
+  const applyQuick = () => {
+    if (!quick) return;
+    setDescription(quick.description);
+    setAmountText(minorToInputText(quick.minor, currency, locale));
+    if (quick.people.length) {
+      const ids = quick.people.flatMap((n) => members.filter((m) => m.displayName === n).map((m) => m.id));
+      setDraft(equalDraft([group.myMemberId, ...ids]));
+      setPayerId(group.myMemberId);
+    }
+  };
   const cat = getCategoryMeta(category);
   const spec = useMemo(() => specFromDraft(draft, memberIds, currency, locale), [draft, memberIds, currency, locale]);
   const preview = useMemo(() => previewSplit(total, spec), [total, spec]);
@@ -303,7 +326,7 @@ function Form({
           onPress={() => setGroupOpen(true)}
           style={{ flexDirection: "row", alignItems: "center", gap: 10, alignSelf: "flex-start", backgroundColor: c.surface2, borderRadius: radius.full, paddingVertical: 6, paddingStart: 6, paddingEnd: 12 }}
         >
-          <GroupIcon type={group.type} emoji={group.emoji} size={28} />
+          <GroupIcon id={group.id} type={group.type} size={28} />
           <Text variant="label">{group.name}</Text>
           <Ionicons name="chevron-down" size={16} color={c.fgSubtle} />
         </Pressable>
@@ -363,13 +386,32 @@ function Form({
         maxLength={120}
         testID="description"
       />
+      {quick && (
+        <Pressable
+          accessibilityRole="button"
+          onPress={applyQuick}
+          style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: c.accentSoft, borderRadius: radius.md, paddingVertical: 12, paddingHorizontal: 14 }}
+        >
+          <Text variant="sub" numberOfLines={1} style={{ flex: 1 }}>
+            <Text variant="sub" style={{ fontWeight: "700" }}>
+              {quick.description || tcat(category as CategoryKey)}
+            </Text>
+            {` · ${safeSymbol(currency, locale)}${quick.amount}`}
+            {quick.people.length > 0 ? ` · ${t("quickWith", { names: quick.people.join(", ") })}` : ""}
+          </Text>
+          <Text variant="label" tone="positive">
+            {t("quickUse")}
+          </Text>
+        </Pressable>
+      )}
 
       {/* Category */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
         {CATEGORIES.map((k) => (
           <Chip
             key={k.id}
-            label={`${k.emoji} ${tcat(k.id as CategoryKey)}`}
+            label={tcat(k.id as CategoryKey)}
+            icon={categoryIcon(k.id)}
             selected={category === k.id}
             onPress={() => setPickedCategory(k.id)}
           />
@@ -579,8 +621,25 @@ function Form({
       <Modal visible={groupOpen} transparent animationType="fade" onRequestClose={() => setGroupOpen(false)}>
         <Pressable style={{ flex: 1, backgroundColor: c.scrim, justifyContent: "flex-end" }} onPress={() => setGroupOpen(false)}>
           <View style={{ backgroundColor: c.bgElevated, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: 8, paddingBottom: 32, maxHeight: "70%" }}>
-            <ScrollView>
-              {groups.map((g) => (
+            <ScrollView keyboardShouldPersistTaps="handled">
+              <View style={{ padding: 12, paddingBottom: 4 }}>
+                <QuickFriend
+                  onCreated={(id) => {
+                    onPickGroup(id);
+                    setGroupOpen(false);
+                  }}
+                />
+              </View>
+              {[
+                { title: tg("friends"), items: groups.filter((g) => g.type === "direct") },
+                { title: tg("sectionGroups"), items: groups.filter((g) => g.type !== "direct") },
+              ]
+                .filter((section) => section.items.length > 0)
+                .flatMap((section) => [
+                  <Text key={`h-${section.title}`} variant="label" tone="muted" style={{ paddingHorizontal: 14, paddingTop: 12, paddingBottom: 4 }}>
+                    {section.title}
+                  </Text>,
+                  ...section.items.map((g) => (
                 <Pressable
                   key={g.id}
                   accessibilityRole="radio"
@@ -591,13 +650,14 @@ function Form({
                   }}
                   style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: radius.md, backgroundColor: pressed ? c.surface2 : "transparent" })}
                 >
-                  <GroupIcon type={g.type} emoji={g.emoji} size={36} />
+                  <GroupIcon id={g.id} type={g.type} size={36} />
                   <Text variant="bodyStrong" style={{ flex: 1 }}>
                     {g.name}
                   </Text>
                   {g.id === group.id && <Ionicons name="checkmark" size={20} color={c.positive} />}
                 </Pressable>
-              ))}
+                  )),
+                ])}
             </ScrollView>
           </View>
         </Pressable>

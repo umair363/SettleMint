@@ -6,6 +6,7 @@ import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { useEffect, useState } from "react";
 import { Alert, Linking, Modal, Platform, Pressable, Switch, View } from "react-native";
+import { router } from "expo-router";
 import { useTranslations } from "use-intl";
 import { appLockAvailable, isAppLockOn, setAppLock } from "@/features/app-lock";
 import { PaymentHandlesCard } from "@/features/payment-handles";
@@ -18,7 +19,7 @@ import { Button } from "@/ui/button";
 import { CurrencyButton } from "@/ui/currency-picker";
 import { Field } from "@/ui/field";
 import { Screen } from "@/ui/screen";
-import { Avatar, Card, SectionHeader, Segmented } from "@/ui/surface";
+import { Avatar, Card, Row, SectionHeader, Segmented } from "@/ui/surface";
 import { Text } from "@/ui/text";
 import { toast } from "@/ui/toast";
 
@@ -273,6 +274,7 @@ function LanguagePicker() {
 
 function YourData() {
   const t = useTranslations("yourData");
+  const tt = useTranslations("trash");
   const tc = useTranslations("common");
   const qc = useQueryClient();
   const [exporting, setExporting] = useState(false);
@@ -314,6 +316,12 @@ function YourData() {
           {t("body")}
         </Text>
       </View>
+      <Row
+        leading={<Ionicons name="time-outline" size={22} color={c.fgMuted} />}
+        title={tt("link")}
+        chevron
+        onPress={() => router.push("/trash")}
+      />
       <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
         {Platform.OS !== "web" && (
           <Button variant="secondary" icon="download-outline" loading={exporting} onPress={exportData}>
@@ -372,12 +380,14 @@ export default function Account() {
 
   return (
     <Screen title={t("title")}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
-        <Avatar name={me.data.name} size={56} />
-        <View style={{ flex: 1 }}>
-          <Text variant="heading">{me.data.isGuest ? t("guest") : me.data.name}</Text>
+      <View style={{ alignItems: "center", gap: 10, paddingVertical: 8 }}>
+        <Avatar id={me.data.id} name={me.data.name} size={88} />
+        <View style={{ alignItems: "center", gap: 2 }}>
+          <Text variant="title" center style={{ fontWeight: "700" }}>
+            {me.data.isGuest ? t("guest") : me.data.name}
+          </Text>
           {me.data.email && !me.data.isGuest ? (
-            <Text variant="sub" tone="muted">
+            <Text tone="muted" center>
               {me.data.email}
             </Text>
           ) : null}

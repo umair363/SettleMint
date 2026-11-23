@@ -62,6 +62,9 @@ function Navigator() {
         <Stack.Protected guard={signedIn && !needsWelcome}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="group/[id]" />
+          <Stack.Screen name="person" />
+          <Stack.Screen name="recap" options={sheet} />
+          <Stack.Screen name="trash" options={sheet} />
           <Stack.Screen name="add-expense" options={sheet} />
           <Stack.Screen name="expense/[id]" options={sheet} />
           <Stack.Screen name="settle" options={sheet} />

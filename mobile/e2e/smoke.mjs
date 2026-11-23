@@ -51,7 +51,7 @@ const see = (text, timeout = 15000) =>
 
 try {
   await page.goto(ORIGIN, { waitUntil: "load" });
-  check(await see("Split anything, with anyone"), "sign-in screen");
+  check(await see("Welcome back"), "sign-in screen");
   await shot("1-sign-in");
 
   await page.getByTestId("guest").click();
@@ -103,6 +103,17 @@ try {
   await page.getByRole("button", { name: "Search" }).click();
   await page.getByLabel("Search expenses and groups").fill("dinner");
   check(await see("Lisbon 2026 ·"), "search finds the expense");
+  await page.getByRole("button", { name: "Close" }).click();
+
+  // A friend needs only a name, and nothing has been deleted yet.
+  await page.goto(`${ORIGIN}/groups`, { waitUntil: "load" });
+  await page.getByRole("button", { name: "Add friend" }).first().click();
+  await page.getByTestId("group-name").fill("Sam");
+  await page.getByTestId("create-group").click();
+  check(await see("Settle up"), "friend added with just a name");
+  await page.goto(`${ORIGIN}/account`, { waitUntil: "load" });
+  await page.getByRole("button", { name: /Recently deleted/ }).click();
+  check(await see("Nothing deleted lately"), "recently deleted is empty");
   await page.getByRole("button", { name: "Close" }).click();
 
   // Language: Arabic switches the text and the layout direction.

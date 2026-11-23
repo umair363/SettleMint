@@ -12,6 +12,7 @@ import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth";
 import { useTheme } from "@/theme/theme";
 import { Button } from "@/ui/button";
+import { GroupMark } from "@/ui/glyphs";
 import { Field } from "@/ui/field";
 import { Screen } from "@/ui/screen";
 import { Avatar, Empty, Loading } from "@/ui/surface";
@@ -117,9 +118,7 @@ export default function Join() {
       }
     >
       <View style={{ alignItems: "center", gap: 8, marginTop: 24 }}>
-        <View style={{ width: 72, height: 72, borderRadius: radius.lg, backgroundColor: c.surface2, alignItems: "center", justifyContent: "center" }}>
-          <Text style={{ fontSize: 40, lineHeight: 48 }}>{group.emoji ?? "👥"}</Text>
-        </View>
+        <GroupMark id={group.id} type="other" size={72} />
         <Text tone="muted">{t("invitedTo")}</Text>
         <Text variant="title" center accessibilityRole="header">
           {group.name}
