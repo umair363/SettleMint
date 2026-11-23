@@ -1,141 +1,187 @@
 <div align="center">
 
-<img src="web/public/icon-192.png" width="88" alt="SettleMint" />
+<img src="web/public/icon-192.png" width="96" alt="SettleMint" />
 
-### SettleMint
+# SettleMint
 
-Split expenses, not friendships.
+**Split expenses, not friendships.**
 
-[Features](#features) · [Architecture](#architecture) · [Run it locally](#run-it-locally) · [Quality checks](#quality-checks) · [Deploy](#deploy-free-tier)
+Track who paid what and who owes whom, in any currency, exact to the cent.
+A fast web app and a phone app, free to use and built to work offline.
+
+[![CI](https://github.com/umair363/SettleMint/actions/workflows/ci.yml/badge.svg)](https://github.com/umair363/SettleMint/actions/workflows/ci.yml)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
+![Node](https://img.shields.io/badge/node-24-5fa04e)
+![Languages](https://img.shields.io/badge/languages-8-4fdaa3)
+
+[Features](#features) ·
+[Architecture](#architecture) ·
+[Getting started](#getting-started) ·
+[Testing](#testing) ·
+[Configuration](#configuration) ·
+[Deployment](docs/deploy.md) ·
+[Contributing](CONTRIBUTING.md)
 
 </div>
 
 <br />
 
-SettleMint keeps track of who paid what and who owes whom, in any currency,
-fair to the cent. It's an installable web app (PWA) that works offline, and
-an iPhone and Android app, both built on one shared money engine.
+<table>
+  <tr>
+    <td width="25%"><img src="docs/screenshots/home.png" alt="Home: your balance across every group" /></td>
+    <td width="25%"><img src="docs/screenshots/group.png" alt="A group, with the settle-up progress bar" /></td>
+    <td width="25%"><img src="docs/screenshots/add-expense.png" alt="Adding an expense by typing a sentence" /></td>
+    <td width="25%"><img src="docs/screenshots/recap.png" alt="A group's recap: where the money went" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Where you stand</sub></td>
+    <td align="center"><sub>A group</sub></td>
+    <td align="center"><sub>Type it like a message</sub></td>
+    <td align="center"><sub>Where it all went</sub></td>
+  </tr>
+</table>
 
 ## Features
 
-- **Free, no limits.** No daily caps, ads or cooldowns.
-- **Join from a link, no account needed.** Pick your name from the list and
-  you're in; create an account later and keep your history.
-- **Three-second add.** Amount-first keypad with quick sums ("12+8.50"),
-  smart defaults, and a category guessed from what you type.
-- **Every split.** Equally, exact amounts, percentages, shares, adjustments,
-  item by item with tax and tip spread fairly, and several payers.
-- **150+ currencies.** The exchange rate is locked when you add the expense.
-- **Fewest payments.** Debt simplification that is provably minimal for
-  groups of up to 16 people, or exact who-owes-whom if you prefer.
-- **Get paid, not just reminded.** Add how you like to be paid (UPI, PayPal,
-  Venmo, Cash App, Revolut, Monzo, Wise, IBAN, Raast, JazzCash, Easypaisa…).
-  Whoever settles with you gets a one-tap link with the amount filled in;
-  "Remind" shares a friendly nudge with those links. SettleMint never
-  touches the money.
-- **Friends and groups.** Split with one person or a whole trip; search
-  everything with ⌘K. Changes from others appear live, no refresh.
-- **Repeating bills.** Rent and subscriptions add themselves weekly, monthly
-  or yearly, on the right day in your time zone.
-- **Switch from Splitwise in a minute.** Import a group export; balances
-  come over to the cent.
-- **Your data is yours.** Export everything as JSON, or delete your account
-  (your friends' balances stay correct).
-- **Trust.** Full history on every expense, undo on deletes, restore, and
-  edit conflicts caught instead of silently overwritten.
-- **Offline-first.** Opens instantly from saved data; anything you add
-  offline syncs when you're back.
-- **Eight languages.** English, Spanish, Portuguese, French, German, Hindi,
-  Urdu and Arabic, fully right-to-left for Urdu and Arabic. Numbers, money and
-  dates follow your region; notifications arrive in each person's language.
-- **Live and notified.** Changes appear on everyone's screen as they happen,
-  and an optional notification tells you when friends add expenses or pay you.
+**Adding and splitting**
+
+- **Fast.** An amount-first keypad with quick sums (`12+8.50`), sensible defaults and a
+  category guessed from what you type. Write "Dinner 45 with Sam" and the form fills itself in.
+- **Every split.** Equally, exact amounts, percentages, shares, adjustments, or item by item
+  from a scanned receipt with tax and tip shared fairly, with one or several payers. A preview
+  always equals what is saved, to the cent.
+- **150+ currencies.** The exchange rate is locked when an expense is added, so a trip's
+  balances never drift.
+- **Repeating bills.** Rent and subscriptions add themselves weekly, monthly or yearly, on the
+  right day in your time zone.
+
+**Friends, groups and people**
+
+- **Friends without groups.** Add a friend with just a name and split with them directly.
+- **Groups** for trips, homes, couples and events. Friends join from a link and pick their
+  name; no account needed, and they can save one later.
+- **One balance per person.** See what someone owes you, or you owe them, added up across
+  every group you share.
+- **Recap.** Where a group's money went and who paid, shareable as an image.
+
+**Settling up**
+
+- **Fewest payments.** Debt simplification that is provably minimal for groups of up to 16
+  people, or exact who-owes-whom if you prefer.
+- **Get paid, not just reminded.** Add how you like to be paid (UPI, PayPal, Venmo, Cash App,
+  Revolut, Monzo, Wise, IBAN, Raast, JazzCash, Easypaisa and more). Whoever settles with you
+  gets a one-tap link with the amount filled in. SettleMint never touches the money.
+- **Switch from Splitwise in a minute.** Import a group export; balances come over to the cent.
+
+**Trust**
+
+- **Nothing is lost.** Full history on every expense, undo on delete, and a "Recently deleted"
+  list that restores anything from the last 30 days. Edit conflicts are caught, not overwritten.
+- **Your data is yours.** Export everything as JSON, or delete your account; friends' balances
+  stay correct.
+- **Works offline.** Opens instantly from saved data, and anything added offline syncs later.
+  Changes from other people appear live.
+- **Eight languages**, fully right-to-left for Arabic and Urdu: English, Spanish, Portuguese,
+  French, German, Hindi, Urdu and Arabic. Numbers, money and dates follow your region.
+- **Accessible.** WCAG 2.2 AA colour, keyboard and screen-reader support, reduced motion and
+  reduced transparency honoured.
 
 ## Architecture
 
 ```
-web/         Next.js 16 static PWA · Tailwind v4 · Radix · Motion   → Cloudflare Pages
-api/         Fastify 5 · Drizzle · Postgres · Better Auth           → Render (src/v1)
-mobile/      Expo SDK 57 · Expo Router · React Native                 → App Store / Play (EAS)
+web/        Next.js 16 static PWA · Tailwind v4 · Radix · Motion      → Cloudflare Pages
+api/        Fastify 5 · Drizzle · Postgres · Better Auth               → Render
+mobile/     Expo SDK 57 · Expo Router · React Native                   → App Store / Google Play (EAS)
 packages/
-  shared/    money engine · API contracts (Zod) · typed API client
-  client/    what web and mobile share above the API: translations
-             (8 languages), data hooks (React Query), text helpers
+  shared/   money engine · API contracts (Zod) · typed API client
+  client/   what web and mobile share above the API: translations, data hooks,
+            text helpers and the design tokens
+docs/       product brief, architecture notes, deployment guide
 ```
 
-- **Money** is always integer minor units with an ISO currency code. All
-  splitting, conversion and balancing lives in `packages/shared` and runs
-  identically on the server, the web app and the phone app, so a preview is
-  exactly what gets saved. Property tests run thousands of random cases.
-- **The API** (`api/src/v1`) has one membership gate on every group route
-  (outsiders get 404), client-generated ids so offline retries never
-  duplicate, version checks on edits, and structured activity history.
-- **The web app** is built with `output: "export"`: plain static files, so it
-  can be hosted free anywhere. A hand-written service worker precaches the
-  build; the data cache lives in IndexedDB.
-- **Design system**: "Liquid Mint" in `web/src/ui`, browsable at `/design`.
-  One typeface (Bricolage Grotesque), WCAG AA colour in both themes, motion
-  kept under ~300 ms and off for people who prefer reduced motion.
+Three ideas shape the codebase. See [docs/architecture.md](docs/architecture.md) for the detail.
 
-## Run it locally
+- **One money engine.** Money is always integer minor units plus an ISO currency code.
+  Splitting, conversion and balancing live in `packages/shared` and run identically on the
+  server, the web app and the phone app. Property tests check thousands of random cases.
+- **One set of design tokens.** Colours, type, spacing and motion are defined once in
+  `packages/client/src/design/tokens.ts` and generated into the website's CSS and the phone
+  app's palette, so the two always match.
+- **A small, strict API.** Every group route passes one membership gate (outsiders get 404),
+  clients make their own ids so offline retries never duplicate, and edits carry versions.
+
+## Getting started
+
+You need Node 24 and npm. No database is required for development.
 
 ```bash
 npm install
-npm run dev:v1    # API on :8001 (uses a local PGlite database, no Postgres needed)
-npm run dev:web   # app on http://localhost:3001
+npm run dev:v1     # API on http://localhost:8001 (a local embedded database)
+npm run dev:web    # web app on http://localhost:3001
 ```
 
-Copy `api/.env.example` to `api/.env` and `web/.env.example` to
-`web/.env.local` to change settings. Without `RESEND_API_KEY`, sign-in codes
-are printed in the API's console.
+Without an email key, sign-in and confirmation codes are printed in the API's console.
+Copy `api/.env.example` to `api/.env` and `web/.env.example` to `web/.env.local` to change
+settings.
 
-**Phone app:** copy `mobile/.env.example` to `mobile/.env` and set
-`EXPO_PUBLIC_API_URL` to your computer's network address (a phone can't reach
-`localhost`), e.g. `http://192.168.1.20:8001`. (For the browser preview,
-`npx expo start --web`, add its address, e.g. `http://localhost:8081`, to the
-API's `WEB_ORIGINS`.) Then `npm run build:shared && npm run dev:mobile` and scan the QR code with a
-development build (`eas build --profile development`). Notifications, the app
-lock and the share sheet need a real phone.
+**Phone app.** Copy `mobile/.env.example` to `mobile/.env` and point `EXPO_PUBLIC_API_URL` at
+your computer's network address, since a phone can't reach `localhost`. Then run
+`npm run dev:mobile`. See [mobile/README.md](mobile/README.md) for devices and builds.
 
-## Quality checks
+### Scripts
+
+| Command | What it does |
+| --- | --- |
+| `npm run dev:v1` | API with automatic reload |
+| `npm run dev:web` | Web app with hot reload |
+| `npm run dev:mobile` | Phone app (Expo) |
+| `npm run typecheck` | Type-check shared, client, api, web and mobile |
+| `npm test` | Money-engine and API integration tests |
+| `npm run lint` | Lint the web app |
+| `npm run db:up` | Optional: a local Postgres in Docker |
+
+## Testing
 
 ```bash
-npm run typecheck     # shared, client, api, web, mobile
-npm test              # money engine + API integration tests (in-memory Postgres)
-npm run lint -w web
+npm run typecheck
+npm test
+npm run lint
 ```
 
-Browser tests (Playwright) live in `web/e2e`: the main flow, offline sync,
-and an axe-core accessibility audit of every screen in both themes. See
-`web/e2e/README.md`. `mobile/e2e/smoke.mjs` drives the phone app's web build
-(the same screens) from sign-in to settling up, in English and Arabic. CI runs
-all of the above on every push.
+- **Unit and integration:** the money engine and every API route, on an in-memory Postgres.
+- **Browser (Playwright):** `web/e2e` covers the main flow, offline sync, live updates,
+  notifications, language switching and an axe-core accessibility audit of every screen in
+  both themes. See [web/e2e/README.md](web/e2e/README.md).
+- **Phone app:** `mobile/e2e/smoke.mjs` drives the app's web build, which renders the same
+  screens, from sign-in to settling up, in English and Arabic.
 
-## Deploy (free tier)
+CI runs all of this on every push and pull request.
 
-1. **Database:** create a Neon project; copy the pooled connection string.
-2. **API:** in Render, *New > Blueprint* and pick this repo (`render.yaml`).
-   Fill in the variables it asks for. Migrations run on start-up.
-3. **Web:** in Cloudflare Pages, connect the repo with
-   build command `npm ci && npm run build -w web`, output directory
-   `web/out`, `NEXT_PUBLIC_API_URL` set to the API's URL and
-   `NEXT_PUBLIC_SITE_URL` to the site's own address (canonical links, sitemap).
-   The build writes `_headers` (strict CSP and security headers) for you.
-4. **Domain (required for sign-in):** put both on one domain, e.g.
-   `app.settlemint.online` (Pages) and `api.settlemint.online` (Render), and
-   set `COOKIE_DOMAIN=.settlemint.online`. Browsers block cookies between
-   unrelated sites, so `*.pages.dev` + `*.onrender.com` can't keep you signed in.
-5. Set `KEEP_ALIVE_URL` to the API's `/health` URL so the free instance
-   doesn't sleep.
-6. **Notifications (optional, free):** run `npx web-push generate-vapid-keys`
-   once and set `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` on the API. Keep the
-   pair: replacing it disconnects every subscribed device.
-7. **Receipt scanning (optional):** set `GEMINI_API_KEY` from Google AI Studio.
-8. **Phone app:** `cd mobile && eas build` (free tier: a limited number of
-   builds a month) with `EXPO_PUBLIC_API_URL` set to the API's URL in
-   `eas.json` or the EAS dashboard. Phone notifications go through Expo's free
-   push service and need no keys. Publishing needs a Google Play developer
-   account (one-off fee) and, for iPhone, an Apple developer account (yearly).
+## Configuration
+
+All settings are environment variables; every one is optional for local development.
+The `.env.example` file in each app documents them in full.
+
+| Variable | App | Purpose |
+| --- | --- | --- |
+| `V1_DATABASE_URL` | api | Postgres connection (an embedded database is used when empty) |
+| `AUTH_SECRET` | api | Signs sessions. 32+ random characters, required in production |
+| `WEB_ORIGINS` | api | Web origins allowed to call the API with cookies |
+| `COOKIE_DOMAIN` | api | Shares the session between the site and the API subdomain |
+| `RESEND_API_KEY` | api | Sends sign-in and confirmation emails |
+| `GEMINI_API_KEY` | api | Turns on receipt scanning |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | api | Web push notifications |
+| `NEXT_PUBLIC_API_URL` | web | Where the API lives |
+| `NEXT_PUBLIC_SITE_URL` | web | The site's own address (canonical links, sitemap) |
+| `EXPO_PUBLIC_API_URL` | mobile | Where the API lives |
+
+## Documentation
+
+- [Product brief](docs/product.md): who it is for and the principles behind it
+- [Architecture](docs/architecture.md): how the pieces fit together
+- [Deployment](docs/deploy.md): running it on free hosting
+- [Security](SECURITY.md): how data is protected, and how to report a problem
+- [Contributing](CONTRIBUTING.md): how to work on the project
 
 <br />
 

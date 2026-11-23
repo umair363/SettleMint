@@ -9,7 +9,9 @@ within three working days.
 ## How SettleMint protects people's data
 
 **Accounts and sessions**
-- Sign-in by emailed code, password, Google or as a guest (Better Auth).
+- Sign-in with email and password (a new account confirms its email with a code, and a
+  forgotten password is reset with a code), an emailed one-time code, Google, or as a guest
+  (Better Auth).
 - Password accounts must confirm their email with a code before they can sign
   in, so nobody can hold an account under someone else's address. When the real
   owner signs in by code, any password or session set up by someone else is removed.

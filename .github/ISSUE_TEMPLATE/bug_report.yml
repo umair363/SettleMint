@@ -1,0 +1,36 @@
+name: Bug report
+description: Something isn't working as it should
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a group
+        2. Add an expense of ...
+        3. ...
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where did it happen?
+      options: [Website, Phone app (iOS), Phone app (Android), API]
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Device and browser
+      placeholder: iPhone 15, Safari 18
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots or anything else
+      description: Please do not include other people's personal details.

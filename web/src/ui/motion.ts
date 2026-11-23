@@ -3,9 +3,9 @@ import type { Transition } from "motion/react";
 // One small set of motion presets so the whole app moves the same way.
 // Components should use these instead of inventing their own timings.
 
-// Timing rules: routine changes 150-300ms, ease-out arrivals, exits faster than
-// entrances, no bounce on routine UI, springs so motion can be interrupted,
-// and nothing animates for keyboard-driven actions.
+// Timing rules: routine changes take 150-300ms, arrivals ease out, exits are
+// faster than entrances, routine UI never bounces, springs keep motion
+// interruptible, and nothing animates for keyboard-driven actions.
 
 /** Snappy, critically damped spring for presses, toggles and indicators (~200ms, no overshoot). */
 export const springSnappy: Transition = { type: "spring", stiffness: 600, damping: 45, mass: 0.6 };

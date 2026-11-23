@@ -107,3 +107,23 @@ jobs:
           name: e2e-screenshots
           path: e2e-shots
           if-no-files-found: ignore
+
+  deploy-api:
+    name: Deploy API to Render
+    needs: [check, e2e]
+    # Only after every check passes, and only for the branch Render builds from.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/v2'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ask Render to deploy
+        env:
+          # A repository secret holding the service's private deploy-hook URL.
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+            echo "RENDER_DEPLOY_HOOK is not set; skipping the deploy."
+            exit 0
+          fi
+          curl --fail --silent --show-error --request POST "$RENDER_DEPLOY_HOOK" > /dev/null
+          echo "Deploy requested."

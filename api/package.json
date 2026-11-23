@@ -11,9 +11,8 @@
     "start:v1": "node dist/v1/main.js",
     "v1:db:generate": "drizzle-kit generate --config drizzle.v1.config.ts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Umair",
+  "license": "UNLICENSED",
   "type": "commonjs",
   "dependencies": {
     "@better-auth/expo": "^1.7.25",
@@ -42,5 +41,6 @@
     "typescript": "^6.0.3",
     "vite": "^7.3.8",
     "vitest": "^5.1.0"
-  }
+  },
+  "private": true
 }

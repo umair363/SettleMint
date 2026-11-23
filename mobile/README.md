@@ -1,103 +1,100 @@
-# SettleMint Mobile
+# SettleMint for iOS and Android
 
-React Native + Expo (SDK 57) app, sharing the backend API and data contracts
-(`@settlemint/shared`) with the Next.js web app in `../app`.
+The phone app: React Native with Expo SDK 57 and Expo Router. It talks to the same API as the
+website and shares its money engine (`@settlemint/shared`), translations, data hooks and design
+tokens (`@settlemint/client`).
 
-## Expo Go does not work with this project (yet)
-
-This app targets **SDK 57**. The Expo Go app currently on the App/Play
-Store supports **SDK 54** — Expo Go only ever supports one SDK at a time,
-and it lags new SDK releases by a few weeks. You'll see *"not compatible
-with this version of Expo Go"* and no amount of `--tunnel`, EAS Update, or
-reinstalling Expo Go will change that; the SDK gap is the whole problem.
-
-Until Expo Go ships SDK 57 support, use one of:
-
-- **EAS Build** (`npx eas-cli build --platform android --profile preview`)
-  — produces a real installable APK, no Expo Go involved. This is what's
-  known to work.
-- **A development build** — a custom Expo Go replacement compiled against
-  this SDK. Needed for iOS testing on a physical device; free-tier builds
-  are tied to a device UDID and expire weekly.
-- **TestFlight** via an Apple Developer account, for real iOS distribution.
-
-## Getting started
+## Run it
 
 ```bash
-# from the repo root
+# from the repository root
 npm install
+cp mobile/.env.example mobile/.env     # then edit it
 npm run dev:mobile
-# or: cd mobile && npm start
 ```
 
-Requires `NEXT_PUBLIC_API_URL` equivalent — set `EXPO_PUBLIC_API_URL` in a
-`.env` file at `mobile/` root to point at your backend (falls back to the
-production URL via `@settlemint/shared`'s `getApiUrl()` otherwise, same as
-the web app).
+A phone can't reach `localhost` on your computer, so set `EXPO_PUBLIC_API_URL` in `mobile/.env`
+to your computer's network address (for example `http://192.168.1.20:8001`) and start the API
+with `npm run dev:v1`.
+
+**Use a development build rather than Expo Go.** Expo Go supports only one SDK at a time and
+usually lags a new release. A development build is compiled against this project's SDK:
+
+```bash
+npx eas-cli build --platform android --profile development
+```
+
+Notifications, the app lock and the share sheet need a real device.
+
+### Browser preview
+
+The same screens render in a browser through react-native-web, which is also what the smoke
+test drives:
+
+```bash
+cd mobile
+npx expo start --web
+```
+
+Add the preview's address (for example `http://localhost:8081`) to the API's `WEB_ORIGINS`.
 
 ## Structure
 
-- `app/` — expo-router file-based routes. `(auth)` = login/signup/verify,
-  `(tabs)` = the authenticated app shell (Home/Groups/Budget/Expenses).
-- `src/lib/` — `session.ts` (expo-secure-store backed JWT storage),
-  `AuthProvider.tsx` (auth state context), `api.ts` (fetch wrapper that
-  attaches the bearer token).
-- `src/theme/` — design tokens ported from `app/src/app/globals.css`
-  (`tokens.ts`) + a `useTheme()` hook reading the OS color scheme.
+```
+app/            Expo Router routes: the (tabs) shell, group, person, recap, sheets and sign-in
+src/features/   screen pieces shared by several routes (rows, receipts, push, app lock)
+src/i18n/       language selection and the translations provider
+src/lib/        API client, auth, query client and offline persistence
+src/theme/      colours (generated from the shared design tokens), identity colours, theme provider
+src/ui/         primitives: text, buttons, fields, cards, rows, glyphs, statement
+e2e/smoke.mjs   an end-to-end run of the app's web build
+```
 
-## Notes
+Colours come from `src/theme/palette.ts`, which is generated from
+`packages/client/src/design/tokens.ts` by `npm run tokens -w web`. Edit the tokens, not the
+generated file, so the website and the app stay identical.
 
-- **Expo SDK 57 is new** — read `AGENTS.md` before assuming APIs from an
-  older SDK version. Confirmed during this scaffold: `expo-router` in this
-  version has **no `<Redirect>` component export** — auth gating in
-  `app/_layout.tsx` uses `router.replace()` in an effect instead.
-- `babel.config.js` + `babel-plugin-module-resolver` wire up the `@/*` path
-  alias for Metro — TypeScript's `tsconfig.json` `paths` alone only affects
-  the type checker, not the bundler, in this SDK.
-- `expo-doctor` flags a duplicate `react` version between this workspace
-  (`19.2.3`, pinned by Expo's `bundledNativeModules.json` — do not change)
-  and the web app (`19.2.4`). npm resolves this by nesting a local
-  `mobile/node_modules/react` copy, and a real Metro bundle export
-  (`npx expo export --platform android`) built cleanly against it. Revisit
-  if an EAS/native build ever behaves differently from the Metro bundle.
+## Test
 
-## Builds and updates (EAS)
+```bash
+cd mobile
+npx tsc --noEmit
+npx expo export --platform web --output-dir ../mobile-web
+node e2e/smoke.mjs ../mobile-web
+```
 
-The project is linked to `@comrades-world/settlemint` on Expo's servers.
+The smoke test signs in as a guest and runs the core journey (new group, expense, balance,
+payment, rename, search, add a friend, recently deleted) and then switches to Arabic to check
+right-to-left layout. It needs the API running on port 8001 with the test origin allowed; see
+`web/e2e/README.md`.
+
+## Build and release (EAS)
+
 Build profiles live in `eas.json`.
 
 ```bash
-# Installable Android APK — internal distribution, no store needed.
-# Takes ~20 min in Expo's cloud queue; produces a shareable download link
-# that stays live for 13 days.
+# An installable Android build for internal testing
 npx eas-cli build --platform android --profile preview
 
-# Push a JS-only update to already-installed builds, no rebuild required.
-# --environment is mandatory in non-interactive shells.
+# A JavaScript-only update to builds that are already installed
 npx eas-cli update --branch preview --message "what changed" --environment preview
 ```
 
-Note that `eas update` set `runtimeVersion` to `{"policy": "appVersion"}`
-in `app.json`, which ties published updates to a native build's app
-version. That's correct for standalone builds and another reason Expo Go
-can't consume these updates.
+Updates are tied to a native build's version (`runtimeVersion` policy `appVersion`), so a change
+that needs new native code needs a new build.
 
-## App icons
+## App icon
 
-`assets/logo-source.png` is the original AI-generated 1254x1254 mark (mint
-`#3DD68C` background, dark "S" glyph) — all other icon assets are derived
-from it:
+`assets/logo-source.png` is the source mark (1254×1254, mint background). Every other icon is
+derived from it:
 
-- `icon.png` / `splash-icon.png` — the full mark, resized to 1024x1024.
-- `favicon.png` — resized to 48x48.
-- `android-icon-background.png` — solid mint fill (matches the source bg).
-- `android-icon-foreground.png` — the "S" mark isolated on a transparent
-  background (keyed out by darkness/brightness threshold, not a color-key,
-  since the mark and background were both solid colors), scaled to ~55% of
-  the canvas to stay inside Android's adaptive-icon safe zone so circular/
-  squircle icon masks don't clip it.
-- `android-icon-monochrome.png` — the foreground recolored to solid white
-  (alpha preserved) for Android 13+ themed icons, which the OS tints itself.
+- `icon.png`, `splash-icon.png`: the full mark at 1024×1024
+- `favicon.png`: 48×48
+- `android-icon-background.png`: a solid mint fill
+- `android-icon-foreground.png`: the mark on a transparent background, scaled to about 55% of
+  the canvas so adaptive-icon masks never clip it
+- `android-icon-monochrome.png`: the foreground in solid white, which Android 13+ tints for
+  themed icons
 
-If the source mark ever changes, regenerate all derived assets from
-`logo-source.png` rather than hand-editing the derived PNGs individually.
+If the source mark changes, regenerate the derived files from it rather than editing them by
+hand.

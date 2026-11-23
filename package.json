@@ -1,6 +1,21 @@
 {
   "name": "settlemint",
   "private": true,
+  "version": "1.0.0",
+  "description": "Split expenses, not friendships: a web app, phone app and API for sharing costs in any currency.",
+  "license": "UNLICENSED",
+  "author": "Umair <https://github.com/umair363>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/umair363/SettleMint.git"
+  },
+  "bugs": {
+    "url": "https://github.com/umair363/SettleMint/issues"
+  },
+  "homepage": "https://www.settlemint.online",
+  "engines": {
+    "node": ">=24"
+  },
   "workspaces": [
     "web",
     "api",
