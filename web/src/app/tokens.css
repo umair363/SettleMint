@@ -19,8 +19,8 @@
   --accent-soft: oklch(80% 0.145 163 / 0.18);
   --positive: oklch(50% 0.105 166);
   --positive-soft: oklch(50% 0.105 166 / 0.1);
-  --negative: oklch(55.5% 0.145 48);
-  --negative-soft: oklch(55.5% 0.145 48 / 0.1);
+  --negative: oklch(53% 0.14 48);
+  --negative-soft: oklch(53% 0.14 48 / 0.1);
   --danger: oklch(53% 0.2 25);
   --danger-soft: oklch(53% 0.2 25 / 0.09);
   --warning: oklch(55% 0.115 78);

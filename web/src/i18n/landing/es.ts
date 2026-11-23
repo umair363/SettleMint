@@ -14,7 +14,6 @@ const es: LandingMessages = {
     skip: "Saltar al contenido",
   },
   hero: {
-    eyebrow: "Gratis · Sin anuncios · 8 idiomas",
     title: "Divide las cuentas. Conserva a los amigos.",
     lead: "La forma justa y rápida de compartir gastos en viajes, en casa y entre amigos. Cualquier moneda, exacta al céntimo, y tus amigos ni siquiera necesitan cuenta.",
     cta: "Empieza a dividir gratis",
@@ -35,13 +34,6 @@ const es: LandingMessages = {
     bilalPaid: "Pagó Bilal",
     lent: "prestaste",
     borrowed: "te prestaron",
-  },
-  facts: {
-    label: "De un vistazo",
-    currencies: "monedas",
-    splits: "formas de repartir",
-    languages: "idiomas",
-    offline: "Funciona sin conexión",
   },
   spotlight: {
     splitTitle: "Todas las formas de repartir, bien hechas",
@@ -76,15 +68,6 @@ const es: LandingMessages = {
     notifyBody: "Entérate cuando tus amigos añaden un gasto o te pagan, en los dispositivos que elijas.",
     trust: "Nada oculto",
     trustBody: "Historial completo de cada gasto, deshacer al eliminar y ediciones que nunca pisan en silencio las de otra persona.",
-  },
-  how: {
-    title: "Cómo funciona",
-    step1: "Crea un grupo",
-    step1Body: "Un viaje, tu casa o solo tú y un amigo. Comparte el enlace.",
-    step2: "Añade lo que gastáis",
-    step2Body: "Escribe el importe, escanea un ticket o deja que una factura se repita.",
-    step3: "Saldad cuentas",
-    step3Body: "Mira quién paga a quién, paga en un toque y estáis a mano.",
   },
   free: {
     title: "Gratis, sin letra pequeña",

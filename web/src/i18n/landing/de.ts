@@ -14,7 +14,6 @@ const de: LandingMessages = {
     skip: "Zum Inhalt springen",
   },
   hero: {
-    eyebrow: "Kostenlos · Ohne Werbung · 8 Sprachen",
     title: "Rechnungen teilen. Freunde behalten.",
     lead: "Der faire, schnelle Weg, Kosten auf Reisen, zu Hause und unter Freunden zu teilen. Jede Währung, centgenau, und deine Freunde brauchen nicht einmal ein Konto.",
     cta: "Kostenlos loslegen",
@@ -35,13 +34,6 @@ const de: LandingMessages = {
     bilalPaid: "Bilal hat bezahlt",
     lent: "du hast ausgelegt",
     borrowed: "du schuldest",
-  },
-  facts: {
-    label: "Auf einen Blick",
-    currencies: "Währungen",
-    splits: "Arten zu teilen",
-    languages: "Sprachen",
-    offline: "Funktioniert offline",
   },
   spotlight: {
     splitTitle: "Jede Art zu teilen, richtig gemacht",
@@ -76,15 +68,6 @@ const de: LandingMessages = {
     notifyBody: "Erfahre, wenn Freunde eine Ausgabe hinzufügen oder dich bezahlen, auf den Geräten deiner Wahl.",
     trust: "Nichts versteckt",
     trustBody: "Vollständiger Verlauf jeder Ausgabe, Rückgängig beim Löschen und Änderungen, die nie stillschweigend die anderer überschreiben.",
-  },
-  how: {
-    title: "So funktioniert’s",
-    step1: "Gruppe erstellen",
-    step1Body: "Eine Reise, dein Zuhause oder nur du und ein Freund. Link teilen.",
-    step2: "Ausgaben eintragen",
-    step2Body: "Betrag tippen, Beleg scannen oder eine Rechnung wiederholen lassen.",
-    step3: "Ausgleichen",
-    step3Body: "Sieh, wer wem was zahlt, bezahle mit einem Tipp, und ihr seid quitt.",
   },
   free: {
     title: "Kostenlos, ohne Haken",

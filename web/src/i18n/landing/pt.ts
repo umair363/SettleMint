@@ -14,7 +14,6 @@ const pt: LandingMessages = {
     skip: "Pular para o conteúdo",
   },
   hero: {
-    eyebrow: "Grátis · Sem anúncios · 8 idiomas",
     title: "Divida as contas. Mantenha os amigos.",
     lead: "O jeito justo e rápido de dividir custos em viagens, em casa e entre amigos. Qualquer moeda, exato até o centavo, e seus amigos nem precisam de conta.",
     cta: "Comece a dividir grátis",
@@ -35,13 +34,6 @@ const pt: LandingMessages = {
     bilalPaid: "Bilal pagou",
     lent: "você emprestou",
     borrowed: "você pegou emprestado",
-  },
-  facts: {
-    label: "Em resumo",
-    currencies: "moedas",
-    splits: "formas de dividir",
-    languages: "idiomas",
-    offline: "Funciona offline",
   },
   spotlight: {
     splitTitle: "Todas as formas de dividir, do jeito certo",
@@ -76,15 +68,6 @@ const pt: LandingMessages = {
     notifyBody: "Saiba quando amigos adicionam uma despesa ou pagam você, nos dispositivos que escolher.",
     trust: "Nada escondido",
     trustBody: "Histórico completo de cada despesa, desfazer exclusões e edições que nunca sobrescrevem as de outra pessoa sem avisar.",
-  },
-  how: {
-    title: "Como funciona",
-    step1: "Crie um grupo",
-    step1Body: "Uma viagem, sua casa ou só você e um amigo. Compartilhe o link.",
-    step2: "Adicione os gastos",
-    step2Body: "Digite o valor, escaneie um recibo ou deixe uma conta se repetir.",
-    step3: "Acertem as contas",
-    step3Body: "Veja quem paga quem, pague com um toque e fiquem quites.",
   },
   free: {
     title: "Grátis, sem pegadinha",

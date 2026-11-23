@@ -16,7 +16,6 @@ const en = {
     skip: "Skip to content",
   },
   hero: {
-    eyebrow: "Free · No ads · 8 languages",
     title: "Split bills. Keep friends.",
     lead: "The fair, fast way to share costs on trips, at home and between friends. Any currency, exact to the cent, and your friends don't even need an account.",
     cta: "Start splitting, free",
@@ -37,13 +36,6 @@ const en = {
     bilalPaid: "Bilal paid",
     lent: "you lent",
     borrowed: "you borrowed",
-  },
-  facts: {
-    label: "At a glance",
-    currencies: "currencies",
-    splits: "ways to split",
-    languages: "languages",
-    offline: "Works offline",
   },
   spotlight: {
     splitTitle: "Every way to split, done right",
@@ -78,15 +70,6 @@ const en = {
     notifyBody: "Know when friends add an expense or pay you, on any device you choose.",
     trust: "Nothing hidden",
     trustBody: "Full history on every expense, undo for deletes, and edits that never silently overwrite someone else's.",
-  },
-  how: {
-    title: "How it works",
-    step1: "Make a group",
-    step1Body: "A trip, your home, or just you and a friend. Share the link.",
-    step2: "Add what you spend",
-    step2Body: "Type the amount, scan a receipt, or let a bill repeat.",
-    step3: "Settle up",
-    step3Body: "See who pays whom, pay in a tap, and you're square.",
   },
   free: {
     title: "Free, without the catch",

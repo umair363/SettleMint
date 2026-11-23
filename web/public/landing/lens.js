@@ -42,12 +42,12 @@ void main() {
   vec2 g = normalize(vec2(sdb(q + e.xy, uB, uR) - sdb(q - e.xy, uB, uR),
                           sdb(q + e.yx, uB, uR) - sdb(q - e.yx, uB, uR)) + 1e-5);
   float depth = clamp(-d / min(uB.x, uB.y), 0.0, 1.0);
-  float rim = pow(1.0 - smoothstep(0.0, 0.6, depth), 2.2);
+  float rim = pow(1.0 - smoothstep(0.0, 0.3, depth), 2.0);
 
   // A dome: gentle magnification in the middle, strong bending at the rim,
   // with each colour channel bent slightly differently.
-  vec2 base = uC + q * 0.94 - g * rim * 12.0 * s;
-  vec2 split = g * rim * 0.9 * s;
+  vec2 base = uC + q * 0.965 - g * rim * 6.5 * s;
+  vec2 split = g * rim * 0.7 * s;
   vec3 col = vec3(tex(base + split).r, tex(base).g, tex(base - split).b);
 
   col = mix(col, uTint, 0.07 + rim * 0.12);
@@ -254,7 +254,8 @@ function start(stage) {
     stage.dataset.lens = "on";
     new IntersectionObserver(([e]) => {
       visible = e.isIntersecting;
-      visible ? play() : stop();
+      if (visible) play();
+      else stop();
     }).observe(stage);
     document.addEventListener("visibilitychange", () => (document.hidden ? stop() : play()));
     let pending = 0;

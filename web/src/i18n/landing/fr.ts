@@ -14,7 +14,6 @@ const fr: LandingMessages = {
     skip: "Aller au contenu",
   },
   hero: {
-    eyebrow: "Gratuit · Sans pub · 8 langues",
     title: "Partagez les comptes. Gardez les amis.",
     lead: "La façon juste et rapide de partager les frais en voyage, à la maison et entre amis. Toutes les devises, au centime près, et vos amis n’ont même pas besoin de compte.",
     cta: "Commencer gratuitement",
@@ -35,13 +34,6 @@ const fr: LandingMessages = {
     bilalPaid: "Bilal a payé",
     lent: "vous avez prêté",
     borrowed: "vous avez emprunté",
-  },
-  facts: {
-    label: "En bref",
-    currencies: "devises",
-    splits: "modes de partage",
-    languages: "langues",
-    offline: "Fonctionne hors ligne",
   },
   spotlight: {
     splitTitle: "Tous les modes de partage, bien faits",
@@ -76,15 +68,6 @@ const fr: LandingMessages = {
     notifyBody: "Sachez quand vos amis ajoutent une dépense ou vous remboursent, sur les appareils de votre choix.",
     trust: "Rien de caché",
     trustBody: "Historique complet de chaque dépense, annulation des suppressions, et des modifications qui n’écrasent jamais en silence celles des autres.",
-  },
-  how: {
-    title: "Comment ça marche",
-    step1: "Créez un groupe",
-    step1Body: "Un voyage, votre logement, ou juste vous et un ami. Partagez le lien.",
-    step2: "Ajoutez vos dépenses",
-    step2Body: "Tapez le montant, scannez un ticket ou laissez une facture se répéter.",
-    step3: "Réglez les comptes",
-    step3Body: "Voyez qui paie qui, payez en un geste, et vous êtes quittes.",
   },
   free: {
     title: "Gratuit, sans arnaque",
