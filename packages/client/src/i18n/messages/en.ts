@@ -359,6 +359,14 @@ const en = {
     failed: "Couldn't make the image",
     empty: "Add some expenses and your recap shows up here.",
   },
+  people: {
+    title: "People",
+    owesYou: "{name} owes you",
+    youOwe: "You owe {name}",
+    square: "You and {name} are square",
+    shared: "{count, plural, one {# shared group} other {# shared groups}}",
+    sharedGroups: "Shared groups",
+  },
   groupSettings: {
     title: "Group settings",
     left: "You left {group}",

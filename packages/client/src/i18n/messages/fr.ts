@@ -356,6 +356,14 @@ const fr: Messages = {
     failed: "Impossible de créer l'image",
     empty: "Ajoutez des dépenses et votre récapitulatif apparaîtra ici.",
   },
+  people: {
+    title: "Personnes",
+    owesYou: "{name} vous doit",
+    youOwe: "Vous devez à {name}",
+    square: "Vous êtes quittes avec {name}",
+    shared: "{count, plural, one {# groupe commun} other {# groupes communs}}",
+    sharedGroups: "Groupes communs",
+  },
   groupSettings: {
     title: "Réglages du groupe",
     left: "Vous avez quitté {group}",

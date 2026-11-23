@@ -17,6 +17,7 @@ import { expenseRoutes } from "./routes/expenses";
 import { groupRoutes } from "./routes/groups";
 import { inviteRoutes } from "./routes/invites";
 import { meRoutes } from "./routes/me";
+import { peopleRoutes } from "./routes/people";
 import { memberRoutes } from "./routes/members";
 import { aiRoutes } from "./routes/ai";
 import { pushRoutes } from "./routes/push";
@@ -180,6 +181,7 @@ export async function buildApp({ db, config, mailer, logger = true, receiptReade
         }
       });
       await v1.register(meRoutes);
+      await v1.register(peopleRoutes);
       await v1.register(groupRoutes);
       await v1.register(memberRoutes);
       await v1.register(inviteRoutes);

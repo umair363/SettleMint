@@ -362,6 +362,14 @@ const ar: Messages = {
     failed: "تعذّر إنشاء الصورة",
     empty: "أضف بعض المصروفات وسيظهر ملخصك هنا.",
   },
+  people: {
+    title: "الأشخاص",
+    owesYou: "{name} مدين لك",
+    youOwe: "أنت مدين لـ {name}",
+    square: "حسابك مع {name} متساوٍ",
+    shared: "{count, plural, zero {لا مجموعات مشتركة} one {مجموعة مشتركة واحدة} two {مجموعتان مشتركتان} few {# مجموعات مشتركة} many {# مجموعة مشتركة} other {# مجموعة مشتركة}}",
+    sharedGroups: "المجموعات المشتركة",
+  },
   groupSettings: {
     title: "إعدادات المجموعة",
     left: "غادرتَ {group}",

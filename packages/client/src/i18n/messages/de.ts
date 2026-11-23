@@ -355,6 +355,14 @@ const de: Messages = {
     failed: "Bild konnte nicht erstellt werden",
     empty: "Füge Ausgaben hinzu, dann erscheint hier dein Rückblick.",
   },
+  people: {
+    title: "Personen",
+    owesYou: "{name} schuldet dir",
+    youOwe: "Du schuldest {name}",
+    square: "Du und {name} seid quitt",
+    shared: "{count, plural, one {# gemeinsame Gruppe} other {# gemeinsame Gruppen}}",
+    sharedGroups: "Gemeinsame Gruppen",
+  },
   groupSettings: {
     title: "Gruppeneinstellungen",
     left: "Du hast {group} verlassen",

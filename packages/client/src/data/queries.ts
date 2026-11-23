@@ -46,6 +46,7 @@ export const keys = {
   recurring: (groupId: string) => ["recurring", groupId] as const,
   activity: ["activity"] as const,
   trash: ["trash"] as const,
+  people: ["people"] as const,
   groupActivity: (groupId: string, entityId?: string) => ["activity", groupId, entityId ?? "all"] as const,
   invite: (token: string) => ["invite", token] as const,
 };
@@ -60,6 +61,7 @@ export function invalidateGroup(qc: QueryClient, groupId: string) {
     qc.invalidateQueries({ queryKey: keys.recurring(groupId) }),
     qc.invalidateQueries({ queryKey: keys.activity }),
     qc.invalidateQueries({ queryKey: keys.trash }),
+    qc.invalidateQueries({ queryKey: keys.people }),
   ]);
 }
 
@@ -160,6 +162,11 @@ export function useCreateGroup() {
       return qc.invalidateQueries({ queryKey: keys.groups });
     },
   });
+}
+
+/** Everyone you share a group with, and what is owed between you across all of them. */
+export function usePeople() {
+  return useQuery({ queryKey: keys.people, queryFn: () => api.people() });
 }
 
 /** Groups, expenses and payments deleted in the last 30 days. */

@@ -354,6 +354,14 @@ const es: Messages = {
     failed: "No se pudo crear la imagen",
     empty: "Añade algunos gastos y tu resumen aparecerá aquí.",
   },
+  people: {
+    title: "Personas",
+    owesYou: "{name} te debe",
+    youOwe: "Le debes a {name}",
+    square: "Estás al día con {name}",
+    shared: "{count, plural, one {# grupo en común} other {# grupos en común}}",
+    sharedGroups: "Grupos en común",
+  },
   groupSettings: {
     title: "Ajustes del grupo",
     left: "Saliste de {group}",

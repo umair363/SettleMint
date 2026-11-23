@@ -476,6 +476,38 @@ describe("groups and expenses", () => {
   });
 });
 
+describe("people", () => {
+  it("adds up what one person owes you across every group you share", async () => {
+    const { ana, group, anaId, benId } = await tripWithFriends();
+    const link = (await ana.post(`/v1/groups/${group.id}/invite`)).body;
+    const ben = client();
+    await ben.signInAsGuest();
+    await ben.post(`/v1/invites/${link.token}/join`, { memberId: benId });
+
+    // Ana paid 20.00 for the two of them: Ben owes her 10.00.
+    await ana.post(`/v1/groups/${group.id}/expenses`, {
+      description: "Lunch", amount: 2000, currency: "USD", date: today,
+      payers: [{ memberId: anaId, amount: 2000 }], split: { method: "equal", memberIds: [anaId, benId] },
+    });
+    // A second group they share, where Ben paid 6.00 for the two of them: Ana owes him 3.00.
+    const flat = (await ana.post<GroupDetailDto>("/v1/groups", { name: "Flat", currency: "USD", type: "home", people: [{ displayName: "Ben" }] })).body;
+    const flatBen = flat.members.find((m) => m.displayName === "Ben")!.id;
+    const flatLink = (await ana.post(`/v1/groups/${flat.id}/invite`)).body;
+    await ben.post(`/v1/invites/${flatLink.token}/join`, { memberId: flatBen });
+    await ben.post(`/v1/groups/${flat.id}/expenses`, {
+      description: "Wifi", amount: 600, currency: "USD", date: today,
+      payers: [{ memberId: flatBen, amount: 600 }], split: { method: "equal", memberIds: [flat.myMemberId, flatBen] },
+    });
+
+    const people = (await ana.get<{ name: string; totals: { currency: string; amount: number }[]; groups: { amount: number }[] }[]>("/v1/people")).body;
+    const benRow = people.find((p) => p.name === "Ben")!;
+    expect(benRow.totals).toEqual([{ currency: "USD", amount: 700 }]); // 10.00 - 3.00
+    expect(benRow.groups.map((g) => g.amount).sort((x, y) => x - y)).toEqual([-300, 1000]);
+    // Cy was only added by name in a group, so they can't be told apart from another Cy: not listed.
+    expect(people.some((p) => p.name === "Cy")).toBe(false);
+  });
+});
+
 describe("invites and guests", () => {
   it("lets a guest join by link, claim a spot and later keep it after signing up", async () => {
     const { ana, group, benId } = await tripWithFriends();

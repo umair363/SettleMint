@@ -5,17 +5,20 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "use-intl";
 import { Suspense, useState } from "react";
 import { GroupRow } from "@/features/groups/group-row";
+import { listablePeople, PersonRow } from "@/features/people/people";
 import { ImportSheet } from "@/features/groups/import-sheet";
 import { NewFriendSheet, NewGroupSheet } from "@/features/groups/new-group-sheet";
 import { SearchButton } from "@/features/search/search-palette";
 import { PageBody, PageHeader } from "@/features/shell/page-header";
-import { useGroups } from "@settlemint/client/data/queries";
+import { useGroups, usePeople } from "@settlemint/client/data/queries";
 import { Button, IconButton } from "@/ui/button";
 import { EmptyState, ErrorState, SkeletonRows } from "@/ui/feedback";
 import { Card, List, SectionHeader } from "@/ui/surface";
 
 function Groups() {
   const groups = useGroups();
+  const people = listablePeople(usePeople().data);
+  const tp = useTranslations("people");
   const params = useSearchParams();
   const router = useRouter();
   const [creating, setCreating] = useState(false);
@@ -89,9 +92,19 @@ function Groups() {
                 </List>
               </section>
             )}
+            {people.length > 0 && (
+              <section>
+                <SectionHeader title={tp("title")} />
+                <List>
+                  {people.map((p) => (
+                    <PersonRow key={p.key} person={p} />
+                  ))}
+                </List>
+              </section>
+            )}
             {active.length > 0 && (
               <section>
-                {friends.length > 0 && <SectionHeader title={t("sectionGroups")} />}
+                {(friends.length > 0 || people.length > 0) && <SectionHeader title={t("sectionGroups")} />}
                 <List>
                   {active.map((g) => (
                     <GroupRow key={g.id} group={g} />

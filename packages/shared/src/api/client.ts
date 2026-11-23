@@ -28,6 +28,7 @@ import type {
   RecurringRuleDto,
   SearchResultDto,
   TrashItemDto,
+  PersonDto,
   SettlementDto,
 } from "./types";
 
@@ -121,6 +122,8 @@ export function createApiClient(opts: ApiClientOptions) {
       /** Permanently delete my account (my past expenses stay as a named placeholder). */
       delete: () => request<void>("DELETE", "/me", { confirm: "DELETE" }),
     },
+    /** Everyone you share a group with, with what is owed between you across all of them. */
+    people: () => get<PersonDto[]>("/people"),
     search: (q: string) => get<SearchResultDto>("/search", { q }),
     scanReceipt: (body: { image: string; mimeType: "image/jpeg" | "image/png" | "image/webp"; currency?: string }) =>
       post<ReceiptScanDto>("/ai/receipt", body),

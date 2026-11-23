@@ -355,6 +355,14 @@ const hi: Messages = {
     failed: "तस्वीर नहीं बन सकी",
     empty: "कुछ खर्च जोड़ें, आपका सारांश यहाँ दिखेगा।",
   },
+  people: {
+    title: "लोग",
+    owesYou: "{name} पर आपका बकाया है",
+    youOwe: "आप पर {name} का बकाया है",
+    square: "आप और {name} का हिसाब बराबर है",
+    shared: "{count, plural, one {# साझा ग्रुप} other {# साझा ग्रुप}}",
+    sharedGroups: "साझा ग्रुप",
+  },
   groupSettings: {
     title: "ग्रुप सेटिंग",
     left: "आपने {group} छोड़ दिया",

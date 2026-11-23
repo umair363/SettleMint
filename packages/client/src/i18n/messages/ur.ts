@@ -355,6 +355,14 @@ const ur: Messages = {
     failed: "تصویر نہیں بن سکی",
     empty: "کچھ خرچے شامل کریں، آپ کا خلاصہ یہاں نظر آئے گا۔",
   },
+  people: {
+    title: "لوگ",
+    owesYou: "{name} پر آپ کا بقایا ہے",
+    youOwe: "آپ پر {name} کا بقایا ہے",
+    square: "آپ اور {name} کا حساب برابر ہے",
+    shared: "{count, plural, one {# مشترکہ گروپ} other {# مشترکہ گروپس}}",
+    sharedGroups: "مشترکہ گروپس",
+  },
   groupSettings: {
     title: "گروپ کی ترتیبات",
     left: "آپ نے {group} چھوڑ دیا",

@@ -54,6 +54,17 @@ export interface PaymentHandleDto {
   label: string | null;
 }
 
+/** One person across every group you share with them. */
+export interface PersonDto {
+  /** Stable id for the person: their account, or the friend's member in a one-to-one group. */
+  key: string;
+  name: string;
+  image: string | null;
+  /** Per currency: positive = they owe you, negative = you owe them. Zero balances are left out. */
+  totals: { currency: string; amount: number }[];
+  groups: { id: string; name: string; type: string; currency: string; amount: number }[];
+}
+
 /** Something deleted in the last 30 days that can still be brought back. */
 export interface TrashItemDto {
   kind: "group" | "expense" | "payment";

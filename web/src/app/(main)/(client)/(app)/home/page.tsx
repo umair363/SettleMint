@@ -6,10 +6,11 @@ import { useState } from "react";
 import { useTranslations } from "use-intl";
 import { ActivityRow } from "@/features/activity/activity-row";
 import { GroupRow } from "@/features/groups/group-row";
+import { listablePeople, PersonRow } from "@/features/people/people";
 import { NewFriendSheet, NewGroupSheet } from "@/features/groups/new-group-sheet";
 import { SearchButton } from "@/features/search/search-palette";
 import { PageBody } from "@/features/shell/page-header";
-import { totalsByCurrency, useActivity, useGroups, useMe } from "@settlemint/client/data/queries";
+import { totalsByCurrency, useActivity, useGroups, useMe, usePeople } from "@settlemint/client/data/queries";
 import { Avatar } from "@/ui/avatar";
 import { BalanceStatement, LedgerLine } from "@/ui/balance-statement";
 import { Button } from "@/ui/button";
@@ -86,6 +87,8 @@ export default function HomePage() {
   const [newGroupOpen, setNewGroupOpen] = useState(false);
   const [friendOpen, setFriendOpen] = useState(false);
   const tg = useTranslations("groups");
+  const tp = useTranslations("people");
+  const people = listablePeople(usePeople().data);
   const t = useTranslations("home");
   const tc = useTranslations("common");
   const firstName = me.data?.name.split(" ")[0] ?? "";
@@ -167,6 +170,17 @@ export default function HomePage() {
                 <List>
                   {friends.slice(0, 5).map((g) => (
                     <GroupRow key={g.id} group={g} />
+                  ))}
+                </List>
+              </section>
+            )}
+
+            {people.length > 0 && (
+              <section>
+                <SectionHeader title={tp("title")} />
+                <List>
+                  {people.slice(0, 5).map((p) => (
+                    <PersonRow key={p.key} person={p} />
                   ))}
                 </List>
               </section>
