@@ -296,12 +296,12 @@ function BalancesTab({
                         {tr.fromMemberId === group.myMemberId ? t("pay") : t("record")}
                       </Button>
                       {tr.toMemberId === group.myMemberId && (
-                        <Button size="sm" variant="ghost" leading={<Send className="size-4" />} onClick={() => onRemind(tr)}>
+                        <Button size="sm" leading={<Send className="size-4" />} onClick={() => onRemind(tr)}>
                           {t("remind")}
                         </Button>
                       )}
                       {tr.toMemberId === group.myMemberId && myQrs.length > 0 && (
-                        <Button size="sm" variant="ghost" leading={<ScanLine className="size-4" />} onClick={() => setQrFor(tr)}>
+                        <Button size="sm" variant="outline" leading={<ScanLine className="size-4" />} onClick={() => setQrFor(tr)}>
                           {tq("show")}
                         </Button>
                       )}
