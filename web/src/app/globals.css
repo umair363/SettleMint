@@ -283,9 +283,9 @@
 .rise {
   animation: rise 800ms var(--ease-focal) var(--d, 0ms) both;
 }
+/* Moves, never fades: text stays fully readable (and measurable by contrast checks) from the first frame. */
 @keyframes rise {
   from {
-    opacity: 0;
     transform: translateY(18px);
   }
 }
