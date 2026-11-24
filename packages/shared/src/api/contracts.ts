@@ -192,7 +192,7 @@ export const putPaymentHandlesBody = z.object({
   handles: z
     .array(zPaymentHandle)
     .max(10)
-    .refine((hs) => hs.filter((h) => h.kind === "qr").length <= 3, { message: "Up to 3 QR codes" }),
+    .refine((hs) => hs.filter((h) => h.kind === "qr").length <= 5, { message: "Up to 5 QR codes" }),
 });
 
 /** Typed confirmation, so an account can't be deleted by accident. */

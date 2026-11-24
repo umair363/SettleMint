@@ -73,7 +73,8 @@ A fast web app and a phone app, free to use and built to work offline.
   gets a one-tap link with the amount filled in. SettleMint never touches the money.
 - **Your own QR code.** Upload the QR your bank or wallet app made (Raast, JazzCash, any bank).
   It is read on your device, stored as text and redrawn sharply in the app's style; friends scan
-  it, or save and share it as a picture.
+  it, or save and share it as a picture. Or make one from details you already entered: a
+  Pakistani IBAN (the State Bank's personal-QR format), a European IBAN, UPI or a payment link.
 - **Reminders that don't point fingers.** One tap sends a notification and an email that say a
   payment is waiting, never who is asking. Add your payment details and QR if you like. One
   reminder per person per day, and a one-click link stops the emails.

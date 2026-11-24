@@ -12,7 +12,7 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const { chromium } = require("playwright");
-const { qrModules } = require("@settlemint/shared");
+const { qrModules, pakistanP2pQr } = require("@settlemint/shared");
 const [outDir, API = "http://localhost:8001", apiLog, shotsDir = os.tmpdir()] = process.argv.slice(2);
 const ORIGIN = "http://localhost:4555";
 
@@ -106,6 +106,20 @@ try {
   await page.getByText("Payment methods saved").waitFor({ timeout: 10000 });
   const saved = await ana.call("GET", "/v1/me/payment-handles");
   ok("it is stored as the exact text that was in the code", saved.length === 1 && saved[0].kind === "qr" && saved[0].value === BANK_QR && saved[0].label === "HBL Raast", JSON.stringify(saved));
+
+  // Making a QR from an IBAN instead of uploading one: it must be exactly the State Bank's format.
+  const PK_IBAN = "PK36SCBL0000001123456702";
+  await page.getByRole("button", { name: "Add a method" }).click();
+  await page.getByLabel("Payment method").last().selectOption({ label: "IBAN" });
+  await page.getByLabel("IBAN details").fill(PK_IBAN);
+  await page.getByRole("button", { name: /Make QR · IBAN/ }).click();
+  await axeOk(page, "the payment methods sheet with a made QR");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await page.getByText("Payment methods saved").waitFor({ timeout: 10000 });
+  const saved2 = await ana.call("GET", "/v1/me/payment-handles");
+  const made = saved2.find((h) => h.kind === "qr" && h.label === "IBAN QR");
+  ok("a QR made from an IBAN is exactly the State Bank's personal-QR format", made?.value === pakistanP2pQr(PK_IBAN), String(made?.value));
+  ok("the IBAN itself is kept as well", saved2.some((h) => h.kind === "iban"));
 
   // A picture with no QR is refused kindly, and nothing is added.
   const blank = path.join(tmp, "blank.png");

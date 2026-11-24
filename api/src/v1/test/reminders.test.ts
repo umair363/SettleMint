@@ -96,11 +96,11 @@ describe("saved payment QR codes", () => {
     const anaAsSeen = seen.members.find((m) => !m.isMe && m.displayName === "Ana")!;
     expect(anaAsSeen.paymentHandles.find((h) => h.kind === "qr")?.value).toBe(BANK_QR);
 
-    // Too long, control characters, and more than three are all refused.
+    // Too long, control characters, and more than five are all refused.
     expect((await ana.put("/v1/me/payment-handles", { handles: [{ kind: "qr", value: "x".repeat(1025) }] })).status).toBe(400);
     expect((await ana.put("/v1/me/payment-handles", { handles: [{ kind: "qr", value: "ab\ncd" }] })).status).toBe(400);
-    const four = Array.from({ length: 4 }, (_, i) => ({ kind: "qr", value: `${BANK_QR}${i}` }));
-    expect((await ana.put("/v1/me/payment-handles", { handles: four })).status).toBe(400);
+    const six = Array.from({ length: 6 }, (_, i) => ({ kind: "qr", value: `${BANK_QR}${i}` }));
+    expect((await ana.put("/v1/me/payment-handles", { handles: six })).status).toBe(400);
     // Other kinds keep their short limit.
     expect((await ana.put("/v1/me/payment-handles", { handles: [{ kind: "raast", value: "9".repeat(200) }] })).status).toBe(400);
   });

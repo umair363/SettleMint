@@ -2,6 +2,7 @@
 
 import {
   ApiError,
+  makeQrText,
   normalizePaymentHandle,
   PAYMENT_KIND_VALUES,
   type PaymentKind,
@@ -11,6 +12,7 @@ import { Plus, ScanLine, Trash2 } from "@/ui/icons";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { useMe } from "@settlemint/client/data/queries";
 import { Button, IconButton } from "@/ui/button";
 import { Skeleton } from "@/ui/feedback";
 import { PayQr } from "@/ui/pay-qr";
@@ -27,7 +29,7 @@ interface Row {
   label: string;
 }
 
-const MAX_QR = 3;
+const MAX_QR = 5;
 
 let nextKey = 0;
 const newKey = () => `row-${nextKey++}`;
@@ -39,6 +41,7 @@ export function PaymentHandlesCard({ bare = false }: { bare?: boolean } = {}) {
   const [draft, setDraft] = useState<Row[] | null>(null);
   const rows: Row[] = draft ?? (saved.data ?? []).map((h) => ({ key: h.id, kind: h.kind, value: h.value, label: h.label ?? "" }));
   const [reading, setReading] = useState(false);
+  const me = useMe();
   const fileInput = useRef<HTMLInputElement>(null);
   const dirty = draft !== null;
   const t = useTranslations("payments");
@@ -66,6 +69,16 @@ export function PaymentHandlesCard({ bare = false }: { bare?: boolean } = {}) {
   const invalid = (r: Row) => r.value.trim() !== "" && normalizePaymentHandle(r.kind, r.value) === null;
   const anyInvalid = rows.some(invalid);
   const qrCount = rows.filter((r) => r.kind === "qr").length;
+
+  /** The QR for a method someone already entered (IBAN, UPI, payment links), or null if none can be made. */
+  const qrFor = (r: Row) => (r.kind === "qr" || !r.value.trim() ? null : makeQrText({ kind: r.kind, value: r.value }, { name: me.data?.name }));
+  const makeQr = (r: Row) => {
+    const text = qrFor(r);
+    if (!text) return void toast.error(t("makeQrFailed"));
+    if (rows.some((x) => x.kind === "qr" && x.value === text)) return;
+    if (qrCount >= MAX_QR) return void toast.error(t("qrTooMany"));
+    setDraft([...rows, { key: newKey(), kind: "qr", value: text, label: t("qrName", { method: kindText.label(r.kind) }) }]);
+  };
 
   const addQr = async (file: File | undefined) => {
     if (!file) return;
@@ -136,6 +149,16 @@ export function PaymentHandlesCard({ bare = false }: { bare?: boolean } = {}) {
                   className="h-12 w-full rounded-[var(--radius-md)] border border-line bg-surface-2 px-3 text-[15px] text-fg placeholder:text-fg-subtle focus:border-accent focus:outline-none aria-[invalid=true]:border-negative"
                 />
                 {invalid(r) && <p className="mt-1 text-[13px] text-negative">{t("invalid", { method: kindText.label(r.kind) })}</p>}
+                {!invalid(r) && qrFor(r) && qrCount < MAX_QR && (
+                  <button
+                    type="button"
+                    aria-label={`${t("makeQr")} · ${kindText.label(r.kind)}`}
+                    onClick={() => makeQr(r)}
+                    className="mt-1.5 inline-flex items-center gap-1.5 text-[13px] font-[560] text-positive hover:underline"
+                  >
+                    <ScanLine className="size-3.5" aria-hidden /> {t("makeQr")}
+                  </button>
+                )}
               </div>
               <IconButton label={t("remove")} onClick={() => setDraft(rows.filter((x) => x.key !== r.key))} className="mt-0.5">
                 <Trash2 className="size-4" />

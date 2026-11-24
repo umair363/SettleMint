@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { ApiError, normalizePaymentHandle, PAYMENT_KIND_VALUES, PAYMENT_KINDS, type PaymentKind } from "@settlemint/shared";
+import { ApiError, makeQrText, normalizePaymentHandle, PAYMENT_KIND_VALUES, PAYMENT_KINDS, type PaymentKind } from "@settlemint/shared";
+import { useMe } from "@settlemint/client/data/queries";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
@@ -22,7 +23,7 @@ interface Row {
   label: string;
 }
 
-const MAX_QR = 3;
+const MAX_QR = 5;
 
 let nextKey = 0;
 const newKey = () => `row-${nextKey++}`;
@@ -46,6 +47,7 @@ export function PaymentHandlesCard() {
   const saved = useQuery({ queryKey: ["payment-handles"], queryFn: () => api.me.paymentHandles() });
   const [draft, setDraft] = useState<Row[] | null>(null);
   const [reading, setReading] = useState(false);
+  const me = useMe();
   const rows: Row[] = draft ?? (saved.data ?? []).map((h) => ({ key: h.id, kind: h.kind, value: h.value, label: h.label ?? "" }));
   const qrCount = rows.filter((r) => r.kind === "qr").length;
 
@@ -64,6 +66,16 @@ export function PaymentHandlesCard() {
 
   const update = (key: string, patch: Partial<Row>) => setDraft(rows.map((r) => (r.key === key ? { ...r, ...patch } : r)));
   const invalid = (r: Row) => r.value.trim() !== "" && normalizePaymentHandle(r.kind, r.value) === null;
+
+  /** The QR for a method already entered (IBAN, UPI, payment links), or null if none can be made. */
+  const qrFor = (r: Row) => (r.kind === "qr" || !r.value.trim() ? null : makeQrText({ kind: r.kind, value: r.value }, { name: me.data?.name }));
+  const makeQr = (r: Row) => {
+    const text = qrFor(r);
+    if (!text) return void toast.error(t("makeQrFailed"));
+    if (rows.some((x) => x.kind === "qr" && x.value === text)) return;
+    if (qrCount >= MAX_QR) return void toast.error(t("qrTooMany"));
+    setDraft([...rows, { key: newKey(), kind: "qr", value: text, label: t("qrName", { method: kindText.label(r.kind) }) }]);
+  };
 
   const addQr = async () => {
     setReading(true);
@@ -142,6 +154,19 @@ export function PaymentHandlesCard() {
                   autoCorrect={false}
                   error={invalid(r) ? t("invalid", { method: kindText.label(r.kind) }) : null}
                 />
+                {!invalid(r) && qrFor(r) && qrCount < MAX_QR && (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`${t("makeQr")} · ${kindText.label(r.kind)}`}
+                    onPress={() => makeQr(r)}
+                    style={{ flexDirection: "row", alignItems: "center", gap: 6, minHeight: 36 }}
+                  >
+                    <Ionicons name="qr-code-outline" size={16} color={c.positive} />
+                    <Text variant="caption" tone="positive">
+                      {t("makeQr")}
+                    </Text>
+                  </Pressable>
+                )}
               </View>
               <View style={{ paddingTop: 5 }}>
                 <IconButton icon="trash-outline" label={t("remove")} onPress={() => setDraft(rows.filter((x) => x.key !== r.key))} />
