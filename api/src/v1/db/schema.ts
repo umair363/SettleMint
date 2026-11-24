@@ -286,6 +286,8 @@ export const PAYMENT_KINDS = [
   "raast",
   "jazzcash",
   "easypaisa",
+  "sadapay",
+  "nayapay",
   "qr",
   "other",
 ] as const;

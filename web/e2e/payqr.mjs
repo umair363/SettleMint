@@ -121,6 +121,23 @@ try {
   ok("a QR made from an IBAN is exactly the State Bank's personal-QR format", made?.value === pakistanP2pQr(PK_IBAN), String(made?.value));
   ok("the IBAN itself is kept as well", saved2.some((h) => h.kind === "iban"));
 
+  // Any Pakistani wallet: choose JazzCash, enter its IBAN, and a QR can be made; a phone number alone can't.
+  await page.getByRole("button", { name: "Add a method" }).click();
+  await page.getByLabel("Payment method").last().selectOption({ label: "JazzCash" });
+  await page.getByLabel("JazzCash details").fill("0300 1234567");
+  ok("a phone number alone offers no Make QR", (await page.getByRole("button", { name: /Make QR · JazzCash/ }).count()) === 0);
+  // The same IBAN as before would make an identical code, which is refused out loud, not silently.
+  await page.getByLabel("JazzCash details").fill(PK_IBAN);
+  await page.getByRole("button", { name: /Make QR · JazzCash/ }).click();
+  await page.getByText("That QR is already in your list.").waitFor({ timeout: 5000 });
+  ok("an identical QR is refused with a message", true);
+  // A different wallet IBAN (check digits computed here) makes a new one.
+  const bban = "JCMA0000009876543210";
+  const check = String(98n - (BigInt((bban + "PK00").replace(/[A-Z]/g, (c) => String(c.charCodeAt(0) - 55))) % 97n)).padStart(2, "0");
+  await page.getByLabel("JazzCash details").fill("PK" + check + bban);
+  await page.getByRole("button", { name: /Make QR · JazzCash/ }).click();
+  ok("an IBAN typed into JazzCash makes a QR named after it", (await page.locator("input").evaluateAll((els) => els.filter((e) => e.value === "JazzCash QR").length)) === 1);
+
   // A picture with no QR is refused kindly, and nothing is added.
   const blank = path.join(tmp, "blank.png");
   fs.writeFileSync(blank, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64"));

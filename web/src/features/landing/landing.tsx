@@ -433,7 +433,7 @@ function CurrencyDemo({ t, money }: { t: T; money: Money }) {
 }
 
 function PayDemo({ t, money }: { t: T; money: Money }) {
-  const methods = ["UPI", "PayPal", "Venmo", "Revolut", "Wise", "Monzo", "Cash App", "IBAN", "Raast", "JazzCash", "Easypaisa"];
+  const methods = ["UPI", "PayPal", "Venmo", "Revolut", "Wise", "Monzo", "Cash App", "IBAN", "Raast", "JazzCash", "Easypaisa", "SadaPay", "NayaPay"];
   return (
     <div className="w-full max-w-md space-y-5">
       <div className="rounded-[1.25rem] bg-surface p-5 shadow-[0_0_0_1px_var(--line)]">

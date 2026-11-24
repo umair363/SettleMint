@@ -19,6 +19,8 @@ export const PAYMENT_KIND_VALUES = [
   "raast",
   "jazzcash",
   "easypaisa",
+  "sadapay",
+  "nayapay",
   "qr",
   "other",
 ] as const;
@@ -47,6 +49,8 @@ export const PAYMENT_KINDS: Record<PaymentKind, PaymentKindInfo> = {
   raast: { label: "Raast", placeholder: "Raast ID or phone", linkable: false },
   jazzcash: { label: "JazzCash", placeholder: "03xx xxxxxxx", linkable: false },
   easypaisa: { label: "Easypaisa", placeholder: "03xx xxxxxxx", linkable: false },
+  sadapay: { label: "SadaPay", placeholder: "PK IBAN or 03xx xxxxxxx", linkable: false },
+  nayapay: { label: "NayaPay", placeholder: "PK IBAN or 03xx xxxxxxx", linkable: false },
   /** The QR code a bank or wallet app made for them: stored as its text, redrawn on demand. */
   qr: { label: "QR code", placeholder: "", linkable: false },
   other: { label: "Other", placeholder: "How to pay you", linkable: false },

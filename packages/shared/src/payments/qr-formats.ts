@@ -45,8 +45,16 @@ export function epcQr(iban: string, name: string): string | null {
   return ["BCD", "002", "1", "SCT", "", holder, v].join("\n");
 }
 
-/** Kinds a QR can be made from. */
-export const QR_CREATABLE_KINDS: readonly PaymentKind[] = ["iban", "upi", "paypal", "venmo", "cashapp", "revolut", "monzo", "wise"];
+/** Kinds that have a standard QR of their own. */
+const LINK_KINDS: readonly PaymentKind[] = ["upi", "paypal", "venmo", "cashapp", "revolut", "monzo", "wise"];
+/**
+ * Pakistani wallets and banks, where the field can hold a phone number or an IBAN. Their personal QR
+ * is the State Bank's IBAN code, so a QR can be made whenever an IBAN is what was entered.
+ */
+const IBAN_HOLDER_KINDS: readonly PaymentKind[] = ["raast", "jazzcash", "easypaisa", "sadapay", "nayapay", "bank", "other"];
+
+/** Kinds a QR might be made from (the value still has to be valid). */
+export const QR_CREATABLE_KINDS: readonly PaymentKind[] = ["iban", ...LINK_KINDS, ...IBAN_HOLDER_KINDS];
 
 export const canMakeQr = (kind: PaymentKind) => QR_CREATABLE_KINDS.includes(kind);
 
@@ -59,6 +67,8 @@ export function makeQrText(handle: { kind: PaymentKind; value: string }, ctx: { 
   const value = normalizePaymentHandle(handle.kind, handle.value);
   if (!value || !canMakeQr(handle.kind)) return null;
   if (handle.kind === "iban") return pakistanP2pQr(value) ?? epcQr(value, ctx.name ?? "");
+  // A wallet or bank where an IBAN was typed instead of a phone number: no IBAN, no QR.
+  if (IBAN_HOLDER_KINDS.includes(handle.kind)) return pakistanP2pQr(value);
   if (handle.kind === "upi") {
     const params = new URLSearchParams({ pa: value, cu: "INR" });
     if (ctx.name?.trim()) params.set("pn", ctx.name.trim());

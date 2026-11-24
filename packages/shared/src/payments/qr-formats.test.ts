@@ -56,11 +56,17 @@ describe("making a QR from a saved method", () => {
     expect(makeQrText({ kind: "paypal", value: "paypal.me/anasouza" })).toBe("https://paypal.me/anasouza");
     expect(makeQrText({ kind: "revolut", value: "@ana" })).toBe("https://revolut.me/ana");
   });
-  it("makes nothing it can't make reliably", () => {
-    for (const kind of ["raast", "jazzcash", "easypaisa", "bank", "other", "qr"] as const) {
-      expect(canMakeQr(kind)).toBe(false);
+  it("makes a Pakistani QR from an IBAN typed into any wallet or bank, and nothing from a phone number", () => {
+    for (const kind of ["raast", "jazzcash", "easypaisa", "sadapay", "nayapay", "bank", "other"] as const) {
+      expect(canMakeQr(kind)).toBe(true);
+      expect(makeQrText({ kind, value: PK_IBAN })).toBe(pakistanP2pQr(PK_IBAN));
       expect(makeQrText({ kind, value: "0300 1234567" })).toBeNull();
     }
+    expect(canMakeQr("qr")).toBe(false);
+    expect(makeQrText({ kind: "qr", value: PK_IBAN })).toBeNull();
+  });
+
+  it("makes nothing it can't make reliably", () => {
     expect(makeQrText({ kind: "iban", value: "not an iban" })).toBeNull();
     expect(makeQrText({ kind: "iban", value: "DE89370400440532013000" })).toBeNull(); // European code needs the holder's name
   });

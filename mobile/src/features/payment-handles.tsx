@@ -72,7 +72,7 @@ export function PaymentHandlesCard() {
   const makeQr = (r: Row) => {
     const text = qrFor(r);
     if (!text) return void toast.error(t("makeQrFailed"));
-    if (rows.some((x) => x.kind === "qr" && x.value === text)) return;
+    if (rows.some((x) => x.kind === "qr" && x.value === text)) return void toast.info(t("qrExists"));
     if (qrCount >= MAX_QR) return void toast.error(t("qrTooMany"));
     setDraft([...rows, { key: newKey(), kind: "qr", value: text, label: t("qrName", { method: kindText.label(r.kind) }) }]);
   };
