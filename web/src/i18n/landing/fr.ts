@@ -87,7 +87,7 @@ const fr: LandingMessages = {
     q1: "SettleMint est-il vraiment gratuit ?",
     a1: "Oui. Les groupes, tous les modes de partage, les devises et les remboursements sont gratuits et illimités. Le scan des tickets est gratuit jusqu’à un quota mensuel.",
     q2: "Mes amis doivent-ils installer quelque chose ?",
-    a2: "Non. Envoyez-leur le lien du groupe : ils l’ouvrent dans n’importe quel navigateur et choisissent leur nom. Ils pourront créer un compte plus tard pour garder leurs groupes.",
+    a2: "Pas pour figurer dans vos dépenses : ajoutez-les par leur nom et tout fonctionne. Pour ouvrir eux-mêmes le groupe, ils suivent votre lien dans n’importe quel navigateur et s’inscrivent gratuitement, en une minute. Rien à installer.",
     q3: "SettleMint fait-il circuler de l’argent ?",
     a3: "Non. Il tient les comptes de qui doit quoi à qui et ouvre votre appli de paiement avec le montant prérempli. L’argent passe directement entre vous.",
     q4: "Quelles devises et langues sont prises en charge ?",

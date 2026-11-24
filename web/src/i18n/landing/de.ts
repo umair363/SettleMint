@@ -87,7 +87,7 @@ const de: LandingMessages = {
     q1: "Ist SettleMint wirklich kostenlos?",
     a1: "Ja. Gruppen, jede Art der Aufteilung, Währungen und das Ausgleichen sind kostenlos und unbegrenzt. Beleg-Scans sind bis zu einem Monatskontingent kostenlos.",
     q2: "Müssen meine Freunde etwas installieren?",
-    a2: "Nein. Schick ihnen den Gruppenlink; sie öffnen ihn in jedem Browser und wählen ihren Namen. Später können sie ein Konto anlegen, um ihre Gruppen zu behalten.",
+    a2: "Nicht, um in deinen Rechnungen zu stehen: Füge sie mit Namen hinzu, dann funktioniert alles. Um die Gruppe selbst zu öffnen, rufen sie deinen Link in einem beliebigen Browser auf und registrieren sich kostenlos, das dauert eine Minute. Es muss nichts installiert werden.",
     q3: "Bewegt SettleMint Geld?",
     a3: "Nein. Es hält fest, wer wem was schuldet, und öffnet deine Zahlungs-App mit dem Betrag. Das Geld fließt direkt zwischen euch.",
     q4: "Welche Währungen und Sprachen gibt es?",

@@ -139,6 +139,10 @@ export async function buildApp({ db, config, mailer, logger = true, receiptReade
     url: "/v1/auth/*",
     async handler(req, reply) {
       const url = new URL(req.url, config.apiUrl);
+      // Guests that already exist keep working (and can still add an email), but no new ones.
+      if (url.pathname === "/v1/auth/sign-in/anonymous" && !config.guestSignIn) {
+        throw new AppError(403, "FORBIDDEN", "Create an account to continue");
+      }
       const hasBody = req.method !== "GET" && req.body !== undefined && req.body !== null;
       const response = await auth.handler(
         new Request(url, {

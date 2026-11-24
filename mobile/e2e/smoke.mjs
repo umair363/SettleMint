@@ -54,8 +54,14 @@ try {
   check(await see("Welcome back"), "sign-in screen");
   await shot("1-sign-in");
 
-  await page.getByTestId("guest").click();
-  check(await see("Welcome to SettleMint"), "guest lands on onboarding");
+  // There is no "continue without an account": create a real one.
+  check((await page.getByTestId("guest").count()) === 0, "no guest option on the sign-in screen");
+  await page.getByRole("button", { name: "Create account" }).click();
+  await page.getByLabel("Your name").fill("Ana");
+  await page.getByTestId("email").fill(`ana-${Date.now()}@example.com`);
+  await page.getByLabel("Password").fill("correct-horse-battery");
+  await page.getByRole("button", { name: "Create account" }).click();
+  check(await see("Welcome to SettleMint"), "a new account lands on onboarding");
   await page.getByLabel("What should friends call you?").fill("Ana");
   await page.getByRole("button", { name: "Continue" }).click();
   check(await see("Let's split your first bill"), "empty home invites a first group");

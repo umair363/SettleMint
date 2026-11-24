@@ -10,8 +10,8 @@ within three working days.
 
 **Accounts and sessions**
 - Sign-in with email and password (a new account confirms its email with a code, and a
-  forgotten password is reset with a code), an emailed one-time code, Google, or as a guest
-  (Better Auth).
+  forgotten password is reset with a code), an emailed one-time code, or Google
+  (Better Auth). Anonymous guest sessions are closed.
 - Password accounts must confirm their email with a code before they can sign
   in, so nobody can hold an account under someone else's address. When the real
   owner signs in by code, any password or session set up by someone else is removed.

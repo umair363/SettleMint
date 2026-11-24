@@ -60,8 +60,8 @@ A fast web app and a phone app, free to use and built to work offline.
 - **Friends without groups.** Add a friend with just a name and split with them directly, or by
   their email or @username: they get a request to accept (an invitation if they have no account
   yet). You can only find someone by typing exactly what they signed up with.
-- **Groups** for trips, homes, couples and events. Friends join from a link and pick their
-  name; no account needed, and they can save one later.
+- **Groups** for trips, homes, couples and events. Add people by name and the balances work
+  at once, or share a link: they sign in or create a free account to join and pick their name.
 - **One balance per person.** See what someone owes you, or you owe them, added up across
   every group you share.
 - **Recap.** Where a group's money went and who paid, shareable as an image.

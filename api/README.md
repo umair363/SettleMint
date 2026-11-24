@@ -20,7 +20,7 @@ change that. For a real Postgres, run `npm run db:up` and set `V1_DATABASE_URL`.
 ```
 src/v1/
   app.ts          builds the server: plugins, security headers, rate limits, routes
-  auth.ts         Better Auth: password, email code, Google, guests
+  auth.ts         Better Auth: password, email code, Google
   main.ts         entry point (migrations, keep-alive, listen)
   config.ts       reads and validates environment variables
   routes/         groups, members, invites, expenses, settlements, recurring, activity,

@@ -87,7 +87,7 @@ const pt: LandingMessages = {
     q1: "O SettleMint é grátis mesmo?",
     a1: "Sim. Grupos, todos os tipos de divisão, moedas e acertos de contas são grátis e sem limites. A leitura de recibos é grátis até uma cota mensal.",
     q2: "Meus amigos precisam instalar alguma coisa?",
-    a2: "Não. Envie o link do grupo; eles abrem em qualquer navegador e escolhem o próprio nome. Depois podem criar uma conta para manter os grupos.",
+    a2: "Não para entrar nas suas contas: adicione-os pelo nome e tudo funciona. Para abrir o grupo eles mesmos, abrem seu link em qualquer navegador e se cadastram de graça, em um minuto. Não há nada para instalar.",
     q3: "O SettleMint movimenta dinheiro?",
     a3: "Não. Ele registra quem deve a quem e abre seu app de pagamento com o valor preenchido. O dinheiro vai direto entre vocês.",
     q4: "Quais moedas e idiomas são suportados?",

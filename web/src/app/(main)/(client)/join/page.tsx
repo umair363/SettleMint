@@ -10,14 +10,12 @@ import { useTranslations } from "use-intl";
 import { AuthLayout } from "@/features/auth/auth-layout";
 import { api } from "@/lib/api";
 import { apiErrorText } from "@settlemint/client/text/api-error-text";
-import { authClient } from "@/lib/auth-client";
 import { keys, useMe } from "@settlemint/client/data/queries";
 import { useHydrated } from "@/lib/use-hydrated";
 import { Avatar } from "@/ui/avatar";
 import { Button } from "@/ui/button";
 import { cn } from "@/ui/cn";
 import { ErrorState, Spinner } from "@/ui/feedback";
-import { TextField } from "@/ui/field";
 
 function Join() {
   const params = useSearchParams();
@@ -36,8 +34,8 @@ function Join() {
     retry: false,
   });
 
-  const [spot, setSpot] = useState<string | "new" | null>(null);
-  const [name, setName] = useState("");
+  // A spot picked before signing in comes back with the person after they do.
+  const [spot, setSpot] = useState<string | "new" | null>(params.get("spot"));
 
   const memberOf = preview.data?.alreadyMember ? preview.data.group.id : null;
   useEffect(() => {
@@ -46,13 +44,7 @@ function Join() {
 
   const join = useMutation({
     meta: { handlesErrors: true },
-    mutationFn: async () => {
-      if (!signedIn) {
-        const { error } = await authClient.signIn.anonymous();
-        if (error) throw new Error(t("guestFailed"));
-      }
-      return api.invites.join(token, spot && spot !== "new" ? { memberId: spot } : { displayName: name.trim() || undefined });
-    },
+    mutationFn: () => api.invites.join(token, spot && spot !== "new" ? { memberId: spot } : {}),
     onSuccess: async (group) => {
       await qc.invalidateQueries();
       router.replace(`/group?id=${group.id}`);
@@ -87,6 +79,7 @@ function Join() {
   }
 
   const { group, openSpots, alreadyMember } = preview.data;
+  const back = `/join?t=${token}${spot && spot !== "new" ? `&spot=${spot}` : ""}`;
   if (alreadyMember) {
     return (
       <AuthLayout>
@@ -97,7 +90,6 @@ function Join() {
     );
   }
 
-  const needsName = spot === "new" && !signedIn && !name.trim();
   const joinError =
     join.error instanceof ApiError && join.error.code === "ALREADY_CLAIMED"
       ? t("claimed")
@@ -153,35 +145,36 @@ function Join() {
           </div>
         )}
 
-        {(openSpots.length === 0 || spot === "new") && !signedIn && (
-          <TextField label={t("yourName")} value={name} onChange={(e) => setName(e.target.value)} placeholder={t("namePlaceholder")} />
-        )}
-
         {joinError && (
           <p role="alert" className="text-center text-sm text-negative">
             {joinError}
           </p>
         )}
 
-        <Button
-          block
-          size="lg"
-          loading={join.isPending}
-          disabled={(openSpots.length > 0 && !spot) || needsName || (openSpots.length === 0 && !signedIn && !name.trim())}
-          onClick={() => join.mutate()}
-        >
-          {signedIn ? t("join") : t("joinGuest")}
-        </Button>
-        {!signedIn && (
-          <p className="text-center text-sm text-fg-muted">
-            {t.rich("haveAccount", {
-              link: (chunks) => (
-                <Link href={`/sign-in?next=${encodeURIComponent(`/join?t=${token}`)}`} className="font-medium text-positive">
-                  {chunks}
-                </Link>
-              ),
-            })}
-          </p>
+        {signedIn ? (
+          <Button block size="lg" loading={join.isPending} disabled={openSpots.length > 0 && !spot} onClick={() => join.mutate()}>
+            {t("join")}
+          </Button>
+        ) : (
+          <>
+            <Button
+              block
+              size="lg"
+              disabled={openSpots.length > 0 && !spot}
+              onClick={() => router.push(`/sign-in?mode=signup&next=${encodeURIComponent(back)}`)}
+            >
+              {t("createToJoin")}
+            </Button>
+            <p className="text-center text-sm text-fg-muted">
+              {t.rich("haveAccount", {
+                link: (chunks) => (
+                  <Link href={`/sign-in?next=${encodeURIComponent(back)}`} className="font-medium text-positive">
+                    {chunks}
+                  </Link>
+                ),
+              })}
+            </p>
+          </>
         )}
       </div>
     </AuthLayout>

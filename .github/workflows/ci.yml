@@ -95,6 +95,9 @@ jobs:
       - name: Friends (username and email requests, accept, invite)
         working-directory: web
         run: node e2e/friends.mjs out http://localhost:8001 ../e2e-shots
+      - name: Joining from an invite (no guest sessions)
+        working-directory: web
+        run: node e2e/join.mjs out http://localhost:8001 ../e2e-shots
       - name: Accessibility (axe, WCAG 2.2 AA)
         working-directory: web
         run: node e2e/a11y.mjs out

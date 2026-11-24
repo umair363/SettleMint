@@ -1,5 +1,5 @@
 import { expoClient } from "@better-auth/expo/client";
-import { anonymousClient, emailOTPClient } from "better-auth/client/plugins";
+import { emailOTPClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
@@ -8,7 +8,7 @@ import { API_URL, SCHEME } from "./env";
 import { persister } from "./persist";
 
 /**
- * Sign-in, codes, guests and sign-out. On a phone the session cookie lives in
+ * Sign-in, codes and sign-out. On a phone the session cookie lives in
  * the keychain / keystore (SecureStore), never in plain storage; in the web
  * preview the browser keeps it as usual.
  */
@@ -17,7 +17,6 @@ export const authClient = createAuthClient({
   plugins: [
     expoClient({ scheme: SCHEME, storagePrefix: SCHEME, storage: SecureStore }),
     emailOTPClient(),
-    anonymousClient(),
   ],
   ...(Platform.OS === "web" ? { fetchOptions: { credentials: "include" as const } } : {}),
 });

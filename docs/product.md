@@ -23,7 +23,7 @@ Success is two numbers: a person knows where they stand within 2 seconds of open
 What SettleMint offers that the incumbent (Splitwise) does not:
 
 - Free without limits: no daily expense caps, no ads. Only receipt scans have a monthly allowance, because each costs money.
-- Friends join from a link and pick their name, with no account needed; they can save an account later.
+- Add friends by name and the balances work with no account on their side; to join a group from a link they sign in or create a free account and pick their name. There are no anonymous guest sessions.
 - Every way to split (equally, exact amounts, percentages, shares, adjustments, item by item from a scanned receipt), with several payers, always adding up to the cent.
 - Real multi-currency: any ISO currency, the rate locked in when the expense is added.
 - Settle-up that gets you paid: the fewest payments, with one-tap links into the payee's payment app (UPI, PayPal, Venmo, Revolut, Wise and others). SettleMint never moves money itself.
@@ -61,7 +61,7 @@ No customers, testimonials, press or usage numbers exist yet. Nothing of that ki
 2. Fast at the table: the common path (add a bill split equally) takes the fewest taps.
 3. Fair and exact: the preview always equals what is saved, to the cent.
 4. Calm about money: debts are stated clearly and kindly, never alarmingly.
-5. Nobody is left out: works offline, in their language, without an account, with assistive technology.
+5. Nobody is left out: works offline, in their language, with assistive technology, and people added by name never need an account.
 
 ## Accessibility & Inclusion
 

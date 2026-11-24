@@ -87,7 +87,7 @@ const es: LandingMessages = {
     q1: "¿SettleMint es gratis de verdad?",
     a1: "Sí. Los grupos, todos los tipos de reparto, las monedas y saldar cuentas son gratis y sin límites. El escaneo de tickets es gratis hasta un cupo mensual.",
     q2: "¿Mis amigos tienen que instalar algo?",
-    a2: "No. Envíales el enlace del grupo; lo abren en cualquier navegador y eligen su nombre. Más tarde pueden crear una cuenta para conservar sus grupos.",
+    a2: "No para aparecer en tus cuentas: añádelos por nombre y todo funciona. Para abrir el grupo ellos mismos, entran con tu enlace desde cualquier navegador y se registran gratis, en un minuto. No hay nada que instalar.",
     q3: "¿SettleMint mueve dinero?",
     a3: "No. Lleva la cuenta de quién debe a quién y abre tu app de pagos con el importe ya puesto. El dinero va directamente entre vosotros.",
     q4: "¿Qué monedas e idiomas admite?",

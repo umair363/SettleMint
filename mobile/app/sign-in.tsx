@@ -42,7 +42,7 @@ function errorText(t: SignInT, err: { code?: string; status?: number } | null | 
 /**
  * Email and password first, like every app: sign in, create an account (then
  * confirm the email with a code), forgot password (code, then a new password).
- * An emailed sign-in code and a guest session stay as quieter options.
+ * An emailed sign-in code stays as a quieter option.
  */
 export default function SignIn() {
   const t = useTranslations("signIn");
@@ -149,7 +149,6 @@ export default function SignIn() {
     if (!res) setCode("");
   };
 
-  const asGuest = () => run(t("guestFailed"), () => authClient.signIn.anonymous(), { fresh: true });
   const google = () => run(t("sendFailed"), () => authClient.signIn.social({ provider: "google", callbackURL: "/" }), { fresh: true });
   const link = (path: string) => () => void WebBrowser.openBrowserAsync(`${WEB_URL}${path}`);
 
@@ -276,12 +275,9 @@ export default function SignIn() {
                 {t("google")}
               </Button>
             )}
-            <View style={{ flexDirection: "row", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+            <View style={{ alignItems: "center" }}>
               <Button variant="ghost" icon="mail" onPress={() => go("code")}>
                 {t("useCode")}
-              </Button>
-              <Button variant="ghost" icon="sparkles" onPress={asGuest} disabled={busy} testID="guest">
-                {t("guest")}
               </Button>
             </View>
           </View>

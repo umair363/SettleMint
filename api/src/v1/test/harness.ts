@@ -40,7 +40,7 @@ export function createFakePushSender() {
 }
 
 /** A fresh API on an in-memory Postgres (PGlite), with migrations applied. */
-export async function createTestApp() {
+export async function createTestApp(overrides: Partial<AppConfig> = {}) {
   const client = new PGlite();
   await migrate(drizzle(client), { migrationsFolder: MIGRATIONS_FOLDER });
   const db = drizzle(client, { schema }) as unknown as Db;
@@ -57,6 +57,9 @@ export async function createTestApp() {
     authSecret: "test-secret-0123456789-0123456789-0123456789",
     aiScansPerMonth: 3,
     vapid: { publicKey: "test-public-key", privateKey: "test-private-key", subject: "mailto:test@example.com" },
+    // New guest sessions are closed for real; tests open them to stand in for guests that already exist.
+    guestSignIn: true,
+    ...overrides,
   };
   const receiptReader = createFakeReceiptReader();
   const pushSender = createFakePushSender();
@@ -149,6 +152,7 @@ export class TestClient {
     throw new Error(`no code emailed to ${email}`);
   }
 
+  /** A guest that already existed before guest sessions were closed. */
   async signInAsGuest() {
     const res = await this.post("/v1/auth/sign-in/anonymous");
     if (res.status !== 200) throw new Error(`guest sign-in failed: ${res.status} ${JSON.stringify(res.body)}`);

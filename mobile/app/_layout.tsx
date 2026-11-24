@@ -75,7 +75,7 @@ function Navigator() {
           <Stack.Screen name="search" options={sheet} />
           <Stack.Screen name="import" options={sheet} />
         </Stack.Protected>
-        {/* Invite links work signed in or out (guests can join without an account). */}
+        {/* Invite links work signed in or out (signed out, they ask you to sign in first). */}
         <Stack.Screen name="join" />
       </Stack>
       {signedIn && <AppLock />}

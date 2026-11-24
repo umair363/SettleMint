@@ -1,9 +1,9 @@
 "use client";
 
-import { Mail, Sparkles } from "@/ui/icons";
+import { Mail } from "@/ui/icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import { useTranslations } from "use-intl";
 import { AuthLayout } from "@/features/auth/auth-layout";
 import { I18nProvider } from "@/i18n/provider";
@@ -19,8 +19,8 @@ import { TextField } from "@/ui/field";
  * Sign in the way every app does it: email and password first. Creating an
  * account asks for a name, email and password, then confirms the email with a
  * code (so nobody can register with someone else's address). "Forgot
- * password" sends a code and sets a new one. An emailed sign-in code and a
- * guest session stay available as quieter options.
+ * password" sends a code and sets a new one. An emailed sign-in code stays
+ * available as a quieter option. There are no anonymous guest sessions.
  */
 type Step = "signin" | "signup" | "forgot" | "reset" | "verify" | "code";
 
@@ -113,7 +113,15 @@ function SignIn() {
     if (signedIn && !acted.current) router.replace(nextPath());
   }, [signedIn, router]);
 
-  const [step, setStep] = useState<Step>("signin");
+  // Invite links send new people straight to "create an account". Read after load
+  // (the server render always shows sign-in), so the page still pre-renders.
+  const wantsSignup = useSyncExternalStore(
+    () => () => {},
+    () => new URLSearchParams(window.location.search).get("mode") === "signup",
+    () => false,
+  );
+  const [picked, setStep] = useState<Step | null>(null);
+  const step: Step = picked ?? (wantsSignup ? "signup" : "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -247,11 +255,6 @@ function SignIn() {
     await finish();
   };
 
-  const asGuest = async () => {
-    const res = await run(t("guestFailed"), () => authClient.signIn.anonymous());
-    if (res) await finish();
-  };
-
   const google = async () => {
     await authClient.signIn.social({
       provider: "google",
@@ -336,12 +339,9 @@ function SignIn() {
             {linkButton(t("createAccount"), () => go("signup"), true)}
           </div>
           {googleButton}
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-line pt-4 text-[14px]">
+          <div className="flex justify-center border-t border-line pt-4 text-[14px]">
             <button type="button" onClick={() => (email.includes("@") ? sendLoginCode() : go("code"))} className="inline-flex items-center gap-1.5 text-fg-muted hover:text-fg">
               <Mail className="size-4" /> {t("useCode")}
-            </button>
-            <button type="button" onClick={asGuest} disabled={busy} className="inline-flex items-center gap-1.5 text-fg-muted hover:text-fg">
-              <Sparkles className="size-4" /> {t("guest")}
             </button>
           </div>
         </form>

@@ -13,7 +13,6 @@ import { authClient } from "@/lib/auth";
 import { useTheme } from "@/theme/theme";
 import { Button } from "@/ui/button";
 import { GroupMark } from "@/ui/glyphs";
-import { Field } from "@/ui/field";
 import { Screen } from "@/ui/screen";
 import { Avatar, Empty, Loading } from "@/ui/surface";
 import { Text } from "@/ui/text";
@@ -35,7 +34,6 @@ export default function Join() {
     retry: false,
   });
   const [spot, setSpot] = useState<string | "new" | null>(null);
-  const [name, setName] = useState("");
 
   const memberOf = preview.data?.alreadyMember ? preview.data.group.id : null;
   useEffect(() => {
@@ -44,13 +42,7 @@ export default function Join() {
 
   const join = useMutation({
     meta: { handlesErrors: true },
-    mutationFn: async () => {
-      if (!signedIn) {
-        const { error } = await authClient.signIn.anonymous();
-        if (error) throw new Error(t("guestFailed"));
-      }
-      return api.invites.join(token, spot && spot !== "new" ? { memberId: spot } : { displayName: name.trim() || undefined });
-    },
+    mutationFn: () => api.invites.join(token, spot && spot !== "new" ? { memberId: spot } : {}),
     onSuccess: async (group) => {
       await qc.invalidateQueries();
       router.replace({ pathname: "/group/[id]", params: { id: group.id } });
@@ -74,7 +66,6 @@ export default function Join() {
   }
 
   const { group, openSpots } = preview.data;
-  const needsName = !signedIn && (openSpots.length === 0 || spot === "new") && !name.trim();
   const joinError =
     join.error instanceof ApiError && join.error.code === "ALREADY_CLAIMED"
       ? t("claimed")
@@ -97,23 +88,16 @@ export default function Join() {
             size="lg"
             block
             loading={join.isPending}
-            disabled={(openSpots.length > 0 && !spot) || needsName}
-            onPress={() => join.mutate()}
+            disabled={openSpots.length > 0 && !spot}
+            onPress={async () => {
+              if (signedIn) return join.mutate();
+              // Come back to this invite after signing in or creating an account.
+              await setPendingInvite(token);
+              router.replace("/sign-in");
+            }}
           >
-            {signedIn ? t("join") : t("joinGuest")}
+            {signedIn ? t("join") : t("createToJoin")}
           </Button>
-          {!signedIn && (
-            <Button
-              variant="ghost"
-              onPress={async () => {
-                // Come back to this invite after signing in.
-                await setPendingInvite(token);
-                router.replace("/sign-in");
-              }}
-            >
-              {t.rich("haveAccount", { link: (chunks) => chunks })}
-            </Button>
-          )}
         </View>
       }
     >
@@ -167,10 +151,6 @@ export default function Join() {
             );
           })}
         </View>
-      )}
-
-      {(openSpots.length === 0 || spot === "new") && !signedIn && (
-        <Field label={t("yourName")} value={name} onChangeText={setName} placeholder={t("namePlaceholder")} autoComplete="name" />
       )}
     </Screen>
   );

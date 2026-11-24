@@ -40,7 +40,8 @@ Fastify 5 with Drizzle ORM on Postgres (Neon in production, an embedded PGlite d
 development and tests).
 
 - **Auth** is Better Auth: email and password with email confirmation, a one-time code sent by
-  email, Google, and guest sessions. Sessions are httpOnly cookies on the web and stored in the
+  email, and Google (new guest sessions are refused; guests from before keep working until
+  they add an email). Sessions are httpOnly cookies on the web and stored in the
   system keychain on the phone.
 - **Access control:** one membership check guards every group route. Someone outside a group
   gets `404`, never a hint that the group exists.

@@ -25,6 +25,11 @@ export interface AppConfig {
   requireEmailVerification: boolean;
   /** Sign-in rate limits. Always on in production; browser tests switch them off locally. */
   authRateLimit?: boolean;
+  /**
+   * Guest ("continue without an account") sessions are closed: nobody can start a
+   * new one. Only tests set this, to stand in for guests that already exist.
+   */
+  guestSignIn?: boolean;
   /** Web Push keys (npx web-push generate-vapid-keys). Notifications are off without them. */
   vapid?: { publicKey: string; privateKey: string; subject: string };
   /**

@@ -481,7 +481,7 @@ describe("people", () => {
     const { ana, group, anaId, benId } = await tripWithFriends();
     const link = (await ana.post(`/v1/groups/${group.id}/invite`)).body;
     const ben = client();
-    await ben.signInAsGuest();
+    await ben.signUp("Ben");
     await ben.post(`/v1/invites/${link.token}/join`, { memberId: benId });
 
     // Ana paid 20.00 for the two of them: Ben owes her 10.00.
@@ -509,7 +509,29 @@ describe("people", () => {
 });
 
 describe("invites and guests", () => {
-  it("lets a guest join by link, claim a spot and later keep it after signing up", async () => {
+  it("no longer starts new guest sessions", async () => {
+    const closed = await createTestApp({ guestSignIn: false });
+    try {
+      const res = await new TestClient(closed.app).post("/v1/auth/sign-in/anonymous");
+      expect(res.status).toBe(403);
+      expect(res.body.error.code).toBe("FORBIDDEN");
+    } finally {
+      await closed.close();
+    }
+  });
+
+  it("keeps the place of a guest that already existed when they sign up", async () => {
+    const { ana, group, benId } = await tripWithFriends();
+    const link = (await ana.post(`/v1/groups/${group.id}/invite`)).body;
+    const ben = client();
+    await ben.signInAsGuest();
+    expect((await ben.post(`/v1/invites/${link.token}/join`, { memberId: benId })).status).toBe(200);
+    await ben.signUp("Ben");
+    expect((await ben.get("/v1/me")).body.isGuest).toBe(false);
+    expect((await ben.get<GroupDetailDto>(`/v1/groups/${group.id}`)).body.myMemberId).toBe(benId);
+  });
+
+  it("lets someone with an account join by link and claim their spot", async () => {
     const { ana, group, benId } = await tripWithFriends();
     const link = (await ana.post(`/v1/groups/${group.id}/invite`)).body;
     expect(link.url).toContain(`/join?t=${link.token}`);
@@ -521,25 +543,17 @@ describe("invites and guests", () => {
 
     const ben = client();
     expect((await ben.post(`/v1/invites/${link.token}/join`, { memberId: benId })).status).toBe(401);
-    await ben.signInAsGuest();
+    await ben.signUp("Ben");
     const joined = await ben.post<GroupDetailDto>(`/v1/invites/${link.token}/join`, { memberId: benId });
     expect(joined.status).toBe(200);
     expect(joined.body.myMemberId).toBe(benId);
-    expect((await ben.get("/v1/me")).body.isGuest).toBe(true);
+    expect((await ben.get("/v1/me")).body.isGuest).toBe(false);
 
     const intruder = client();
-    await intruder.signInAsGuest();
+    await intruder.signUp("Intruder");
     const taken = await intruder.post(`/v1/invites/${link.token}/join`, { memberId: benId });
     expect(taken.status).toBe(409);
     expect(taken.body.error.code).toBe("ALREADY_CLAIMED");
-
-    // The guest creates a real account and keeps their place in the group.
-    await ben.signUp("Ben");
-    const me = (await ben.get("/v1/me")).body;
-    expect(me.isGuest).toBe(false);
-    const detail = await ben.get<GroupDetailDto>(`/v1/groups/${group.id}`);
-    expect(detail.status).toBe(200);
-    expect(detail.body.myMemberId).toBe(benId);
   });
 
   it("invalidates the old link when an admin resets it", async () => {

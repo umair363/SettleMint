@@ -89,7 +89,7 @@ const en = {
     q1: "Is SettleMint really free?",
     a1: "Yes. Groups, every kind of split, currencies and settling up are free with no limits. Receipt scanning is free up to a monthly allowance.",
     q2: "Do my friends need to install anything?",
-    a2: "No. Send them the group link; they open it in any browser and pick their name. They can create an account later to keep their groups.",
+    a2: "Not to be in your bills: add them by name and everything works. To open the group themselves they follow your link in any browser and sign up free, which takes a minute. Nothing to install.",
     q3: "Does SettleMint move money?",
     a3: "No. It keeps track of who owes whom and opens your payment app with the amount filled in. The money goes directly between you.",
     q4: "Which currencies and languages are supported?",
