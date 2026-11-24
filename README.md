@@ -71,6 +71,12 @@ A fast web app and a phone app, free to use and built to work offline.
 - **Get paid, not just reminded.** Add how you like to be paid (UPI, PayPal, Venmo, Cash App,
   Revolut, Monzo, Wise, IBAN, Raast, JazzCash, Easypaisa and more). Whoever settles with you
   gets a one-tap link with the amount filled in. SettleMint never touches the money.
+- **Your own QR code.** Upload the QR your bank or wallet app made (Raast, JazzCash, any bank).
+  It is read on your device, stored as text and redrawn sharply in the app's style; friends scan
+  it, or save and share it as a picture.
+- **Reminders that don't point fingers.** One tap sends a notification and an email that say a
+  payment is waiting, never who is asking. Add your payment details and QR if you like. One
+  reminder per person per day, and a one-click link stops the emails.
 - **Switch from Splitwise in a minute.** Import a group export; balances come over to the cent.
 
 **Trust**
@@ -150,8 +156,8 @@ npm run lint
 
 - **Unit and integration:** the money engine and every API route, on an in-memory Postgres.
 - **Browser (Playwright):** `web/e2e` covers the main flow, offline sync, live updates,
-  notifications, language switching and an axe-core accessibility audit of every screen in
-  both themes. See [web/e2e/README.md](web/e2e/README.md).
+  notifications, language switching, saved QR codes and reminders (including a scan test of the
+  redrawn code) and an axe-core accessibility audit of every screen in both themes. See [web/e2e/README.md](web/e2e/README.md).
 - **Phone app:** `mobile/e2e/smoke.mjs` drives the app's web build, which renders the same
   screens, from sign-in to settling up, in English and Arabic.
 
@@ -168,7 +174,7 @@ The `.env.example` file in each app documents them in full.
 | `AUTH_SECRET` | api | Signs sessions. 32+ random characters, required in production |
 | `WEB_ORIGINS` | api | Web origins allowed to call the API with cookies |
 | `COOKIE_DOMAIN` | api | Shares the session between the site and the API subdomain |
-| `RESEND_API_KEY` | api | Sends sign-in and confirmation emails |
+| `RESEND_API_KEY` | api | Sends sign-in, confirmation and reminder emails |
 | `GEMINI_API_KEY` | api | Turns on receipt scanning |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | api | Web push notifications |
 | `NEXT_PUBLIC_API_URL` | web | Where the API lives |

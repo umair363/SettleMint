@@ -86,6 +86,12 @@ try {
   await page.getByRole("radio", { name: "Balances" }).click();
   check(await see("Ben owes"), "suggested payment: Ben owes me");
   await shot("5-balances");
+  // Remind: Ben was added by name, so the screen offers his email or a shared message instead.
+  await page.getByRole("button", { name: "Remind" }).click();
+  check(await see("Remind Ben"), "reminder screen opens for the person who owes");
+  check(await see("It's a general reminder and doesn't say who is asking."), "reminder says it won't name who is asking");
+  check(await see("hasn't joined yet"), "an unreachable friend is offered an email or a shared message");
+  await page.getByRole("button", { name: "Close" }).click();
   await page.getByRole("button", { name: "Record" }).click();
   await page.getByTestId("record-payment").click();
   check(await see("Payment recorded"), "payment recorded");

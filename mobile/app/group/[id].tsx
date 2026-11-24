@@ -1,11 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useExpenses, useGroup, useSetExpenseDeleted, useSettlements } from "@settlemint/client/data/queries";
 import { dayLabel } from "@settlemint/client/text/dates";
-import { reminderText } from "@settlemint/client/text/reminder";
 import { ApiError, getCategoryMeta, type ExpenseDto, type GroupDetailDto, type SettlementDto, type TransferDto } from "@settlemint/shared";
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
-import { Pressable, Share, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { useLocale, useTranslations } from "use-intl";
 import { GroupIcon } from "@/features/rows";
 import { useTheme } from "@/theme/theme";
@@ -228,7 +227,7 @@ function BalancesTab({ group }: { group: GroupDetailDto }) {
                         <Button
                           variant="secondary"
                           icon="notifications-outline"
-                          onPress={() => void Share.share({ message: reminderText(group, tr, locale) })}
+                          onPress={() => router.push({ pathname: "/remind", params: { groupId: group.id, from: tr.fromMemberId, amount: String(tr.amount) } })}
                         >
                           {t("remind")}
                         </Button>

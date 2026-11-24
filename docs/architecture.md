@@ -25,6 +25,9 @@ compute the same numbers.
 - **Balances** fold a group's expenses and payments into one net figure per member.
 - **Debt simplification** suggests the fewest payments that settle a group. It is exact for
   groups of up to 16 people and falls back to a greedy match above that.
+- **Saved QR codes** are stored as the text inside them and redrawn on demand (`qr.ts`), so the
+  picture is crisp at any size and scans exactly like the original. The same module draws the
+  rounded version for the apps and the plain PNG for emails.
 - **Contracts** are Zod schemas for every request and response. The typed API client is built
   from them, and the API validates with the same schemas.
 

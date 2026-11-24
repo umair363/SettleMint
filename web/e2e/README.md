@@ -17,6 +17,7 @@ node e2e/live.mjs out                              # two browsers: changes appea
 node e2e/a11y.mjs out                              # axe-core WCAG 2.2 AA on every screen, both themes
 node e2e/push.mjs out                              # notifications: subscribe, worker shows them, real delivery
 node e2e/i18n.mjs out ../.e2e-shots/i18n           # Arabic right-to-left, language switching, Hindi
+node e2e/payqr.mjs out http://localhost:8001 "" ../.e2e-shots   # saved QR codes (the redrawn code must scan back) and reminders
 ```
 
 `flow.mjs` takes `phone|desktop` and `dark|light`. Both print PASS/FAIL lines or problems found.

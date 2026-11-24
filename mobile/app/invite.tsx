@@ -32,6 +32,8 @@ export default function Invite() {
   const link = useMutation({ mutationFn: (rotate: boolean) => api.groups.inviteLink(groupId!, rotate) });
   const { add } = useMemberActions(groupId ?? "");
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const emailOk = !email.trim() || /^\S+@\S+\.\S+$/.test(email.trim());
   const [copied, setCopied] = useState(false);
 
   const { mutate, isIdle } = link;
@@ -101,13 +103,14 @@ export default function Invite() {
           <Button
             variant="secondary"
             icon="person-add"
-            disabled={!name.trim()}
+            disabled={!name.trim() || !emailOk}
             loading={add.isPending}
             onPress={() =>
-              add.mutate(name.trim(), {
+              add.mutate(email.trim() ? { displayName: name.trim(), email: email.trim() } : { displayName: name.trim() }, {
                 onSuccess: () => {
                   toast.success(t("added", { name: name.trim() }));
                   setName("");
+                  setEmail("");
                 },
               })
             }
@@ -115,8 +118,18 @@ export default function Invite() {
             {t("add")}
           </Button>
         </View>
+        <Field
+          value={email}
+          onChangeText={setEmail}
+          placeholder={t("emailPlaceholder")}
+          accessibilityLabel={t("emailPlaceholder")}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          maxLength={254}
+        />
         <Text variant="caption" tone="subtle">
-          {t("addNote")}
+          {t("addNote")} {t("emailNote")}
         </Text>
       </View>
 

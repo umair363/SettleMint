@@ -24,7 +24,7 @@ src/v1/
   main.ts         entry point (migrations, keep-alive, listen)
   config.ts       reads and validates environment variables
   routes/         groups, members, invites, expenses, settlements, recurring, activity,
-                  me (profile, export, recently deleted), people, search, import, ai, push
+                  me (profile, export, recently deleted), people, remind, search, import, ai, push
   services/       ledger, activity, receipts, recurring bills, push, exchange rates
   db/             Drizzle schema and SQL migrations (run automatically on start)
   live.ts         server-sent events for live updates

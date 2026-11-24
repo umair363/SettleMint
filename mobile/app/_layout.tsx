@@ -70,6 +70,7 @@ function Navigator() {
           <Stack.Screen name="settle" options={sheet} />
           <Stack.Screen name="new-group" options={sheet} />
           <Stack.Screen name="invite" options={sheet} />
+          <Stack.Screen name="remind" options={sheet} />
           <Stack.Screen name="group-settings" options={sheet} />
           <Stack.Screen name="search" options={sheet} />
           <Stack.Screen name="import" options={sheet} />

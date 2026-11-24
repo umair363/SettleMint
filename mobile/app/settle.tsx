@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { minorToInputText } from "@settlemint/client/data/split-model";
 import { useCreateSettlement, useGroup } from "@settlemint/client/data/queries";
 import { todayIso } from "@settlemint/client/text/dates";
-import { buildPayAction, parseMoneyInput, type GroupDetailDto, type MemberDto } from "@settlemint/shared";
+import { buildPayAction, formatMoney, parseMoneyInput, type GroupDetailDto, type MemberDto } from "@settlemint/shared";
 import * as Clipboard from "expo-clipboard";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
@@ -10,6 +10,7 @@ import { Linking, Pressable, ScrollView, TextInput, View } from "react-native";
 import { useLocale, useTranslations } from "use-intl";
 import { uuidv7 } from "uuidv7";
 import { usePaymentKindText } from "@/features/payment-handles";
+import { QrModal } from "@/features/qr-modal";
 import { useTheme } from "@/theme/theme";
 import { Button, haptic, IconButton } from "@/ui/button";
 import { Field } from "@/ui/field";
@@ -26,6 +27,8 @@ function PayWith({ payee, amount, currency, note, onUsed }: { payee: MemberDto; 
   const t = useTranslations("payWith");
   const kindText = usePaymentKindText();
   const [copied, setCopied] = useState<string | null>(null);
+  const [qrOpen, setQrOpen] = useState<string | null>(null);
+  const locale = useLocale();
   if (payee.paymentHandles.length === 0) return null;
   return (
     <View style={{ gap: 8 }}>
@@ -36,6 +39,47 @@ function PayWith({ payee, amount, currency, note, onUsed }: { payee: MemberDto; 
         {payee.paymentHandles.map((h) => {
           const action = buildPayAction(h, { amount, currency, note, payeeName: payee.displayName });
           const label = kindText.label(h.kind);
+          if (action.qr !== undefined) {
+            return (
+              <View key={h.id} style={{ flexGrow: 1, flexBasis: "45%" }}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${action.label} ${t("showQr")}`}
+                  onPress={() => setQrOpen(h.id)}
+                  style={({ pressed }) => ({
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 8,
+                    minHeight: 52,
+                    padding: 10,
+                    borderRadius: radius.md,
+                    borderWidth: 1,
+                    borderColor: c.line,
+                    backgroundColor: pressed ? c.surface3 : c.surface2,
+                  })}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text variant="label" numberOfLines={1}>
+                      {action.label}
+                    </Text>
+                    <Text variant="caption" tone="muted">
+                      {t("showQr")}
+                    </Text>
+                  </View>
+                  <Ionicons name="qr-code-outline" size={18} color={c.fgSubtle} />
+                </Pressable>
+                <QrModal
+                  visible={qrOpen === h.id}
+                  onClose={() => setQrOpen(null)}
+                  value={action.qr}
+                  label={action.label}
+                  payeeName={payee.displayName}
+                  amountText={formatMoney(amount, currency, { locale })}
+                  onUsed={onUsed}
+                />
+              </View>
+            );
+          }
           return (
             <Pressable
               key={h.id}
