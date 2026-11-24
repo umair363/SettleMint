@@ -79,7 +79,7 @@ export function OfflineBanner() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -40, opacity: 0 }}
           transition={springSoft}
-          className="glass fixed start-1/2 top-[max(env(safe-area-inset-top),0.75rem)] z-50 flex -translate-x-1/2 items-center gap-2 rounded-full px-3.5 py-1.5 text-[13px] font-medium shadow-float rtl:translate-x-1/2"
+          className="glass-bar fixed start-1/2 top-[calc(env(safe-area-inset-top,0px)+0.5rem)] z-50 flex -translate-x-1/2 items-center gap-2 rounded-full px-3.5 py-1.5 text-[13px] font-medium shadow-float rtl:translate-x-1/2"
         >
           <CloudOff className="size-4 text-info" aria-hidden />
           {t("offline")}

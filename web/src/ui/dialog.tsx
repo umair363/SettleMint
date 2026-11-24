@@ -34,7 +34,7 @@ export function ConfirmDialog({
     <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
       <AlertDialog.Portal>
         <AlertDialog.Overlay className="fixed inset-0 z-50 bg-scrim backdrop-blur-[2px]" />
-        <AlertDialog.Content className="glass fixed start-1/2 top-1/2 z-50 w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-[var(--radius-xl)] p-6 shadow-float rtl:translate-x-1/2">
+        <AlertDialog.Content className="fixed start-1/2 top-1/2 z-50 w-[min(24rem,calc(100vw-2rem))] border border-line bg-bg-elevated -translate-x-1/2 -translate-y-1/2 rounded-[var(--radius-xl)] p-6 shadow-float rtl:translate-x-1/2">
           <AlertDialog.Title className="font-display text-lg font-semibold text-fg">{title}</AlertDialog.Title>
           {body ? (
             <AlertDialog.Description className="mt-2 text-[15px] text-fg-muted">{body}</AlertDialog.Description>

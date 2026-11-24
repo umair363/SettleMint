@@ -20,19 +20,23 @@ function ThemedToaster() {
     <Toaster
       theme={resolved}
       position="top-center"
-      offset={16}
+      // Below the notch / Dynamic Island: on an iPhone the top 50-60px belongs to the
+      // system, and a toast placed at 16px sat under it where it couldn't be read or tapped.
+      offset={{ top: "calc(env(safe-area-inset-top, 0px) + 12px)" }}
+      mobileOffset={{ top: "calc(env(safe-area-inset-top, 0px) + 12px)", left: 14, right: 14 }}
       toastOptions={{
         unstyled: true,
         classNames: {
           // Solid, not glass: toasts can land over a dimmed sheet backdrop, where
           // translucency would wash the text out.
           toast:
-            "flex w-full items-center gap-3 rounded-[var(--radius-lg)] border border-line-strong bg-bg-elevated px-4 py-3 text-fg shadow-float",
-          title: "text-[15px] font-semibold",
-          description: "text-[13px] text-fg-muted",
-          icon: "shrink-0 [&_svg]:size-5",
-          success: "[&_[data-icon]]:text-positive",
-          error: "[&_[data-icon]]:text-negative",
+            "flex w-full items-center gap-3 rounded-[24px] border border-line bg-bg-elevated py-2.5 ps-2.5 pe-4 text-fg shadow-float",
+          title: "text-[15px] font-[600] leading-snug",
+          description: "mt-0.5 text-[13px] leading-snug text-fg-muted",
+          // A round badge in the toast's own colour, so success and trouble read at a glance.
+          icon: "grid size-9 shrink-0 place-items-center rounded-full bg-surface-2 [&_svg]:size-[18px]",
+          success: "[&_[data-icon]]:bg-accent-soft [&_[data-icon]]:text-positive",
+          error: "[&_[data-icon]]:bg-negative-soft [&_[data-icon]]:text-negative",
           actionButton: "ms-auto shrink-0 rounded-full bg-accent px-3.5 py-1.5 text-sm font-semibold text-accent-fg",
           cancelButton: "shrink-0 rounded-full bg-surface-3 px-3 py-1.5 text-sm",
         },
