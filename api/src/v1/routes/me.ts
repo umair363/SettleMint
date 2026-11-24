@@ -14,6 +14,7 @@ import {
   type TrashItemDto,
 } from "@settlemint/shared";
 import { requireUser } from "../app";
+import { AppError } from "../errors";
 import type { DbOrTx } from "../db/client";
 import { activityEvents, expenses, groups, members, paymentHandles, settlements, user } from "../db/schema";
 import { activityToDto, expensesToDto, loadMembers, settlementToDto } from "../services/dto";
@@ -41,6 +42,7 @@ export const meRoutes: FastifyPluginAsyncZod = async (app) => {
       isGuest: Boolean(u.isAnonymous),
       defaultCurrency: u.defaultCurrency,
       locale: u.locale,
+      username: u.username,
     };
   };
 
@@ -123,16 +125,27 @@ export const meRoutes: FastifyPluginAsyncZod = async (app) => {
 
   app.patch("/me", { schema: { body: updateMeBody } }, async (req) => {
     const me = requireUser(req);
-    const { name, defaultCurrency, locale } = req.body;
-    await app.db
+    const { name, defaultCurrency, locale, username } = req.body;
+    if (username) {
+      const [taken] = await app.db.select({ id: user.id }).from(user).where(and(eq(user.username, username), ne(user.id, me.id))).limit(1);
+      if (taken) throw new AppError(409, "CONFLICT", "That username is taken");
+    }
+    try {
+      await app.db
       .update(user)
       .set({
         ...(name !== undefined ? { name } : {}),
         ...(defaultCurrency !== undefined ? { defaultCurrency } : {}),
         ...(locale !== undefined ? { locale } : {}),
+        ...(username !== undefined ? { username } : {}),
         updatedAt: new Date(),
       })
       .where(eq(user.id, me.id));
+    } catch (err) {
+      // Two people picking the same name at the same moment.
+      if (username && /unique|duplicate/i.test(String((err as Error).message))) throw new AppError(409, "CONFLICT", "That username is taken");
+      throw err;
+    }
     return load(me.id);
   });
 

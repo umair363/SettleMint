@@ -1,3 +1,4 @@
+import { FindFriend } from "@/features/friends";
 import { Ionicons } from "@expo/vector-icons";
 import { useCreateGroup, useMe } from "@settlemint/client/data/queries";
 import { router, useLocalSearchParams } from "expo-router";
@@ -70,6 +71,7 @@ export default function NewGroup() {
         </Button>
       }
     >
+      {friend && <FindFriend />}
       {!friend && (
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} accessibilityRole="radiogroup" accessibilityLabel={t("kind")}>
         {TYPES.map((k) => {

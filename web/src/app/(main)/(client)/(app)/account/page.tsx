@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Coins, Download, History, LogOut, Monitor, Moon, ScanLine, Send, Share, ShieldCheck, Sun, UserRound } from "@/ui/icons";
+import { AtSign, Coins, Download, History, LogOut, Monitor, Moon, ScanLine, Send, Share, ShieldCheck, Sun, UserRound } from "@/ui/icons";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { LanguageRow } from "@/features/account/language-card";
 import { NotificationsRow } from "@/features/account/notifications-card";
 import { PaymentHandlesCard } from "@/features/account/payment-handles-card";
 import { YourDataRows } from "@/features/account/your-data-card";
+import { UsernameSheet } from "@/features/account/username-sheet";
 import { MyQrSheet } from "@/features/payments/my-qr-sheet";
 import { api } from "@/lib/api";
 import { useInstall } from "@/features/pwa/pwa";
@@ -133,6 +134,7 @@ export default function AccountPage() {
   const [nameOpen, setNameOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
   const [myQrOpen, setMyQrOpen] = useState(false);
+  const [usernameOpen, setUsernameOpen] = useState(false);
   const handles = useQuery({ queryKey: ["payment-handles"], queryFn: api.me.paymentHandles, enabled: !!me.data && !me.data.isGuest });
   const myQrs = (handles.data ?? []).filter((h) => h.kind === "qr").map((h) => ({ id: h.id, value: h.value, label: h.label || "QR" }));
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -140,6 +142,7 @@ export default function AccountPage() {
   const t = useTranslations("account");
   const tp = useTranslations("payments");
   const tq = useTranslations("myQr");
+  const tf = useTranslations("friends");
   const tt = useTranslations("trash");
   const tn = useTranslations("yourData");
 
@@ -198,6 +201,19 @@ export default function AccountPage() {
               setNameOpen(true);
             }}
           />
+          {!me.data.isGuest && (
+            <ListRow
+              leading={
+                <IconTile>
+                  <AtSign />
+                </IconTile>
+              }
+              title={tf("usernameRow")}
+              trailing={<span className="text-[15px] text-fg-muted">{me.data.username ? `@${me.data.username}` : tf("usernameNone")}</span>}
+              chevron
+              onClick={() => setUsernameOpen(true)}
+            />
+          )}
           <ListRow
             leading={
               <IconTile>
@@ -292,6 +308,7 @@ export default function AccountPage() {
       <Sheet open={payOpen} onOpenChange={setPayOpen} title={tp("title")} description={tp("body")} showDescription tall>
         <PaymentHandlesCard bare />
       </Sheet>
+      {usernameOpen && <UsernameSheet open={usernameOpen} onOpenChange={setUsernameOpen} current={me.data.username} />}
       <MyQrSheet open={myQrOpen} onOpenChange={setMyQrOpen} qrs={myQrs} name={me.data.name} />
       <CurrencyPicker
         open={pickerOpen}

@@ -9,6 +9,7 @@ import { Alert, Linking, Modal, Platform, Pressable, Switch, View } from "react-
 import { router } from "expo-router";
 import { useTranslations } from "use-intl";
 import { appLockAvailable, isAppLockOn, setAppLock } from "@/features/app-lock";
+import { UsernameRow } from "@/features/friends";
 import { ShowMyQrRow } from "@/features/my-qr-modal";
 import { PaymentHandlesCard } from "@/features/payment-handles";
 import { pushState, turnPushOff, turnPushOn, type PushState } from "@/features/push";
@@ -452,6 +453,7 @@ export default function Account() {
       </View>
 
       <DeviceCard />
+      {!me.data.isGuest && <UsernameRow current={me.data.username} />}
       {!me.data.isGuest && <PaymentHandlesCard />}
       {!me.data.isGuest && <ShowMyQrRow name={me.data.name} />}
       <YourData />

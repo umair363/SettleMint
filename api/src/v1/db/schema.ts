@@ -36,6 +36,8 @@ export const user = pgTable("user", {
   isAnonymous: boolean("is_anonymous").default(false),
   defaultCurrency: varchar("default_currency", { length: 3 }),
   locale: varchar("locale", { length: 35 }),
+  /** Lower case handle friends can add them by (optional, unique). */
+  username: varchar("username", { length: 20 }).unique(),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
@@ -412,3 +414,36 @@ export const reminderMutes = pgTable("reminder_mutes", {
   email: varchar("email", { length: 254 }).primaryKey(),
   createdAt: createdAt(),
 });
+
+// ─── Friends ───────────────────────────────────────────────────────────────
+
+/**
+ * A request to be someone's friend, or an invitation sent to an email with no
+ * account yet. Accepting a request creates the one-to-one group the two share.
+ * Declined rows stay, so the same person can't keep asking (they are never told).
+ */
+export const friendRequests = pgTable(
+  "friend_requests",
+  {
+    id: uuid("id").primaryKey(),
+    fromUserId: text("from_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    /** Null when the invitation went to an email address with no account. */
+    toUserId: text("to_user_id").references(() => user.id, { onDelete: "cascade" }),
+    /** What the sender typed (an email or @username); only they ever see it. */
+    label: varchar("label", { length: 254 }).notNull(),
+    status: varchar("status", { length: 8 }).$type<"pending" | "invited" | "accepted" | "declined">().notNull().default("pending"),
+    /** The one-to-one group, once there is one. */
+    groupId: uuid("group_id").references(() => groups.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+    respondedAt: ts("responded_at"),
+  },
+  (t) => [
+    index("friend_requests_to_idx").on(t.toUserId, t.status),
+    index("friend_requests_from_idx").on(t.fromUserId, t.createdAt),
+    uniqueIndex("friend_requests_pair_uq")
+      .on(t.fromUserId, t.toUserId)
+      .where(sql`${t.toUserId} is not null`),
+  ],
+);

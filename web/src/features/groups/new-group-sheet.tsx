@@ -16,6 +16,7 @@ import { springSnappy } from "@/ui/motion";
 import { Sheet } from "@/ui/sheet";
 import { groupGlyph } from "@settlemint/client/design/glyphs";
 import { Glyph } from "@/ui/icons";
+import { FindFriend } from "@/features/people/find-friend";
 
 const TYPES = ["trip", "home", "couple", "event", "other"] as const;
 type GroupType = (typeof TYPES)[number] | "direct";
@@ -31,10 +32,18 @@ export function NewGroupSheet({ open, onOpenChange }: { open: boolean; onOpenCha
 
 /** Splitting with one person: just their name. They don't need the app. */
 export function NewFriendSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
-  const t = useTranslations("newGroup");
+  const tf = useTranslations("friends");
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} title={t("friendTitle")} description={t("friendBody")} showDescription>
-      {open && <NewGroupForm friend onDone={() => onOpenChange(false)} />}
+    <Sheet open={open} onOpenChange={onOpenChange} title={tf("title")} description={tf("body")} showDescription tall>
+      {open && (
+        <div className="space-y-7 pb-2 pt-1">
+          <FindFriend />
+          <div className="space-y-3 border-t border-line pt-5">
+            <p className="text-[15px] font-[600]">{tf("byName")}</p>
+            <NewGroupForm friend onDone={() => onOpenChange(false)} />
+          </div>
+        </div>
+      )}
     </Sheet>
   );
 }

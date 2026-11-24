@@ -170,7 +170,19 @@ export const updateSettlementBody = z
 
 // ─── Me ────────────────────────────────────────────────────────────────────
 
+/** Names that could be mistaken for the app or its staff. */
+export const RESERVED_USERNAMES = ["admin", "administrator", "api", "app", "help", "me", "null", "official", "root", "settlemint", "staff", "support", "system", "team", "undefined", "you"];
+
+/** A friend-finding handle: lower case letters, numbers and underscores, 3 to 20 long. */
+export const zUsername = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(/^[a-z0-9_]{3,20}$/, { message: "3 to 20 letters, numbers or underscores" })
+  .refine((u) => !RESERVED_USERNAMES.includes(u), { message: "That name is reserved" });
+
 export const updateMeBody = z.object({
+  username: zUsername.nullable().optional(),
   name: zName(60).optional(),
   defaultCurrency: zCurrency.nullable().optional(),
   locale: z.string().trim().min(2).max(35).nullable().optional(),
@@ -188,6 +200,9 @@ export const zPaymentHandle = z
   });
 
 /** Replace the whole list (order = preference). */
+/** Add a friend by exactly what they signed up with: an email address or a @username. */
+export const addFriendBody = z.object({ to: z.string().trim().min(2).max(254) });
+
 export const putPaymentHandlesBody = z.object({
   handles: z
     .array(zPaymentHandle)
@@ -218,6 +233,7 @@ export type UpdateGroupBody = z.input<typeof updateGroupBody>;
 export type AddMemberBody = z.input<typeof addMemberBody>;
 export type UpdateMemberBody = z.input<typeof updateMemberBody>;
 export type RemindBody = z.input<typeof remindBody>;
+export type AddFriendBody = z.input<typeof addFriendBody>;
 export type JoinInviteBody = z.input<typeof joinInviteBody>;
 export type CreateExpenseBody = z.input<typeof createExpenseBody>;
 export type UpdateExpenseBody = z.input<typeof updateExpenseBody>;

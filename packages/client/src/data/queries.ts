@@ -47,6 +47,7 @@ export const keys = {
   activity: ["activity"] as const,
   trash: ["trash"] as const,
   people: ["people"] as const,
+  friendRequests: ["friend-requests"] as const,
   groupActivity: (groupId: string, entityId?: string) => ["activity", groupId, entityId ?? "all"] as const,
   invite: (token: string) => ["invite", token] as const,
 };
@@ -413,4 +414,44 @@ export function totalsByCurrency(groups: GroupSummaryDto[] | undefined) {
 /** Send a payment reminder (a notification and an email) to someone who owes me. */
 export function useRemind(groupId: string) {
   return useMutation({ mutationFn: (body: RemindBody) => api.members.remind(groupId, body) });
+}
+
+/** Friend requests waiting for my answer, and the ones I sent. */
+export function useFriendRequests() {
+  return useQuery({ queryKey: keys.friendRequests, queryFn: () => api.friends.requests(), refetchInterval: 60_000 });
+}
+
+/** Add a friend by exactly their email or @username. */
+export function useAddFriend() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (to: string) => api.friends.add({ to }),
+    onSettled: () => qc.invalidateQueries({ queryKey: keys.friendRequests }),
+  });
+}
+
+/** Accept (which creates the one-to-one group) or decline a request. */
+export function useAnswerFriendRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, accept }: { id: string; accept: boolean }) => {
+      if (accept) await api.friends.accept(id);
+      else await api.friends.decline(id);
+    },
+    onSettled: () =>
+      Promise.all([
+        qc.invalidateQueries({ queryKey: keys.friendRequests }),
+        qc.invalidateQueries({ queryKey: keys.groups }),
+        qc.invalidateQueries({ queryKey: keys.people }),
+      ]),
+  });
+}
+
+/** Take back a request I sent. */
+export function useCancelFriendRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.friends.cancel(id),
+    onSettled: () => qc.invalidateQueries({ queryKey: keys.friendRequests }),
+  });
 }

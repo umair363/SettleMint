@@ -1,4 +1,5 @@
 import type {
+  AddFriendBody,
   AddMemberBody,
   RemindBody,
   UpdateMemberBody,
@@ -15,9 +16,11 @@ import type {
 } from "./contracts";
 import type {
   ActivityDto,
+  AddFriendResultDto,
   ApiErrorBody,
   ApiErrorCode,
   ExpenseDto,
+  FriendRequestsDto,
   GroupDetailDto,
   GroupSummaryDto,
   ImportResultDto,
@@ -161,6 +164,13 @@ export function createApiClient(opts: ApiClientOptions) {
         patch<MemberDto[]>(`/groups/${groupId}/members/${memberId}`, body),
       remind: (groupId: string, body: RemindBody) => post<ReminderResultDto>(`/groups/${groupId}/remind`, body),
       remove: (groupId: string, memberId: string) => del<MemberDto[]>(`/groups/${groupId}/members/${memberId}`),
+    },
+    friends: {
+      requests: () => get<FriendRequestsDto>("/friends/requests"),
+      add: (body: AddFriendBody) => post<AddFriendResultDto>("/friends/requests", body),
+      accept: (id: string) => post<{ groupId: string }>(`/friends/requests/${id}/accept`),
+      decline: (id: string) => post<void>(`/friends/requests/${id}/decline`),
+      cancel: (id: string) => del<void>(`/friends/requests/${id}`),
     },
     invites: {
       preview: (token: string) => get<InvitePreviewDto>(`/invites/${token}`),

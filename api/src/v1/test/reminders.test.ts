@@ -210,7 +210,7 @@ describe("payment reminders", () => {
     const opened = await t.app.inject({ method: "GET", url: path(link) });
     expect(opened.statusCode).toBe(200);
     expect(opened.headers["content-type"]).toContain("text/html");
-    expect(opened.body).toContain("Stop reminder emails");
+    expect(opened.body).toContain("Stop these emails");
 
     // A forged or altered link does nothing.
     const forged = await t.app.inject({ method: "POST", url: path(link).replace(/t=[0-9a-f]{40}/, `t=${"0".repeat(40)}`) });

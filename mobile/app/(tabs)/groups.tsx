@@ -1,3 +1,4 @@
+import { FriendRequests } from "@/features/friends";
 import { useGroups, usePeople } from "@settlemint/client/data/queries";
 import { listablePeople } from "@settlemint/client/data/people";
 import { router } from "expo-router";
@@ -33,6 +34,7 @@ export default function Groups() {
       onRefresh={() => void groups.refetch()}
       refreshing={groups.isRefetching}
     >
+      <FriendRequests />
       {groups.isPending ? (
         <Loading />
       ) : active.length === 0 && friends.length === 0 ? (

@@ -45,6 +45,34 @@ export interface Me {
   isGuest: boolean;
   defaultCurrency: string | null;
   locale: string | null;
+  /** The handle friends can add them by, once they pick one. */
+  username: string | null;
+}
+
+/** Someone who asked to be my friend. */
+export interface FriendRequestDto {
+  id: string;
+  name: string;
+  username: string | null;
+  image: string | null;
+  createdAt: string;
+}
+
+/** A request I sent that hasn't been answered; `label` is what I typed. */
+export interface SentFriendRequestDto {
+  id: string;
+  label: string;
+  createdAt: string;
+}
+
+export interface FriendRequestsDto {
+  incoming: FriendRequestDto[];
+  outgoing: SentFriendRequestDto[];
+}
+
+export interface AddFriendResultDto {
+  /** Always "sent": the app never says whether an email has an account. */
+  state: "sent";
 }
 
 export interface PaymentHandleDto {

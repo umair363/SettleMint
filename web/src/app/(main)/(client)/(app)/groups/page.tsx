@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "use-intl";
 import { Suspense, useState } from "react";
 import { GroupRow } from "@/features/groups/group-row";
+import { FriendRequests } from "@/features/people/friend-requests";
 import { listablePeople, PersonRow } from "@/features/people/people";
 import { ImportSheet } from "@/features/groups/import-sheet";
 import { NewFriendSheet, NewGroupSheet } from "@/features/groups/new-group-sheet";
@@ -54,6 +55,7 @@ function Groups() {
         }
       />
       <PageBody>
+        <FriendRequests />
         {groups.isPending ? (
           <Card>
             <SkeletonRows count={4} />

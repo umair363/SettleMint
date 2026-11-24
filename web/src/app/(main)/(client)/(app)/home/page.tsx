@@ -9,6 +9,7 @@ import { GroupRow } from "@/features/groups/group-row";
 import { listablePeople, PersonRow } from "@/features/people/people";
 import { NewFriendSheet, NewGroupSheet } from "@/features/groups/new-group-sheet";
 import { SearchButton } from "@/features/search/search-palette";
+import { FriendRequests } from "@/features/people/friend-requests";
 import { PageBody } from "@/features/shell/page-header";
 import { totalsByCurrency, useActivity, useGroups, useMe, usePeople } from "@settlemint/client/data/queries";
 import { Avatar } from "@/ui/avatar";
@@ -118,6 +119,7 @@ export default function HomePage() {
         )}
       </header>
       <PageBody className="pt-6">
+        <FriendRequests />
         {isNew ? (
           <Card>
             <EmptyState

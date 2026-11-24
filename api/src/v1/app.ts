@@ -21,6 +21,7 @@ import { peopleRoutes } from "./routes/people";
 import { memberRoutes } from "./routes/members";
 import { aiRoutes } from "./routes/ai";
 import { pushRoutes } from "./routes/push";
+import { friendRoutes } from "./routes/friends";
 import { remindRoutes, reminderMuteRoutes } from "./routes/remind";
 import { combinedSender, createNotifier, expoPushSender, webPushSender, type PushSender } from "./services/push";
 import { importRoutes } from "./routes/import";
@@ -199,6 +200,7 @@ export async function buildApp({ db, config, mailer, logger = true, receiptReade
       await v1.register(aiRoutes);
       await v1.register(pushRoutes);
       await v1.register(remindRoutes);
+      await v1.register(friendRoutes);
     },
     { prefix: "/v1" },
   );

@@ -1,3 +1,4 @@
+import { FriendRequests } from "@/features/friends";
 import { totalsByCurrency, useActivity, useGroups, useMe, usePeople } from "@settlemint/client/data/queries";
 import { listablePeople } from "@settlemint/client/data/people";
 import { router } from "expo-router";
@@ -84,6 +85,7 @@ export default function Home() {
       onRefresh={refresh}
       refreshing={groups.isRefetching}
     >
+      <FriendRequests />
       {isNew ? (
         <Card>
           <Empty icon="sparkles" title={t("firstBillTitle")} body={t("firstBillBody")} />
