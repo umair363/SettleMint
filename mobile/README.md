@@ -17,14 +17,35 @@ A phone can't reach `localhost` on your computer, so set `EXPO_PUBLIC_API_URL` i
 to your computer's network address (for example `http://192.168.1.20:8001`) and start the API
 with `npm run dev:v1`.
 
-**Use a development build rather than Expo Go.** Expo Go supports only one SDK at a time and
-usually lags a new release. A development build is compiled against this project's SDK:
+### Try it on an iPhone with Expo Go (free, no Apple account)
+
+Expo Go is a free app from the App Store that runs the project straight from your computer.
+It supports one SDK at a time (this project uses SDK 57); if it says the project is
+incompatible, update Expo Go from the App Store.
+
+1. Put the phone and the computer on the same Wi-Fi.
+2. Find the computer's address (`ipconfig`, the IPv4 line, for example `192.168.1.20`).
+3. In `mobile/.env` set `EXPO_PUBLIC_API_URL=http://192.168.1.20:8001` (your address).
+4. Start the API on the computer. It must run in development mode, because the real API
+   deliberately refuses Expo Go's `exp://` origin. Skip the emailed code and rate limits locally:
+   ```powershell
+   $env:EMAIL_VERIFICATION = "off"; $env:AUTH_RATE_LIMIT = "off"; npm run dev:v1
+   ```
+5. In a second terminal: `npm run dev:mobile`. Scan the QR code with the iPhone's Camera app
+   and tap the banner; it opens in Expo Go.
+6. If Windows asks, let Node.js through the firewall on private networks. If the phone can't
+   reach the computer (some Wi-Fi blocks it), use `npx expo start --tunnel` for the app, and
+   expose the API with a Cloudflare quick tunnel (`cloudflared tunnel --url http://localhost:8001`),
+   then put that `https://` address in `EXPO_PUBLIC_API_URL`.
+
+What to expect in Expo Go: sign-in, groups, expenses, settling, friends, saved and made QR
+codes, reminders and sharing all run the real code. Push notifications, the app's own icon and
+the Google sign-in return link are not reliable there. A **development build** (compiled
+against this SDK; it needs an Apple Developer account for iPhones) covers those:
 
 ```bash
-npx eas-cli build --platform android --profile development
+npx eas-cli build --platform ios --profile development
 ```
-
-Notifications, the app lock and the share sheet need a real device.
 
 ### Browser preview
 
@@ -63,7 +84,7 @@ npx expo export --platform web --output-dir ../mobile-web
 node e2e/smoke.mjs ../mobile-web
 ```
 
-The smoke test signs in as a guest and runs the core journey (new group, expense, balance,
+The smoke test creates an account and runs the core journey (new group, expense, balance,
 payment, rename, search, add a friend, recently deleted) and then switches to Arabic to check
 right-to-left layout. It needs the API running on port 8001 with the test origin allowed; see
 `web/e2e/README.md`.

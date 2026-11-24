@@ -25,7 +25,7 @@ services:
       # e.g. https://api.settlemint.online
       - key: API_URL
         sync: false
-      # e.g. https://app.settlemint.online
+      # e.g. https://www.settlemint.online
       - key: WEB_ORIGINS
         sync: false
       # e.g. .settlemint.online (app and API must share this domain for sign-in cookies)
