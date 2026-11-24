@@ -43,7 +43,7 @@ export function PageHeader({
         aria-hidden={!compact}
         inert={!compact}
         className={cn(
-          "glass safe-top fixed inset-x-0 top-0 z-30 transition-[opacity,transform] duration-[var(--dur-state)] ease-[var(--ease-standard)] lg:start-[272px]",
+          "glass-bar safe-top fixed inset-x-0 top-0 z-30 transition-[opacity,transform] duration-[var(--dur-state)] ease-[var(--ease-standard)] lg:start-[272px]",
           compact ? "opacity-100" : "pointer-events-none -translate-y-1 opacity-0",
         )}
       >

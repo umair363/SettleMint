@@ -39,6 +39,8 @@ export function AmountDisplay({
     return parts.find((p) => p.type === "currency")?.value ?? currency;
   }, [locale, currency]);
 
+  // What the chip shows is also what a screen reader hears first.
+  const chip = symbol !== currency ? `${symbol} ${currency}` : currency;
   const shown = expr === "" ? "0" : expr.replace(/\./g, dec).replace(/([+-])/g, " $1 ");
   const size = shown.length > 14 ? "text-3xl" : shown.length > 9 ? "text-4xl" : "text-6xl";
 
@@ -50,9 +52,9 @@ export function AmountDisplay({
           onClick={onCurrencyClick}
           disabled={!onCurrencyClick}
           className="rounded-full bg-surface-2 px-2.5 py-1 text-sm font-semibold text-fg-muted transition-colors enabled:hover:bg-surface-3 enabled:hover:text-fg"
-          aria-label={t("currencyLabel", { currency })}
+          aria-label={t("currencyLabel", { currency: chip })}
         >
-          {symbol !== currency ? `${symbol} ${currency}` : currency}
+          {chip}
         </button>
         <span
           className={cn(

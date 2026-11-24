@@ -66,8 +66,10 @@ function BottomNav({ pathname }: { pathname: string }) {
   const t = useTranslations("nav");
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(env(safe-area-inset-bottom),12px)] lg:hidden">
+      {/* Page content fades out before it reaches the bar, instead of running into it. */}
+      <div aria-hidden className="absolute inset-x-0 bottom-0 -z-10 h-[calc(7rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-bg from-30% to-transparent" />
       <div className="mx-auto flex max-w-md items-center gap-2.5">
-        <nav aria-label={t("main")} className="glass pointer-events-auto flex h-16 flex-1 items-center rounded-full p-1.5">
+        <nav aria-label={t("main")} className="glass-bar pointer-events-auto flex h-16 flex-1 items-center rounded-full p-1.5">
           {NAV.map((n) => {
             const active = n.match(pathname);
             const Icon = n.icon;
