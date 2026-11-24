@@ -170,6 +170,14 @@ const de: Messages = {
     paste: "Füge sie in eine Nachricht ein.",
     copyFailed: "Erinnerung konnte nicht kopiert werden",
   },
+  myQr: {
+    title: "Mein QR-Code",
+    show: "Meinen QR zeigen",
+    hint: "Lass jemanden ihn mit der Banking-App scannen, um dich zu bezahlen.",
+    hintAmount: "Er wird gescannt, dann gibt man {amount} ein.",
+    pick: "Welcher QR",
+    footer: "Mit der App deiner Bank scannen",
+  },
   remindSheet: {
     title: "{name} erinnern",
     body: "{amount} zu begleichen in „{group}“.",

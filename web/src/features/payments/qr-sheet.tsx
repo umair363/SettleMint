@@ -37,7 +37,7 @@ export function QrSheet({
   const run = async (mode: "save" | "share") => {
     setBusy(mode);
     try {
-      const blob = await qrCardBlob(value, `${label} · ${payeeName}`);
+      const blob = await qrCardBlob(value, label, { name: payeeName });
       const result = await shareOrSaveQr(blob, `${payeeName}-${label}`, { share: mode === "share" });
       if (result !== "cancelled") onUsed?.();
     } catch {

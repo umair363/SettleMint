@@ -174,6 +174,14 @@ const ar: Messages = {
     paste: "الصقه في رسالة.",
     copyFailed: "تعذّر نسخ التذكير",
   },
+  myQr: {
+    title: "رمز QR الخاص بي",
+    show: "عرض رمز QR الخاص بي",
+    hint: "دع شخصًا يمسحه بتطبيق مصرفه ليدفع لك.",
+    hintAmount: "يمسحه ثم يُدخل {amount}.",
+    pick: "أي رمز",
+    footer: "امسح الرمز بتطبيق مصرفك",
+  },
   remindSheet: {
     title: "تذكير {name}",
     body: "{amount} بانتظار التسوية في «{group}».",

@@ -169,6 +169,14 @@ const es: Messages = {
     paste: "Pégalo en un mensaje.",
     copyFailed: "No se pudo copiar el recordatorio",
   },
+  myQr: {
+    title: "Mi código QR",
+    show: "Mostrar mi QR",
+    hint: "Deja que alguien lo escanee con su app de banco para pagarte.",
+    hintAmount: "Lo escanean y luego introducen {amount}.",
+    pick: "Qué QR",
+    footer: "Escanea con tu app de banco",
+  },
   remindSheet: {
     title: "Recordar a {name}",
     body: "{amount} por saldar en «{group}».",

@@ -9,6 +9,7 @@ import { Alert, Linking, Modal, Platform, Pressable, Switch, View } from "react-
 import { router } from "expo-router";
 import { useTranslations } from "use-intl";
 import { appLockAvailable, isAppLockOn, setAppLock } from "@/features/app-lock";
+import { ShowMyQrRow } from "@/features/my-qr-modal";
 import { PaymentHandlesCard } from "@/features/payment-handles";
 import { pushState, turnPushOff, turnPushOn, type PushState } from "@/features/push";
 import { deviceTags, useLanguage } from "@/i18n/i18n";
@@ -452,6 +453,7 @@ export default function Account() {
 
       <DeviceCard />
       {!me.data.isGuest && <PaymentHandlesCard />}
+      {!me.data.isGuest && <ShowMyQrRow name={me.data.name} />}
       <YourData />
 
       <Button variant="secondary" size="lg" icon="log-out-outline" onPress={() => void signOut(qc)}>

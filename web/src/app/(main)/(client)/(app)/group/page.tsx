@@ -2,12 +2,13 @@
 
 import {
   ApiError,
+  formatMoney,
   type ExpenseDto,
   type GroupDetailDto,
   type SettlementDto,
   type TransferDto,
 } from "@settlemint/shared";
-import { ArrowRightLeft, ChevronRight, Inbox, Plus, Repeat, Send, Settings, UserPlus } from "@/ui/icons";
+import { ArrowRightLeft, ChevronRight, Inbox, Plus, Repeat, ScanLine, Send, Settings, UserPlus } from "@/ui/icons";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -18,6 +19,7 @@ import { ExpenseDetailSheet } from "@/features/groups/expense-detail-sheet";
 import { GroupSettingsSheet } from "@/features/groups/group-settings-sheet";
 import { InviteSheet } from "@/features/groups/invite-sheet";
 import { RemindSheet } from "@/features/groups/remind-sheet";
+import { MyQrSheet } from "@/features/payments/my-qr-sheet";
 import { RepeatingSection } from "@/features/groups/repeating-section";
 import { SettleSheet, type SettleTarget } from "@/features/groups/settle-sheet";
 import { PageBody, PageHeader } from "@/features/shell/page-header";
@@ -240,11 +242,23 @@ function BalancesTab({
   onSettle: (t: SettleTarget) => void;
   onRemind: (t: TransferDto) => void;
 }) {
+  const locale = useLocale();
+  const tq = useTranslations("myQr");
+  const [qrFor, setQrFor] = useState<TransferDto | null>(null);
+  const meMember = group.members.find((m) => m.isMe);
+  const myQrs = (meMember?.paymentHandles ?? []).filter((h) => h.kind === "qr").map((h) => ({ id: h.id, value: h.value, label: h.label || "QR" }));
   const t = useTranslations("group");
   const trecap = useTranslations("recap");
   const people = group.members.filter((m) => !m.left || (group.balances[m.id] ?? 0) !== 0);
   return (
     <div className="space-y-6">
+      <MyQrSheet
+        open={qrFor !== null}
+        onOpenChange={(o) => !o && setQrFor(null)}
+        qrs={myQrs}
+        name={meMember?.displayName ?? ""}
+        amountText={qrFor ? formatMoney(qrFor.amount, group.currency, { locale }) : undefined}
+      />
       <section>
         <SectionHeader title={group.simplifyDebts ? t("suggestedPayments") : t("whoOwesWhom")} />
         {group.transfers.length === 0 ? (
@@ -284,6 +298,11 @@ function BalancesTab({
                       {tr.toMemberId === group.myMemberId && (
                         <Button size="sm" variant="ghost" leading={<Send className="size-4" />} onClick={() => onRemind(tr)}>
                           {t("remind")}
+                        </Button>
+                      )}
+                      {tr.toMemberId === group.myMemberId && myQrs.length > 0 && (
+                        <Button size="sm" variant="ghost" leading={<ScanLine className="size-4" />} onClick={() => setQrFor(tr)}>
+                          {tq("show")}
                         </Button>
                       )}
                     </div>

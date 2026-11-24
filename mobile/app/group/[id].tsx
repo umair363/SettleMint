@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useExpenses, useGroup, useSetExpenseDeleted, useSettlements } from "@settlemint/client/data/queries";
 import { dayLabel } from "@settlemint/client/text/dates";
-import { ApiError, getCategoryMeta, type ExpenseDto, type GroupDetailDto, type SettlementDto, type TransferDto } from "@settlemint/shared";
+import { ApiError, formatMoney, getCategoryMeta, type ExpenseDto, type GroupDetailDto, type SettlementDto, type TransferDto } from "@settlemint/shared";
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
+import { MyQrModal } from "@/features/my-qr-modal";
 import { Pressable, View } from "react-native";
 import { useLocale, useTranslations } from "use-intl";
 import { GroupIcon } from "@/features/rows";
@@ -196,9 +197,20 @@ function BalancesTab({ group }: { group: GroupDetailDto }) {
   const trecap = useTranslations("recap");
   const locale = useLocale();
   const active = group.members.filter((m) => !m.left || (group.balances[m.id] ?? 0) !== 0);
+  const tq = useTranslations("myQr");
+  const [qrFor, setQrFor] = useState<TransferDto | null>(null);
+  const meMember = group.members.find((m) => m.isMe);
+  const myQrs = (meMember?.paymentHandles ?? []).filter((h) => h.kind === "qr").map((h) => ({ id: h.id, value: h.value, label: h.label || "QR" }));
 
   return (
     <View style={{ gap: 12 }}>
+      <MyQrModal
+        visible={qrFor !== null}
+        onClose={() => setQrFor(null)}
+        qrs={myQrs}
+        name={meMember?.displayName ?? ""}
+        amountText={qrFor ? formatMoney(qrFor.amount, group.currency, { locale }) : undefined}
+      />
       <View>
         <SectionHeader title={group.simplifyDebts ? t("suggestedPayments") : t("whoOwesWhom")} />
         <Card padded={false}>
@@ -223,6 +235,11 @@ function BalancesTab({ group }: { group: GroupDetailDto }) {
                       <Money minor={tr.amount} currency={group.currency} variant="bodyStrong" tone={dir === "out" ? "negative" : dir === "in" ? "positive" : "fg"} />
                     </View>
                     <View style={{ flexDirection: "row", gap: 8, justifyContent: "flex-end" }}>
+                      {dir === "in" && myQrs.length > 0 && (
+                        <Button variant="ghost" icon="qr-code-outline" onPress={() => setQrFor(tr)}>
+                          {tq("show")}
+                        </Button>
+                      )}
                       {dir === "in" && (
                         <Button
                           variant="secondary"

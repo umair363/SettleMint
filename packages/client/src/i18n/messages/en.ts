@@ -174,6 +174,14 @@ const en = {
     paste: "Paste it into a message.",
     copyFailed: "Couldn't copy the reminder",
   },
+  myQr: {
+    title: "My QR code",
+    show: "Show my QR",
+    hint: "Let someone scan this with their banking app to pay you.",
+    hintAmount: "They scan it, then enter {amount}.",
+    pick: "Which QR",
+    footer: "Scan with your banking app",
+  },
   remindSheet: {
     title: "Remind {name}",
     body: "{amount} to settle in “{group}”.",

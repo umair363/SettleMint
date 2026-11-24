@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { Modal, Pressable, View } from "react-native";
 import type Svg from "react-native-svg";
 import { useTranslations } from "use-intl";
@@ -21,14 +21,22 @@ export function QrModal({
   payeeName,
   amountText,
   onUsed,
+  title,
+  description,
+  extra,
 }: {
   visible: boolean;
   onClose: () => void;
   value: string;
   label: string;
   payeeName: string;
-  amountText: string;
+  amountText?: string;
   onUsed?: () => void;
+  /** Replaces "Pay {name}" (used when showing my own code). */
+  title?: string;
+  description?: string;
+  /** Shown above the code, e.g. a picker between several saved codes. */
+  extra?: ReactNode;
 }) {
   const { c, radius } = useTheme();
   const t = useTranslations("payWith");
@@ -56,13 +64,14 @@ export function QrModal({
       <View style={{ backgroundColor: c.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: 20, gap: 14, alignItems: "center" }}>
         <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 12, alignSelf: "stretch" }}>
           <View style={{ flex: 1, gap: 2 }}>
-            <Text variant="heading">{t("qrTitle", { name: payeeName })}</Text>
+            <Text variant="heading">{title ?? t("qrTitle", { name: payeeName })}</Text>
             <Text variant="sub" tone="muted">
-              {t("qrScan", { amount: amountText })}
+              {description ?? t("qrScan", { amount: amountText ?? "" })}
             </Text>
           </View>
           <IconButton icon="close" label={tc("close")} onPress={onClose} />
         </View>
+        {extra}
         <View style={{ borderRadius: radius.lg, overflow: "hidden", borderWidth: 1, borderColor: c.line }}>
           <PayQr ref={svg} value={value} label={`${label} · ${payeeName}`} size={280} />
         </View>

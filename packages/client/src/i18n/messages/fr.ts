@@ -171,6 +171,14 @@ const fr: Messages = {
     paste: "Collez-le dans un message.",
     copyFailed: "Impossible de copier le rappel",
   },
+  myQr: {
+    title: "Mon QR code",
+    show: "Afficher mon QR",
+    hint: "Laissez quelqu’un le scanner avec son appli bancaire pour vous payer.",
+    hintAmount: "Il le scanne, puis saisit {amount}.",
+    pick: "Quel QR",
+    footer: "Scannez avec l’appli de votre banque",
+  },
   remindSheet: {
     title: "Relancer {name}",
     body: "{amount} à régler dans « {group} ».",

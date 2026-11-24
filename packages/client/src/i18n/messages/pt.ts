@@ -169,6 +169,14 @@ const pt: Messages = {
     paste: "Cole em uma mensagem.",
     copyFailed: "Não foi possível copiar o lembrete",
   },
+  myQr: {
+    title: "Meu QR code",
+    show: "Mostrar meu QR",
+    hint: "Deixe alguém escaneá-lo com o app do banco para pagar você.",
+    hintAmount: "A pessoa escaneia e depois informa {amount}.",
+    pick: "Qual QR",
+    footer: "Escaneie com o app do seu banco",
+  },
   remindSheet: {
     title: "Lembrar {name}",
     body: "{amount} para acertar em “{group}”.",

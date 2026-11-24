@@ -21,7 +21,7 @@ export async function remindToPay(group: GroupDetailDto, transfer: TransferDto, 
       let files: File[] | undefined;
       if (qr) {
         try {
-          const blob = await qrCardBlob(qr.value, `${qr.label ?? ""}${qr.label ? " · " : ""}${me?.displayName ?? ""}`.trim());
+          const blob = await qrCardBlob(qr.value, qr.label ?? "", { name: me?.displayName });
           files = [new File([blob], "payment-qr.png", { type: "image/png" })];
         } catch {
           // The text still goes out without the picture.

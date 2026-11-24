@@ -174,6 +174,58 @@ try {
   await benPage.screenshot({ path: path.join(tmp, "ben-qr.png") });
   fs.copyFileSync(path.join(tmp, "ben-qr.png"), path.join(shotsDir, "payqr-ben.png"));
 
+  // 2b ─ Ana shows her own QR to someone standing next to her: from Account, and from the balance she is owed.
+  await page.goto(`${ORIGIN}/account`, { waitUntil: "load" });
+  await page.getByText("Show my QR", { exact: true }).click();
+  const mine = page.getByRole("img", { name: /HBL Raast · Ana/ });
+  await mine.waitFor({ timeout: 10000 });
+  await axeOk(page, "the Show my QR sheet");
+  await page.addScriptTag({ path: require.resolve("jsqr/dist/jsQR.js") });
+  const mineText = await page.evaluate(async () => {
+    const svg = document.querySelector('svg[role="img"][aria-label*="HBL Raast"]');
+    const clone = svg.cloneNode(true);
+    clone.setAttribute("width", "900");
+    clone.setAttribute("height", "900");
+    clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    const img = new Image();
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(clone));
+    await img.decode();
+    const c = document.createElement("canvas");
+    c.width = c.height = 900;
+    const g = c.getContext("2d");
+    g.fillStyle = "#fff";
+    g.fillRect(0, 0, 900, 900);
+    g.drawImage(img, 0, 0, 900, 900);
+    return jsQR(g.getImageData(0, 0, 900, 900).data, 900, 900)?.data ?? null;
+  });
+  ok("my own QR, shown from Account, scans to the same text", mineText === BANK_QR, String(mineText));
+  const [shared] = await Promise.all([page.waitForEvent("download", { timeout: 15000 }), page.getByRole("button", { name: "Save image" }).click()]);
+  const sharedFile = path.join(tmp, "my-card.png");
+  await shared.saveAs(sharedFile);
+  const png = fs.readFileSync(sharedFile);
+  ok("the saved card is a tall picture with the code and her name", png.subarray(1, 4).toString() === "PNG" && png.readUInt32BE(16) === 1080 && png.readUInt32BE(20) > 1300, png.readUInt32BE(20) + " px tall");
+  fs.copyFileSync(sharedFile, path.join(shotsDir, "payqr-card.png"));
+  const cardText = await page.evaluate(async (b64) => {
+    const img = new Image();
+    img.src = "data:image/png;base64," + b64;
+    await img.decode();
+    const c = document.createElement("canvas");
+    c.width = img.naturalWidth;
+    c.height = img.naturalHeight;
+    const g = c.getContext("2d");
+    g.drawImage(img, 0, 0);
+    return jsQR(g.getImageData(0, 0, c.width, c.height).data, c.width, c.height)?.data ?? null;
+  }, png.toString("base64"));
+  ok("the shareable card image itself scans to the same text", cardText === BANK_QR, String(cardText));
+  await page.keyboard.press("Escape");
+
+  await page.goto(`${ORIGIN}/group?id=${group.id}`, { waitUntil: "load" });
+  await page.getByRole("radio", { name: "Balances" }).click();
+  await page.getByRole("button", { name: "Show my QR" }).click();
+  await page.getByText(/then enter Rs\s?2,000\.00/).waitFor({ timeout: 10000 });
+  ok("from the balance she is owed, it says what to enter after scanning", true);
+  await page.keyboard.press("Escape");
+
   // 3 ─ Ana reminds Ben.
   await page.goto(`${ORIGIN}/group?id=${group.id}`, { waitUntil: "load" });
   await page.getByRole("radio", { name: "Balances" }).click();

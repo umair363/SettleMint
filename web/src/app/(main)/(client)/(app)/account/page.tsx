@@ -1,7 +1,7 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
-import { Coins, Download, History, LogOut, Monitor, Moon, Send, Share, ShieldCheck, Sun, UserRound } from "@/ui/icons";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Coins, Download, History, LogOut, Monitor, Moon, ScanLine, Send, Share, ShieldCheck, Sun, UserRound } from "@/ui/icons";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
@@ -10,6 +10,8 @@ import { LanguageRow } from "@/features/account/language-card";
 import { NotificationsRow } from "@/features/account/notifications-card";
 import { PaymentHandlesCard } from "@/features/account/payment-handles-card";
 import { YourDataRows } from "@/features/account/your-data-card";
+import { MyQrSheet } from "@/features/payments/my-qr-sheet";
+import { api } from "@/lib/api";
 import { useInstall } from "@/features/pwa/pwa";
 import { PageBody, PageHeader } from "@/features/shell/page-header";
 import { authClient } from "@/lib/auth-client";
@@ -130,10 +132,14 @@ export default function AccountPage() {
   const [name, setName] = useState("");
   const [nameOpen, setNameOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
+  const [myQrOpen, setMyQrOpen] = useState(false);
+  const handles = useQuery({ queryKey: ["payment-handles"], queryFn: api.me.paymentHandles, enabled: !!me.data && !me.data.isGuest });
+  const myQrs = (handles.data ?? []).filter((h) => h.kind === "qr").map((h) => ({ id: h.id, value: h.value, label: h.label || "QR" }));
   const [pickerOpen, setPickerOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const t = useTranslations("account");
   const tp = useTranslations("payments");
+  const tq = useTranslations("myQr");
   const tt = useTranslations("trash");
   const tn = useTranslations("yourData");
 
@@ -215,6 +221,18 @@ export default function AccountPage() {
               onClick={() => setPayOpen(true)}
             />
           )}
+          {myQrs.length > 0 && (
+            <ListRow
+              leading={
+                <IconTile>
+                  <ScanLine />
+                </IconTile>
+              }
+              title={tq("show")}
+              chevron
+              onClick={() => setMyQrOpen(true)}
+            />
+          )}
         </List>
 
         <InstallCard />
@@ -274,6 +292,7 @@ export default function AccountPage() {
       <Sheet open={payOpen} onOpenChange={setPayOpen} title={tp("title")} description={tp("body")} showDescription tall>
         <PaymentHandlesCard bare />
       </Sheet>
+      <MyQrSheet open={myQrOpen} onOpenChange={setMyQrOpen} qrs={myQrs} name={me.data.name} />
       <CurrencyPicker
         open={pickerOpen}
         onOpenChange={setPickerOpen}
