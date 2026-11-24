@@ -10,5 +10,6 @@ export * from "./api/contracts";
 export type * from "./api/types";
 export * from "./api/client";
 export * from "./payments/handles";
+export * from "./payments/qr";
 export * from "./recurrence/recurrence";
 export * from "./import/splitwise";

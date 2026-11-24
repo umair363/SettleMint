@@ -37,6 +37,7 @@
     "@types/node": "^25.9.3",
     "@types/web-push": "^3.6.4",
     "drizzle-kit": "^0.31.11",
+    "jsqr": "^1.4.0",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "vite": "^7.3.8",

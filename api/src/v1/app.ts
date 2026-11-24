@@ -21,6 +21,7 @@ import { peopleRoutes } from "./routes/people";
 import { memberRoutes } from "./routes/members";
 import { aiRoutes } from "./routes/ai";
 import { pushRoutes } from "./routes/push";
+import { remindRoutes, reminderMuteRoutes } from "./routes/remind";
 import { combinedSender, createNotifier, expoPushSender, webPushSender, type PushSender } from "./services/push";
 import { importRoutes } from "./routes/import";
 import { geminiReceiptReader, type ReceiptReader } from "./services/receipts";
@@ -90,6 +91,7 @@ export async function buildApp({ db, config, mailer, logger = true, receiptReade
   app.decorate("db", db);
   app.decorate("auth", auth);
   app.decorate("config", config);
+  app.decorate("mailer", mailer);
   app.decorate(
     "receiptReader",
     receiptReader !== undefined ? receiptReader : config.geminiApiKey ? geminiReceiptReader(config.geminiApiKey) : null,
@@ -125,6 +127,9 @@ export async function buildApp({ db, config, mailer, logger = true, receiptReade
   app.get("/health", async () => ({ ok: true }));
 
   registerLiveUpdates(app);
+
+  // "Stop these emails" pages: public, protected by the signed link in each email.
+  await app.register(reminderMuteRoutes);
 
   // Better Auth handles everything under /v1/auth (sign-up, sign-in, OTP,
   // OAuth callbacks, guest sessions, sign-out).
@@ -193,6 +198,7 @@ export async function buildApp({ db, config, mailer, logger = true, receiptReade
       await v1.register(importRoutes);
       await v1.register(aiRoutes);
       await v1.register(pushRoutes);
+      await v1.register(remindRoutes);
     },
     { prefix: "/v1" },
   );

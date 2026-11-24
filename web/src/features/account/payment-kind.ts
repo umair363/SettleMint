@@ -5,7 +5,7 @@ import { useTranslations } from "use-intl";
 export function usePaymentKindText() {
   const t = useTranslations("payments");
   return {
-    label: (kind: PaymentKind) => (kind === "bank" || kind === "other" ? t(`kind.${kind}`) : PAYMENT_KINDS[kind].label),
+    label: (kind: PaymentKind) => (kind === "bank" || kind === "other" || kind === "qr" ? t(`kind.${kind}`) : PAYMENT_KINDS[kind].label),
     placeholder: (kind: PaymentKind) => t(`placeholder.${kind}`),
   };
 }

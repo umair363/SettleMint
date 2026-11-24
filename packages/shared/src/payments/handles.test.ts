@@ -62,3 +62,22 @@ describe("buildPayAction", () => {
     });
   });
 });
+
+describe("saved QR codes", () => {
+  const text = "00020101021126400014A000000677010112011234567890123456789005204739953035865802PK5909Ana Souza6007Karachi6304ABCD";
+
+  it("keeps the scanned text exactly, up to 1024 characters, with no control characters", () => {
+    expect(normalizePaymentHandle("qr", `  ${text}  `)).toBe(text);
+    expect(normalizePaymentHandle("qr", "a b  c")).toBe("a b  c"); // never reflowed
+    expect(normalizePaymentHandle("qr", "x".repeat(1024))).not.toBeNull();
+    expect(normalizePaymentHandle("qr", "x".repeat(1025))).toBeNull();
+    expect(normalizePaymentHandle("qr", "line\nbreak")).toBeNull();
+    expect(normalizePaymentHandle("raast", "9".repeat(121))).toBeNull(); // others stay short
+  });
+
+  it("hands the text to whoever draws it, under the person's own name for it", () => {
+    const action = buildPayAction({ kind: "qr", value: text, label: "HBL Raast" }, { amount: 4500, currency: "PKR" });
+    expect(action).toEqual({ kind: "qr", label: "HBL Raast", qr: text, amountIncluded: false });
+    expect(buildPayAction({ kind: "qr", value: text }, { amount: 1, currency: "PKR" }).label).toBe("QR code");
+  });
+});

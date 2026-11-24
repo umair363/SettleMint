@@ -23,7 +23,7 @@ import {
   type QueryClient,
 } from "@tanstack/react-query";
 import { uuidv7 } from "uuidv7";
-import type { Page } from "@settlemint/shared";
+import type { Page, RemindBody } from "@settlemint/shared";
 import { api } from "./api";
 
 declare module "@tanstack/react-query" {
@@ -378,7 +378,16 @@ export function useMemberActions(groupId: string) {
   const qc = useQueryClient();
   const done = () => invalidateGroup(qc, groupId);
   return {
-    add: useMutation({ mutationFn: (displayName: string) => api.members.add(groupId, { displayName }), onSettled: done }),
+    add: useMutation({
+      mutationFn: (input: string | { displayName: string; email?: string }) =>
+        api.members.add(groupId, typeof input === "string" ? { displayName: input } : input),
+      onSettled: done,
+    }),
+    /** Add or change the email a reminder reaches someone at (only for people who haven't joined). */
+    setEmail: useMutation({
+      mutationFn: ({ memberId, email }: { memberId: string; email: string | null }) => api.members.update(groupId, memberId, { email }),
+      onSettled: done,
+    }),
     rename: useMutation({
       mutationFn: ({ memberId, displayName }: { memberId: string; displayName: string }) =>
         api.members.rename(groupId, memberId, displayName),
@@ -399,4 +408,9 @@ export function totalsByCurrency(groups: GroupSummaryDto[] | undefined) {
     totals.set(g.currency, t);
   }
   return [...totals.entries()].map(([currency, t]) => ({ currency, ...t, net: t.owed - t.owe }));
+}
+
+/** Send a payment reminder (a notification and an email) to someone who owes me. */
+export function useRemind(groupId: string) {
+  return useMutation({ mutationFn: (body: RemindBody) => api.members.remind(groupId, body) });
 }

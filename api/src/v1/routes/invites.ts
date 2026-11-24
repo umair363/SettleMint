@@ -89,7 +89,7 @@ export const inviteRoutes: FastifyPluginAsyncZod = async (app) => {
         if (current) await tx.update(members).set({ userId: null }).where(eq(members.id, current.id));
         const [spot] = await tx
           .update(members)
-          .set({ userId: user.id })
+          .set({ userId: user.id, contactEmail: null })
           .where(
             and(
               eq(members.id, req.body.memberId),

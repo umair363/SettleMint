@@ -5,6 +5,7 @@ import {
   type ExpenseDto,
   type GroupDetailDto,
   type SettlementDto,
+  type TransferDto,
 } from "@settlemint/shared";
 import { ArrowRightLeft, ChevronRight, Inbox, Plus, Repeat, Send, Settings, UserPlus } from "@/ui/icons";
 import { AnimatePresence, motion } from "motion/react";
@@ -16,7 +17,7 @@ import { useAddExpense } from "@/features/expenses/add-expense-context";
 import { ExpenseDetailSheet } from "@/features/groups/expense-detail-sheet";
 import { GroupSettingsSheet } from "@/features/groups/group-settings-sheet";
 import { InviteSheet } from "@/features/groups/invite-sheet";
-import { remindToPay } from "@/features/groups/remind";
+import { RemindSheet } from "@/features/groups/remind-sheet";
 import { RepeatingSection } from "@/features/groups/repeating-section";
 import { SettleSheet, type SettleTarget } from "@/features/groups/settle-sheet";
 import { PageBody, PageHeader } from "@/features/shell/page-header";
@@ -230,8 +231,15 @@ function ExpensesTab({ group, onOpen }: { group: GroupDetailDto; onOpen: (e: Exp
   );
 }
 
-function BalancesTab({ group, onSettle }: { group: GroupDetailDto; onSettle: (t: SettleTarget) => void }) {
-  const locale = useLocale();
+function BalancesTab({
+  group,
+  onSettle,
+  onRemind,
+}: {
+  group: GroupDetailDto;
+  onSettle: (t: SettleTarget) => void;
+  onRemind: (t: TransferDto) => void;
+}) {
   const t = useTranslations("group");
   const trecap = useTranslations("recap");
   const people = group.members.filter((m) => !m.left || (group.balances[m.id] ?? 0) !== 0);
@@ -274,7 +282,7 @@ function BalancesTab({ group, onSettle }: { group: GroupDetailDto; onSettle: (t:
                         {tr.fromMemberId === group.myMemberId ? t("pay") : t("record")}
                       </Button>
                       {tr.toMemberId === group.myMemberId && (
-                        <Button size="sm" variant="ghost" leading={<Send className="size-4" />} onClick={() => remindToPay(group, tr, locale)}>
+                        <Button size="sm" variant="ghost" leading={<Send className="size-4" />} onClick={() => onRemind(tr)}>
                           {t("remind")}
                         </Button>
                       )}
@@ -338,6 +346,7 @@ function GroupScreen() {
   const [inviteOpen, setInviteOpen] = useState(params.get("invite") === "1");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settle, setSettle] = useState<SettleTarget | null>(null);
+  const [remind, setRemind] = useState<TransferDto | null>(null);
   const [openExpense, setOpenExpense] = useState<ExpenseDto | null>(null);
   const [celebrate, setCelebrate] = useState(false);
   const t = useTranslations("group");
@@ -476,7 +485,7 @@ function GroupScreen() {
             <ExpensesTab group={g} onOpen={setOpenExpense} />
           </>
         ) : (
-          <BalancesTab group={g} onSettle={setSettle} />
+          <BalancesTab group={g} onSettle={setSettle} onRemind={setRemind} />
         )}
       </PageBody>
 
@@ -489,6 +498,7 @@ function GroupScreen() {
         }}
       />
       <GroupSettingsSheet group={g} open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <RemindSheet group={g} transfer={remind} onClose={() => setRemind(null)} />
       <SettleSheet group={g} target={settle} onClose={() => setSettle(null)} onSettledMe={() => setCelebrate(true)} />
       <ExpenseDetailSheet group={g} expense={openExpense} onClose={() => setOpenExpense(null)} />
     </>

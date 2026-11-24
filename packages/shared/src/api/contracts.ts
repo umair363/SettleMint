@@ -88,8 +88,23 @@ export const updateGroupBody = z.object({
   archived: z.boolean().optional(),
 });
 
-export const addMemberBody = z.object({ id: zId.optional(), displayName: zName(60) });
-export const updateMemberBody = z.object({ displayName: zName(60) });
+const zEmail = z.string().trim().toLowerCase().pipe(z.email().max(254));
+export const addMemberBody = z.object({
+  id: zId.optional(),
+  displayName: zName(60),
+  /** Optional: lets reminders reach someone who hasn't joined. Never shown to the group. */
+  email: zEmail.optional(),
+});
+export const updateMemberBody = z
+  .object({ displayName: zName(60).optional(), email: zEmail.nullable().optional() })
+  .refine((b) => b.displayName !== undefined || b.email !== undefined, { message: 'Nothing to change' });
+
+/** A payment reminder to someone who owes me in this group: a notification and an email, never naming who is asking. */
+export const remindBody = z.object({
+  debtorMemberId: zId,
+  /** Add my payment details (and QR) to the email. */
+  includePayment: z.boolean().default(false),
+});
 export const joinInviteBody = z.object({
   /** Claim an existing spot that was added by name. */
   memberId: zId.optional(),
@@ -164,7 +179,7 @@ export const updateMeBody = z.object({
 export const zPaymentHandle = z
   .object({
     kind: z.enum(PAYMENT_KIND_VALUES),
-    value: z.string().trim().min(1).max(120),
+    value: z.string().trim().min(1).max(1024),
     label: z.string().trim().max(40).nullable().optional(),
   })
   .refine((h) => normalizePaymentHandle(h.kind, h.value) !== null, {
@@ -173,7 +188,12 @@ export const zPaymentHandle = z
   });
 
 /** Replace the whole list (order = preference). */
-export const putPaymentHandlesBody = z.object({ handles: z.array(zPaymentHandle).max(10) });
+export const putPaymentHandlesBody = z.object({
+  handles: z
+    .array(zPaymentHandle)
+    .max(10)
+    .refine((hs) => hs.filter((h) => h.kind === "qr").length <= 3, { message: "Up to 3 QR codes" }),
+});
 
 /** Typed confirmation, so an account can't be deleted by accident. */
 export const deleteAccountBody = z.object({ confirm: z.literal("DELETE") });
@@ -196,6 +216,8 @@ export const pageQuery = z.object({
 export type CreateGroupBody = z.input<typeof createGroupBody>;
 export type UpdateGroupBody = z.input<typeof updateGroupBody>;
 export type AddMemberBody = z.input<typeof addMemberBody>;
+export type UpdateMemberBody = z.input<typeof updateMemberBody>;
+export type RemindBody = z.input<typeof remindBody>;
 export type JoinInviteBody = z.input<typeof joinInviteBody>;
 export type CreateExpenseBody = z.input<typeof createExpenseBody>;
 export type UpdateExpenseBody = z.input<typeof updateExpenseBody>;

@@ -1,4 +1,5 @@
 import { minorToDecimalString } from "../money/amount";
+import { QR_MAX_LENGTH } from "./qr";
 
 /**
  * Ways someone can be paid. SettleMint never moves money: it opens the
@@ -18,6 +19,7 @@ export const PAYMENT_KIND_VALUES = [
   "raast",
   "jazzcash",
   "easypaisa",
+  "qr",
   "other",
 ] as const;
 export type PaymentKind = (typeof PAYMENT_KIND_VALUES)[number];
@@ -45,6 +47,8 @@ export const PAYMENT_KINDS: Record<PaymentKind, PaymentKindInfo> = {
   raast: { label: "Raast", placeholder: "Raast ID or phone", linkable: false },
   jazzcash: { label: "JazzCash", placeholder: "03xx xxxxxxx", linkable: false },
   easypaisa: { label: "Easypaisa", placeholder: "03xx xxxxxxx", linkable: false },
+  /** The QR code a bank or wallet app made for them: stored as its text, redrawn on demand. */
+  qr: { label: "QR code", placeholder: "", linkable: false },
   other: { label: "Other", placeholder: "How to pay you", linkable: false },
 };
 
@@ -76,8 +80,11 @@ const stripUrl = (v: string, hosts: string[]) => {
  */
 export function normalizePaymentHandle(kind: PaymentKind, raw: string): string | null {
   const v = raw.trim();
-  if (!v || v.length > 120) return null;
+  if (!v || v.length > (kind === "qr" ? QR_MAX_LENGTH : 120)) return null;
   switch (kind) {
+    case "qr":
+      // Any text a QR can hold, exactly as scanned: banks check it, so it is never reflowed.
+      return /[\u0000-\u001f\u007f]/.test(v) ? null : v;
     case "upi":
       return /^[\w.-]{2,64}@[a-zA-Z][\w.-]{1,64}$/.test(v) ? v.toLowerCase() : null;
     case "paypal": {
@@ -121,6 +128,8 @@ export interface PayAction {
   url?: string;
   /** Text to copy, for methods without a link. */
   copy?: string;
+  /** The text inside a saved QR code, to draw it. */
+  qr?: string;
   /** True when the link pre-fills the amount. */
   amountIncluded: boolean;
 }
@@ -131,7 +140,7 @@ export interface PayAction {
  * details to copy.
  */
 export function buildPayAction(
-  handle: { kind: PaymentKind; value: string },
+  handle: { kind: PaymentKind; value: string; label?: string | null },
   opts: { amount: number; currency: string; note?: string; payeeName?: string },
 ): PayAction {
   const info = PAYMENT_KINDS[handle.kind];
@@ -141,7 +150,7 @@ export function buildPayAction(
   const note = opts.note?.slice(0, 80) ?? "";
   const enc = encodeURIComponent;
   const v = handle.value;
-  const base = { kind: handle.kind, label: info.label, amountIncluded: withAmount };
+  const base = { kind: handle.kind, label: (handle.kind === "qr" && handle.label?.trim()) || info.label, amountIncluded: withAmount };
 
   switch (handle.kind) {
     case "upi": {
@@ -173,6 +182,8 @@ export function buildPayAction(
       };
     case "wise":
       return { ...base, url: `https://wise.com/pay/me/${enc(v)}` };
+    case "qr":
+      return { ...base, qr: v };
     default:
       return { ...base, copy: v };
   }

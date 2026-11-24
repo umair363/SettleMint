@@ -125,6 +125,7 @@ export class TestClient {
   get = <T = any>(url: string) => this.request<T>("GET", url);
   post = <T = any>(url: string, body: unknown = {}) => this.request<T>("POST", url, body);
   patch = <T = any>(url: string, body: unknown) => this.request<T>("PATCH", url, body);
+  put = <T = any>(url: string, body: unknown) => this.request<T>("PUT", url, body);
   del = <T = any>(url: string) => this.request<T>("DELETE", url);
 
   async signUp(name: string, email = `${name.toLowerCase().replace(/\W/g, "")}-${Math.random().toString(36).slice(2, 8)}@example.com`) {

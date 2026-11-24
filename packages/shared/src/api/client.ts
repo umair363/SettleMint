@@ -1,5 +1,7 @@
 import type {
   AddMemberBody,
+  RemindBody,
+  UpdateMemberBody,
   CreateExpenseBody,
   CreateGroupBody,
   CreateRecurringBody,
@@ -25,6 +27,7 @@ import type {
   Page,
   PaymentHandleDto,
   ReceiptScanDto,
+  ReminderResultDto,
   RecurringRuleDto,
   SearchResultDto,
   TrashItemDto,
@@ -154,6 +157,9 @@ export function createApiClient(opts: ApiClientOptions) {
       add: (groupId: string, body: AddMemberBody) => post<MemberDto[]>(`/groups/${groupId}/members`, body),
       rename: (groupId: string, memberId: string, displayName: string) =>
         patch<MemberDto[]>(`/groups/${groupId}/members/${memberId}`, { displayName }),
+      update: (groupId: string, memberId: string, body: UpdateMemberBody) =>
+        patch<MemberDto[]>(`/groups/${groupId}/members/${memberId}`, body),
+      remind: (groupId: string, body: RemindBody) => post<ReminderResultDto>(`/groups/${groupId}/remind`, body),
       remove: (groupId: string, memberId: string) => del<MemberDto[]>(`/groups/${groupId}/members/${memberId}`),
     },
     invites: {

@@ -1,8 +1,18 @@
+export interface MailAttachment {
+  filename: string;
+  content: Buffer;
+  contentType: string;
+  /** Set to show the file inside the message body (cid:...). */
+  contentId?: string;
+}
+
 export interface Mail {
   to: string;
   subject: string;
   text: string;
   html: string;
+  attachments?: MailAttachment[];
+  headers?: Record<string, string>;
 }
 
 export interface Mailer {

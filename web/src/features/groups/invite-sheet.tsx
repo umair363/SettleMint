@@ -29,6 +29,8 @@ export function InviteSheet({
   const { add } = useMemberActions(group.id);
   const [copied, setCopied] = useState(false);
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const emailOk = !email.trim() || /^\S+@\S+\.\S+$/.test(email.trim());
   const canRotate = group.members.find((m) => m.isMe)?.role !== "member";
   const t = useTranslations("invite");
   const tc = useTranslations("common");
@@ -68,11 +70,13 @@ export function InviteSheet({
   const addByName = (e: FormEvent) => {
     e.preventDefault();
     const n = name.trim();
-    if (!n) return;
-    add.mutate(n, {
+    if (!n || !emailOk) return;
+    const em = email.trim();
+    add.mutate(em ? { displayName: n, email: em } : { displayName: n }, {
       onSuccess: () => {
         toast.success(t("added", { name: n }));
         setName("");
+        setEmail("");
       },
     });
   };
@@ -126,12 +130,23 @@ export function InviteSheet({
             placeholder={t("namePlaceholder")}
             maxLength={60}
             trailing={
-              <Button type="submit" size="sm" variant="ghost" disabled={!name.trim()} loading={add.isPending} leading={<UserPlus className="size-4" />}>
+              <Button type="submit" size="sm" variant="ghost" disabled={!name.trim() || !emailOk} loading={add.isPending} leading={<UserPlus className="size-4" />}>
                 {t("add")}
               </Button>
             }
           />
-          <p className="text-[13px] text-fg-subtle">{t("addNote")}</p>
+          <TextField
+            type="email"
+            inputMode="email"
+            autoComplete="off"
+            aria-label={t("emailPlaceholder")}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={t("emailPlaceholder")}
+            maxLength={254}
+            aria-invalid={emailOk ? undefined : true}
+          />
+          <p className="text-[13px] text-fg-subtle">{t("addNote")} {t("emailNote")}</p>
         </form>
 
         <div className="flex flex-wrap gap-2">

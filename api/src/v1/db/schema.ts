@@ -131,6 +131,8 @@ export const members = pgTable(
       .references(() => groups.id, { onDelete: "cascade" }),
     userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
     displayName: varchar("display_name", { length: 60 }).notNull(),
+    /** Where reminders reach someone who hasn't joined. Set by a group member; never sent back out by the API. */
+    contactEmail: varchar("contact_email", { length: 254 }),
     role: varchar("role", { length: 8 }).$type<MemberRole>().notNull().default("member"),
     leftAt: ts("left_at"),
     createdAt: createdAt(),
@@ -284,6 +286,7 @@ export const PAYMENT_KINDS = [
   "raast",
   "jazzcash",
   "easypaisa",
+  "qr",
   "other",
 ] as const;
 export type PaymentKind = (typeof PAYMENT_KINDS)[number];
@@ -301,7 +304,8 @@ export const paymentHandles = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     kind: varchar("kind", { length: 16 }).$type<PaymentKind>().notNull(),
-    value: varchar("value", { length: 120 }).notNull(),
+    /** Up to 1024 for a saved QR code's text; every other kind is far shorter. */
+    value: varchar("value", { length: 1024 }).notNull(),
     label: varchar("label", { length: 40 }),
     position: integer("position").notNull().default(0),
     createdAt: createdAt(),
@@ -379,3 +383,30 @@ export const pushSubscriptions = pgTable(
   },
   (t) => [index("push_user_idx").on(t.userId)],
 );
+
+// ─── Payment reminders ─────────────────────────────────────────────────────
+
+/** Every reminder sent, so one person can't be nudged about the same debt more than once a day. */
+export const reminders = pgTable(
+  "reminders",
+  {
+    id: uuid("id").primaryKey(),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    fromMemberId: uuid("from_member_id")
+      .notNull()
+      .references(() => members.id, { onDelete: "cascade" }),
+    toMemberId: uuid("to_member_id")
+      .notNull()
+      .references(() => members.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("reminders_pair_idx").on(t.groupId, t.fromMemberId, t.toMemberId, t.createdAt)],
+);
+
+/** Addresses that opted out of reminder emails (the link in every email). Lower-case. */
+export const reminderMutes = pgTable("reminder_mutes", {
+  email: varchar("email", { length: 254 }).primaryKey(),
+  createdAt: createdAt(),
+});

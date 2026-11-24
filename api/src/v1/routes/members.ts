@@ -62,7 +62,7 @@ export const memberRoutes: FastifyPluginAsyncZod = async (app) => {
       const [existing] = await tx.select().from(members).where(eq(members.id, id));
       if (existing && existing.groupId !== group.id) throw new AppError(409, "CONFLICT", "That id is already in use");
       if (!existing) {
-        await tx.insert(members).values({ id, groupId: group.id, displayName: req.body.displayName });
+        await tx.insert(members).values({ id, groupId: group.id, displayName: req.body.displayName, contactEmail: req.body.email ?? null });
         await recordActivity(tx, {
           groupId: group.id,
           type: "member.added",
@@ -87,16 +87,28 @@ export const memberRoutes: FastifyPluginAsyncZod = async (app) => {
         const target = await findMember(tx, group.id, req.params.memberId);
         // Anyone can fix the name of someone added by name; a joined person's
         // name is theirs (or a group admin's) to change.
-        if (target.userId && target.userId !== user.id && !canManageGroup(me)) throw forbidden();
-        await tx.update(members).set({ displayName: req.body.displayName }).where(eq(members.id, target.id));
-        await recordActivity(tx, {
-          groupId: group.id,
-          type: "member.renamed",
-          actorUserId: user.id,
-          actorMemberId: me.id,
-          entityId: target.id,
-          data: { from: target.displayName, to: req.body.displayName },
-        });
+        if (req.body.displayName !== undefined && target.userId && target.userId !== user.id && !canManageGroup(me)) throw forbidden();
+        const { displayName, email } = req.body;
+        if (email !== undefined && target.userId) {
+          throw new AppError(422, "VALIDATION_ERROR", "Their own account already has an email");
+        }
+        await tx
+          .update(members)
+          .set({
+            ...(displayName !== undefined ? { displayName } : {}),
+            ...(email !== undefined ? { contactEmail: email } : {}),
+          })
+          .where(eq(members.id, target.id));
+        if (displayName !== undefined && displayName !== target.displayName) {
+          await recordActivity(tx, {
+            groupId: group.id,
+            type: "member.renamed",
+            actorUserId: user.id,
+            actorMemberId: me.id,
+            entityId: target.id,
+            data: { from: target.displayName, to: displayName },
+          });
+        }
         return loadMembers(tx, group.id, user.id);
       });
     },

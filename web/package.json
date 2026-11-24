@@ -31,7 +31,8 @@
     "tailwind-merge": "^3.7.0",
     "use-intl": "^4.15.1",
     "uuidv7": "^1.2.1",
-    "vaul": "^1.1.2"
+    "vaul": "^1.1.2",
+    "jsqr": "^1.4.0"
   },
   "devDependencies": {
     "@formatjs/icu-messageformat-parser": "^3.5.23",

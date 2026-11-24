@@ -16,7 +16,7 @@ type ActivityRow = typeof activityEvents.$inferSelect;
 
 export async function loadMembers(db: DbOrTx, groupId: string, myUserId: string): Promise<MemberDto[]> {
   const rows = await db
-    .select({ m: members, image: user.image })
+    .select({ m: members, image: user.image, email: user.email, anonymous: user.isAnonymous })
     .from(members)
     .leftJoin(user, eq(user.id, members.userId))
     .where(eq(members.groupId, groupId))
@@ -38,7 +38,7 @@ export async function loadMembers(db: DbOrTx, groupId: string, myUserId: string)
     handlesBy.set(h.userId, list);
   }
 
-  return rows.map(({ m, image }) => ({
+  return rows.map(({ m, image, email, anonymous }) => ({
     paymentHandles: m.userId ? (handlesBy.get(m.userId) ?? []) : [],
     id: m.id,
     displayName: m.displayName,
@@ -48,6 +48,8 @@ export async function loadMembers(db: DbOrTx, groupId: string, myUserId: string)
     isMe: m.userId === myUserId,
     claimed: m.userId !== null,
     left: m.leftAt !== null,
+    // Only whether an address exists; the address itself never leaves the server.
+    hasEmail: m.userId ? Boolean(email) && !anonymous : Boolean(m.contactEmail),
   }));
 }
 

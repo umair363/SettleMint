@@ -105,6 +105,17 @@ export interface MemberDto {
   left: boolean;
   /** How this person likes to be paid (only for people who joined). */
   paymentHandles: PaymentHandleDto[];
+  /** An email address is on file (their account's, or one you added), so a reminder can reach them. The address itself is never shared. */
+  hasEmail: boolean;
+}
+
+export interface ReminderResultDto {
+  /** Reached by a notification, an email, or both. When false nothing was sent and nothing was used up: share a message instead. */
+  reachable: boolean;
+  push: number;
+  email: boolean;
+  /** When another reminder to this person is allowed. */
+  nextAllowedAt: string | null;
 }
 
 export interface TransferDto {

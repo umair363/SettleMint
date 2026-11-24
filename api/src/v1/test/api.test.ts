@@ -1263,6 +1263,7 @@ describe("outsiders can't touch a group", () => {
       ["remove member", () => mallory.del(`/v1/groups/${group.id}/members/${benId}`)],
       ["get invite link", () => mallory.post(`/v1/groups/${group.id}/invite`)],
       ["leave", () => mallory.post(`/v1/groups/${group.id}/leave`)],
+      ["remind", () => mallory.post(`/v1/groups/${group.id}/remind`, { debtorMemberId: benId })],
     ];
     for (const [name, attempt] of attempts) {
       const res = await attempt();

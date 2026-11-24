@@ -189,9 +189,35 @@ export function createNotifier(db: Db, sender: PushSender, webUrl: string) {
       log?.info({ type: n.type, groupId: n.groupId, sent, gone, failed: subs.length - sent - gone }, "notifications sent");
     }
   }
+  /** One message straight to everything this person has subscribed (not tied to a group event). Returns how many devices it reached. */
+  async function pushTo(
+    userId: string,
+    message: { title: string; body: string; url: string; tag: string },
+    log?: PushLog,
+  ): Promise<number> {
+    const subs = await db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
+    let sent = 0;
+    await Promise.allSettled(
+      subs.map(async (s) => {
+        try {
+          const target: PushTarget =
+            s.kind === "expo"
+              ? { kind: "expo", endpoint: s.endpoint }
+              : { kind: "web", endpoint: s.endpoint, p256dh: s.p256dh ?? "", auth: s.auth ?? "" };
+          const result = await sender.send(target, JSON.stringify(message));
+          if (result.gone) await db.delete(pushSubscriptions).where(eq(pushSubscriptions.id, s.id));
+          else sent++;
+        } catch (err) {
+          log?.error({ err }, "push failed");
+        }
+      }),
+    );
+    return sent;
+  }
   // Deliveries still in flight, so shutdown (and tests) can wait for them.
   const pending = new Set<Promise<void>>();
   return {
+    pushTo,
     dispatch(notices: ActivityNotice[], log?: PushLog) {
       const p = dispatch(notices, log).catch((err) => log?.error({ err }, "notifications failed"));
       pending.add(p);
