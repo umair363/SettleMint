@@ -72,7 +72,7 @@ Next.js 16 with `output: "export"`: plain static files that can be hosted anywhe
 
 ## The phone app (`mobile`)
 
-Expo SDK 57 with Expo Router. It talks to the same API, persists its cache to AsyncStorage and
+Expo SDK 58 with Expo Router. It talks to the same API, persists its cache to AsyncStorage and
 keeps sessions in SecureStore. The same screens render to the web through react-native-web,
 which is what the CI smoke test drives.
 

@@ -53,13 +53,14 @@ function Navigator() {
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <StatusBar style={isDark ? "light" : "dark"} />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg } }}>
-        <Stack.Protected guard={!signedIn}>
+        {/* SDK 58 sends a refused route to the first reachable screen; say where, so a signed-out phone never lands on an invite. */}
+        <Stack.Protected guard={!signedIn} redirectTo="/">
           <Stack.Screen name="sign-in" />
         </Stack.Protected>
-        <Stack.Protected guard={signedIn && needsWelcome}>
+        <Stack.Protected guard={signedIn && needsWelcome} redirectTo={signedIn ? "/" : "/sign-in"}>
           <Stack.Screen name="welcome" />
         </Stack.Protected>
-        <Stack.Protected guard={signedIn && !needsWelcome}>
+        <Stack.Protected guard={signedIn && !needsWelcome} redirectTo={signedIn ? "/welcome" : "/sign-in"}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="group/[id]" />
           <Stack.Screen name="person" />

@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useRef, useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, TextInput, View, type TextInputInstance } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslations } from "use-intl";
 import { authClient, startFresh } from "@/lib/auth";
@@ -58,7 +58,7 @@ export default function SignIn() {
   const [error, setError] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(0);
   const [codeSent, setCodeSent] = useState(false);
-  const codeRef = useRef<TextInput>(null);
+  const codeRef = useRef<TextInputInstance>(null);
 
   useEffect(() => {
     if (resendIn <= 0) return;

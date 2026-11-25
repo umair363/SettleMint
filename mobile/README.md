@@ -1,6 +1,6 @@
 # SettleMint for iOS and Android
 
-The phone app: React Native with Expo SDK 57 and Expo Router. It talks to the same API as the
+The phone app: React Native with Expo SDK 58 and Expo Router. It talks to the same API as the
 website and shares its money engine (`@settlemint/shared`), translations, data hooks and design
 tokens (`@settlemint/client`).
 
@@ -20,7 +20,7 @@ with `npm run dev:v1`.
 ### Try it on an iPhone with Expo Go (free, no Apple account)
 
 Expo Go is a free app from the App Store that runs the project straight from your computer.
-It supports one SDK at a time (this project uses SDK 57); if it says the project is
+Expo Go from the App Store supports only the newest SDK, so keep it updated. It supports one SDK at a time (this project uses SDK 58); if it says the project is
 incompatible, update Expo Go from the App Store.
 
 1. Put the phone and the computer on the same Wi-Fi.

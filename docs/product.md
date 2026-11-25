@@ -40,7 +40,7 @@ What SettleMint offers that the incumbent (Splitwise) does not:
 ## Capabilities and Constraints
 
 - Web: Next.js static export (no server rendering), so it can be hosted for free. Public pages ship no framework JavaScript.
-- Phone: Expo SDK 57.
+- Phone: Expo SDK 58.
 - Budget is zero: only free and openly licensed fonts, icons and libraries.
 - Money is stored in integer minor units; amounts must always display in the viewer's locale and never drift.
 - Terminology: "group", "expense", "payment" (a settlement), "settle up", "owed to you", "you owe".

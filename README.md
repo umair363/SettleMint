@@ -100,7 +100,7 @@ A fast web app and a phone app, free to use and built to work offline.
 ```
 web/        Next.js 16 static PWA · Tailwind v4 · Radix · Motion      → Cloudflare Pages
 api/        Fastify 5 · Drizzle · Postgres · Better Auth               → Render
-mobile/     Expo SDK 57 · Expo Router · React Native                   → App Store / Google Play (EAS)
+mobile/     Expo SDK 58 · Expo Router · React Native                   → App Store / Google Play (EAS)
 packages/
   shared/   money engine · API contracts (Zod) · typed API client
   client/   what web and mobile share above the API: translations, data hooks,

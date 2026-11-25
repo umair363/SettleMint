@@ -1,5 +1,5 @@
 import { forwardRef, useState } from "react";
-import { Platform, TextInput, View, type TextInputProps } from "react-native";
+import { Platform, TextInput, View, type TextInputInstance, type TextInputProps } from "react-native";
 import { useTheme } from "@/theme/theme";
 import { Text } from "./text";
 
@@ -10,7 +10,7 @@ interface FieldProps extends TextInputProps {
 }
 
 /** Labelled text input with hint and error, 16px+ text so nothing zooms. */
-export const Field = forwardRef<TextInput, FieldProps>(function Field({ label, hint, error, style, ...rest }, ref) {
+export const Field = forwardRef<TextInputInstance, FieldProps>(function Field({ label, hint, error, style, ...rest }, ref) {
   const { c, radius } = useTheme();
   const [focused, setFocused] = useState(false);
   return (

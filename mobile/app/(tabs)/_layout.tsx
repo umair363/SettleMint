@@ -20,7 +20,7 @@ const ICONS: Record<string, { on: IconName; off: IconName }> = {
  * Four sections in a floating capsule and, apart from it, the one mint action:
  * the same shape as the website on a phone. Content scrolls under both.
  */
-function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+function FloatingTabBar({ state, descriptors, emitter, navigateToTab }: BottomTabBarProps) {
   const { c } = useTheme();
   const insets = useSafeAreaInsets();
   const t = useTranslations("nav");
@@ -40,8 +40,8 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               accessibilityLabel={title}
               testID={`tab-${route.name}`}
               onPress={() => {
-                const event = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
-                if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
+                const event = emitter.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
+                if (!focused && !event.defaultPrevented) navigateToTab(route.key);
               }}
               style={[styles.tab, focused && { backgroundColor: c.surface2 }]}
             >
