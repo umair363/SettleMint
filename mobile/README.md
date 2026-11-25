@@ -109,8 +109,13 @@ that needs new native code needs a new build.
 `assets/logo-source.png` is the source mark (1254×1254, mint background). Every other icon is
 derived from it:
 
-- `icon.png`, `splash-icon.png`: the full mark at 1024×1024
+- `icon.png`, `icon-dark.png`, `icon-tinted.png`: the iPhone icon in its three appearances, each a
+  full 1024×1024 square with no transparency (iOS rounds the corners itself): the green square,
+  a green S on near-black for Dark icons, and white on black for Tinted. `app.json` points
+  `ios.icon` at all three
+- `splash-icon.png`: the mark with rounded, transparent corners
 - `favicon.png`: 48×48
+- the website's `apple-touch-icon*.png` and `icon-192/512.png` (in `web/public`)
 - `android-icon-background.png`: a solid mint fill
 - `android-icon-foreground.png`: the mark on a transparent background, scaled to about 55% of
   the canvas so adaptive-icon masks never clip it
@@ -118,4 +123,4 @@ derived from it:
   themed icons
 
 If the source mark changes, regenerate the derived files from it rather than editing them by
-hand.
+hand: `node mobile/scripts/build-icons.mjs` (the Android files are not part of it yet).

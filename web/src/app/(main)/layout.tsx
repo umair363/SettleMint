@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { iconScript } from "@/features/pwa/icon-script";
 import { languageScript } from "@/i18n/language-script";
 import { themeScript } from "@/ui/theme";
 import { baseMetadata, baseViewport, fontVariables } from "../shell";
@@ -18,6 +19,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" data-theme="light" className={fontVariables} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: iconScript }} />
         <script dangerouslySetInnerHTML={{ __html: languageScript(UNTRANSLATED) }} />
       </head>
       <body>{children}</body>

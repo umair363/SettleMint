@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { dirOf, LANGUAGE_CODES, LANGUAGE_STORAGE_KEY, type Language } from "@settlemint/client/i18n/languages";
+import { iconScript } from "@/features/pwa/icon-script";
 import { themeScript } from "@/ui/theme";
 import { baseMetadata, baseViewport, fontVariables } from "../../shell";
 import "../../globals.css";
@@ -25,6 +26,7 @@ export default async function SiteLayout({ children, params }: { children: React
     <html lang={lang} dir={dirOf(lang as Language)} data-theme="light" className={fontVariables} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: iconScript }} />
         <script dangerouslySetInnerHTML={{ __html: rememberLanguage }} />
       </head>
       <body>{children}</body>
