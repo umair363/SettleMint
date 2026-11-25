@@ -396,7 +396,9 @@ function FormBody({
             transition={springSoft}
             className="flex min-h-0 flex-1 flex-col"
           >
-            <div className="flex items-center gap-2 pb-3">
+            {/* Everything above the keypad scrolls if a short screen can't hold it; the keypad and the button never move. */}
+            <div className="-mx-1 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-1">
+            <div className="flex items-center gap-2 pb-3 short:pb-2">
               <button
                 type="button"
                 onClick={() => setPanel("group")}
@@ -472,7 +474,7 @@ function FormBody({
               expr={expr}
               currency={currency}
               onCurrencyClick={() => setCurrencyOpen(true)}
-              className="py-5"
+              className="py-5 short:py-1.5"
             />
 
             {needsRate && (
@@ -490,10 +492,10 @@ function FormBody({
               </div>
             )}
 
-            <div className="flex flex-wrap gap-2 pb-3">
+            <div className="flex flex-wrap gap-2 pb-3 short:gap-1.5 short:pb-2">
               <Pill onClick={() => setPanel("paidBy")} label={t("paidBy")} value={payerSummary} />
               <Pill onClick={() => setPanel("split")} label={t("split")} value={splitSummary} />
-              <label className="relative inline-flex h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3.5 text-sm hover:bg-surface-3">
+              <label className="relative inline-flex h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3.5 text-sm hover:bg-surface-3 short:h-9">
                 <Calendar className="size-4 text-fg-subtle" aria-hidden />
                 <span className="font-medium">{dayLabel(date, locale)}</span>
                 <input
@@ -506,7 +508,7 @@ function FormBody({
                 />
               </label>
               {!expense && (
-                <label className="relative inline-flex h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3.5 text-sm hover:bg-surface-3">
+                <label className="relative inline-flex h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3.5 text-sm hover:bg-surface-3 short:h-9">
                   <Repeat className={cn("size-4", repeat === "never" ? "text-fg-subtle" : "text-positive")} aria-hidden />
                   <span className="font-medium">{t("repeatShort", { frequency: repeat })}</span>
                   <select
@@ -524,8 +526,9 @@ function FormBody({
               )}
             </div>
             </div>
+            </div>
 
-            <div className="space-y-3 pb-2">
+            <div className="shrink-0 space-y-3 pb-2 short:space-y-2">
               <AmountPad expr={expr} onChange={setExpr} currency={currency} />
               <AnimatePresence>
                 {problemText && (
@@ -683,7 +686,7 @@ function Pill({ label, value, onClick }: { label: string; value: string; onClick
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex h-11 min-w-0 max-w-full items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3.5 text-sm hover:bg-surface-3"
+      className="inline-flex h-11 min-w-0 max-w-full items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3.5 text-sm hover:bg-surface-3 short:h-9"
     >
       <span className="shrink-0 text-fg-subtle">{label}</span>
       <span className="truncate font-medium">{value}</span>

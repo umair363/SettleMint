@@ -10,6 +10,8 @@
  */
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+/* A phone with a short screen (iPhone SE and older, or one with the browser bars showing). */
+@custom-variant short (@media (max-height: 740px) and (max-width: 639.98px));
 
 @theme inline {
   --color-bg: var(--bg);

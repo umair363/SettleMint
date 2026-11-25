@@ -19,6 +19,7 @@ node e2e/push.mjs out                              # notifications: subscribe, w
 node e2e/i18n.mjs out ../.e2e-shots/i18n           # Arabic right-to-left, language switching, Hindi
 node e2e/friends.mjs out http://localhost:8001 ../.e2e-shots   # add friends by username or email: request, accept, invite, cancel
 node e2e/join.mjs out http://localhost:8001 ../.e2e-shots      # joining from an invite link: create an account first, no guest option
+node e2e/smallscreen.mjs out http://localhost:8001 ../.e2e-shots # iPhone SE size: keypad and Add button on screen, lists scroll without closing the sheet, Home Screen icon
 node e2e/payqr.mjs out http://localhost:8001 "" ../.e2e-shots   # saved QR codes (the redrawn code must scan back) and reminders
 ```
 

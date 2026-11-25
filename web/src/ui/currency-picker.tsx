@@ -2,6 +2,7 @@
 
 import { CURRENCY_CODES, currencyName, currencySymbol } from "@settlemint/shared";
 import { Check, Search } from "@/ui/icons";
+import { hasFinePointer } from "@/lib/pointer";
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "use-intl";
 import { cn } from "./cn";
@@ -76,9 +77,10 @@ export function CurrencyPicker({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange} title={t("currency")} tall>
-      <div className="sticky top-0 z-10 -mx-5 bg-transparent px-5 pb-3">
+      <div className="sticky top-0 z-10 -mx-5 bg-[color-mix(in_oklab,var(--bg-elevated)_95%,transparent)] px-5 pb-3">
         <TextField
-          autoFocus
+          // On a phone the keyboard waits until you tap the field.
+          autoFocus={hasFinePointer()}
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search 150+ currencies"

@@ -42,7 +42,7 @@ export function AmountDisplay({
   // What the chip shows is also what a screen reader hears first.
   const chip = symbol !== currency ? `${symbol} ${currency}` : currency;
   const shown = expr === "" ? "0" : expr.replace(/\./g, dec).replace(/([+-])/g, " $1 ");
-  const size = shown.length > 14 ? "text-3xl" : shown.length > 9 ? "text-4xl" : "text-6xl";
+  const size = shown.length > 14 ? "text-3xl" : shown.length > 9 ? "text-4xl" : "text-6xl short:text-5xl";
 
   return (
     <div className={cn("flex flex-col items-center", className)}>
@@ -139,7 +139,9 @@ export function AmountPad({
 
   const layout = withMath ? MATH_LAYOUT : PLAIN_LAYOUT;
   return (
-    <div className={cn("grid select-none auto-rows-[3.5rem] gap-2", withMath ? "grid-cols-4" : "grid-cols-3", className)}>
+    // Keys are 56px on a tall screen and shrink with the height, down to 44px, so the keypad plus the
+    // button below it always fit (an iPhone SE is only 667px tall).
+    <div className={cn("grid select-none auto-rows-[clamp(2.75rem,7.4dvh,3.5rem)] gap-2 short:gap-1.5", withMath ? "grid-cols-4" : "grid-cols-3", className)}>
       {layout.map((k) => {
         const isOp = k === "+" || k === "-";
         const label =
@@ -170,7 +172,7 @@ export function AmountPad({
             whileTap={{ scale: 0.92 }}
             transition={springSnappy}
             className={cn(
-              "tabular flex items-center justify-center rounded-[var(--radius-md)] font-display text-2xl font-medium transition-colors disabled:opacity-0",
+              "tabular flex items-center justify-center rounded-[var(--radius-md)] font-display text-2xl font-medium transition-colors disabled:opacity-0 short:text-xl",
               isOp
                 ? "bg-accent-soft text-positive"
                 : k === "clear"

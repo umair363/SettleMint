@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "use-intl";
 import { GroupIcon } from "@/features/groups/group-row";
 import { api } from "@/lib/api";
+import { hasFinePointer } from "@/lib/pointer";
 import { dayLabel } from "@settlemint/client/text/dates";
 import { IconButton } from "@/ui/button";
 import { Spinner } from "@/ui/feedback";
@@ -84,7 +85,8 @@ function SearchBody({ onPick }: { onPick: () => void }) {
     <div className="space-y-5 pb-4">
       <div className="sticky top-0 z-10 -mx-5 bg-[color-mix(in_oklab,var(--bg-elevated)_95%,transparent)] px-5 pb-1">
         <TextField
-          autoFocus
+          // On a phone the keyboard waits until you tap the field.
+          autoFocus={hasFinePointer()}
           aria-label={t("label")}
           placeholder={t("placeholder")}
           value={q}
