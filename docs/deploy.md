@@ -65,6 +65,16 @@ Connect the repository with:
 - **Variables:** `NEXT_PUBLIC_API_URL` (the API's address) and `NEXT_PUBLIC_SITE_URL` (the
   site's own address, used for canonical links and the sitemap)
 
+### Deploying the website from CI
+
+The `deploy-web` job in `.github/workflows/ci.yml` builds the site and publishes it to Cloudflare
+Pages on every push to `v2` once the checks pass. It needs two repository secrets (Settings → Secrets
+and variables → Actions) and quietly does nothing without them:
+
+1. `CLOUDFLARE_API_TOKEN`: in the Cloudflare dashboard, My Profile → API Tokens → Create Token, with
+   **Account → Cloudflare Pages → Edit** permission.
+2. `CLOUDFLARE_ACCOUNT_ID`: shown on the right of the dashboard's account home page.
+
 Or deploy a local build directly:
 
 ```bash
