@@ -13,11 +13,19 @@
       "android": {
         "buildType": "apk"
       },
-      "channel": "preview"
+      "channel": "preview",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.settlemint.online",
+        "EXPO_PUBLIC_WEB_URL": "https://www.settlemint.online"
+      }
     },
     "production": {
       "autoIncrement": true,
-      "channel": "production"
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.settlemint.online",
+        "EXPO_PUBLIC_WEB_URL": "https://www.settlemint.online"
+      }
     }
   },
   "submit": {
