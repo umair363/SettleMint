@@ -115,7 +115,7 @@ derived from it:
   `ios.icon` at all three
 - `splash-icon.png`: the mark with rounded, transparent corners
 - `favicon.png`: 48×48
-- the website's `apple-touch-icon*.png` and `icon-192/512.png` (in `web/public`)
+- the website's `apple-touch-icon.png` (a green S on pale mint, because iOS darkens a web app's icon itself and a dark S would vanish), `apple-touch-icon-dark.png` and `icon-192/512.png` (in `web/public`)
 - `android-icon-background.png`: a solid mint fill
 - `android-icon-foreground.png`: the mark on a transparent background, scaled to about 55% of
   the canvas so adaptive-icon masks never clip it

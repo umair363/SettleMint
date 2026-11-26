@@ -20,6 +20,10 @@ const publicDir = path.join(here, "../../web/public");
 
 const GREEN = { r: 61, g: 213, b: 134 };
 const INK = { r: 11, g: 15, b: 28 };
+// The website icon: iOS darkens a web app's icon on its own for the Dark Home Screen style, keeping the
+// mark's colour and darkening the background. A dark S would vanish; a green S on pale mint survives.
+const MINT_PALE = { r: 226, g: 247, b: 236 };
+const GREEN_DEEP = { r: 18, g: 160, b: 96 };
 const WHITE = { r: 255, g: 255, b: 255 };
 const BLACK = { r: 0, g: 0, b: 0 };
 
@@ -79,7 +83,7 @@ const out = [
   [path.join(assets, "icon-dark.png"), await fullBleed(1024, INK, GREEN)],
   [path.join(assets, "icon-tinted.png"), await fullBleed(1024, BLACK, WHITE)],
   [path.join(assets, "splash-icon.png"), await rounded(1024)],
-  [path.join(publicDir, "apple-touch-icon.png"), await fullBleed(180, GREEN, INK)],
+  [path.join(publicDir, "apple-touch-icon.png"), await fullBleed(180, MINT_PALE, GREEN_DEEP)],
   [path.join(publicDir, "apple-touch-icon-dark.png"), await fullBleed(180, INK, GREEN)],
   [path.join(publicDir, "icon-192.png"), await rounded(192)],
   [path.join(publicDir, "icon-512.png"), await rounded(512)],
