@@ -166,4 +166,4 @@ jobs:
           fi
           npm ci
           npm run build -w web
-          npx --workspace web wrangler pages deploy web/out --project-name settlemint-web --branch main
+          npx --workspace web wrangler pages deploy out --project-name settlemint-web --branch main
